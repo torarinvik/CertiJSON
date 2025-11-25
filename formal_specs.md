@@ -102,6 +102,7 @@ Traditional programming languages trust the programmer. When an LLM writes code,
 18. [Agent Profile](#18-agent-profile)
 19. [Standard Library](#19-standard-library)
 20. [Meta-Theoretic Goals](#20-meta-theoretic-goals)
+21. [Correctness Levels and Verification Modes](#21-correctness-levels-and-verification-modes)
 
 ### Appendices
 - [A: JSON Examples](#appendix-a-json-examples)
@@ -1499,6 +1500,257 @@ For any closed `main : IO A` and initial world `w₀`, the evaluation result `(a
 ### 20.8 Race Freedom
 
 No data races: no shared mutable state across threads.
+
+---
+
+## 21. Correctness Levels and Verification Modes
+
+CertiJSON supports **configurable correctness levels**, analogous to optimization levels in conventional compilers. These levels allow users and LLM agents to trade compile time against the *amount and depth of verification work performed*.
+
+Crucially:
+
+* **Logical soundness and core safety are never compromised** by correctness levels.
+* Lower levels may:
+
+  * Skip expensive *optional* analyses,
+  * Use cheaper equality/normalization strategies,
+  * Accept fewer proofs or provide weaker diagnostics.
+* Higher levels:
+
+  * Perform deeper normalization and proof checking,
+  * Enforce stricter obligations,
+  * Run additional static analyses (e.g. repr/FFI consistency).
+
+Correctness levels thus control **how hard the kernel works**, not whether it is sound.
+
+The compiler exposes this as a flag:
+
+```text
+--correctness-level=C0 | C1 | C2 | C3 | C4 | C5
+```
+
+Unless stated otherwise, the **default level is `C1`**.
+
+### 21.1 Invariants Across All Levels
+
+The following checks and properties are **always enforced at all levels** (`C0`–`C5`):
+
+* Core typing rules (§4)
+* Definitional equality as specified in §5 (at least β + δ + ι; depth may vary by level, but never in a way that makes an ill-typed term appear well-typed)
+* Structural recursion and termination checks (§7)
+* Positivity and well-formedness of inductives
+* Linearity discipline for:
+
+  * `ArrayHandle A` (§14),
+  * `Thread A` (§15),
+* World discipline for IO and concurrency (§13–§15)
+* Basic repr well-formedness and FFI type sanity (§8–§9)
+* Erasure correctness (§10) and extraction shape invariants (§11–§12)
+
+These invariants ensure that:
+
+> Any module accepted at any correctness level is well-typed, total, and free of undefined behavior **within the CertiJSON semantics**.
+> Differences between levels are about *completeness of proofs, strength of guarantees about externals, and depth of analysis*, not about relaxing soundness.
+
+### 21.2 Levels Overview
+
+At a high level:
+
+| Level | Goal                                               | Typical Use                          |
+| ----- | -------------------------------------------------- | ------------------------------------ |
+| `C0`  | Fastest feedback, minimal extra analysis           | Rapid prototyping, LLM iteration     |
+| `C1`  | Baseline safe mode (default)                       | Normal development                   |
+| `C2`  | Deeper normalization and definitional equality     | Debugging subtle type/proof issues   |
+| `C3`  | Full proof obligation closure and invariants       | Verifying core libraries/components  |
+| `C4`  | Global consistency and strong invariants           | System-level verification            |
+| `C5`  | Maximum verification (research / heavy proof mode) | Deep formalization, critical kernels |
+
+Raising the level never makes previously accepted programs *unsound*; it may:
+
+* Reject programs that relied on incomplete or shallow reasoning at lower levels.
+* Produce more precise error messages for FFI / repr / concurrency mistakes.
+* Take substantially more time and memory.
+
+### 21.3 Level C0 — Prototype Mode
+
+**Intent:** Fastest possible feedback for LLMs and human developers while retaining core soundness.
+
+**Characteristics:**
+
+* Full core typing, linearity, world/IO discipline, termination: **enabled** (non-negotiable).
+* Definitional equality:
+
+  * Guaranteed β-reduction, basic δ (unfolding of non-recursive definitions), and ι (match on constructors).
+  * Normalization is **shallow**: the kernel may stop short of full normalization if equivalence is already decided or obviously fails.
+* Pattern coverage and non-overlap:
+
+  * Structural checks run, but the kernel may rely more heavily on `"coverage_hint": "complete"` for diagnostics.
+  * Coverage analysis may be less aggressive in suggesting missing cases.
+* repr/extern checks:
+
+  * Basic shape and ABI compatibility: **enabled**.
+  * Expensive cross-module repr consistency checks: **may be skipped**.
+* Additional global analyses: **disabled**.
+
+**Use cases:**
+
+* Rapid LLM-driven exploration.
+* Quick compile–run cycles to test extracted C.
+* "Turn it on, see if it even type-checks."
+
+### 21.4 Level C1 — Baseline Safe Mode (Default)
+
+**Intent:** Default mode balancing safety and performance.
+
+Compared to `C0`:
+
+* Definitional equality:
+
+  * Full β + δ + ι as specified in §5, with a conservative normalization fuel budget sufficient for typical code.
+* Pattern coverage:
+
+  * Exhaustiveness and non-overlap checks run for all inductives.
+  * `"coverage_hint": "complete"` is treated as a hint only; the kernel verifies coverage.
+* repr/extern:
+
+  * All local repr and extern_c declarations must satisfy well-formedness constraints (§8–§9).
+  * Basic ABI and type erasure sanity is enforced.
+
+**Not guaranteed at `C1`:**
+
+* Closing all proof obligations about complex global invariants.
+* Checking deep normalization of very large or proof-heavy terms if they exceed resource budgets (resulting in rejection rather than unsound acceptance).
+
+This level is suitable for:
+
+* Everyday development,
+* LLM agents generating "normal" code with light to moderate proofs,
+* Projects where compile time should remain practical.
+
+### 21.5 Level C2 — Deep Normalization
+
+**Intent:** Debug subtle type/equality/proof issues by enabling deeper definitional equality and normalization.
+
+Compared to `C1`:
+
+* Definitional equality:
+
+  * Requires **full βδι normalization to weak-head normal form** for all typing and conversion checks.
+  * Larger fuel budget for normalization; the kernel attempts to resolve all reasonable equality constraints.
+* Rewriting and equality-heavy definitions:
+
+  * Complex chains of rewrites and equalities are evaluated more thoroughly.
+* Termination and recursion:
+
+  * Same structural criteria as lower levels, but additional sanity checks and diagnostics are enabled to help pinpoint structural recursion mistakes.
+
+**Use cases:**
+
+* When a module fails in `C1` due to subtle type mismatches or unprovable equalities.
+* When FFI or repr-level issues manifest as confusing type errors.
+* As an intermediate step before enabling heavy invariant checking at higher levels.
+
+### 21.6 Level C3 — Full Proof Closure and Invariants
+
+**Intent:** Ensure that all declared proofs and core invariants are fully discharged.
+
+At `C3`, in addition to `C2` behavior:
+
+* All theorems and lemmas:
+
+  * Must be **fully checked**, including large proof terms.
+  * No "admitted" or "stub" proofs (unless explicitly marked and rejected for extraction).
+* Global invariants:
+
+  * Inductive invariants (e.g. for arrays, state machines, protocols) declared in the library must be validated.
+* IO and world:
+
+  * Additional static checks ensure that IO/world threading does not accidentally violate documented invariants (e.g. no "world leaks" outside intended scope).
+
+**Use cases:**
+
+* Verifying standard libraries (Nat/List/Array/Result/etc.).
+* Security- or correctness-critical subsystems.
+* Situations where an LLM repeatedly generates code that passes low levels but misbehaves semantically, and you want stronger assurances.
+
+### 21.7 Level C4 — Global Consistency and Strong Invariants
+
+**Intent:** Strengthen guarantees about the *overall theory and system*, not just individual modules.
+
+Building on `C3`:
+
+* Logical consistency checks:
+
+  * Additional verification of universe levels and inductive definitions to guard against subtle inconsistencies.
+  * More conservative treatment of axioms: extern_c axioms and unsafe assumptions are scrutinized more aggressively.
+* World and concurrency invariants:
+
+  * Stronger checks that world partitions for concurrency (§15) are non-overlapping and that merging maintains global invariants.
+  * Enforcement of more stringent discipline on linear resources across module boundaries.
+* Cross-module repr/FFI analysis:
+
+  * Whole-program or whole-library passes that analyze repr usage, encode/decode roundtrips, and extern calls for consistency.
+
+**Use cases:**
+
+* System-level verification of libraries and executables.
+* Long-term assurance of correctness in critical deployments.
+* Debugging subtle bugs in the interaction between internal code and FFI.
+
+### 21.8 Level C5 — Maximum Verification Mode
+
+**Intent:** "Full proof assistant weight" for research-grade or critical proofs.
+
+In addition to all prior guarantees:
+
+* Definitional equality and normalization:
+
+  * Proof terms may be fully normalized (up to a configurable bound) to canonical forms where feasible.
+* Termination and well-foundedness:
+
+  * Optional additional checks for advanced termination arguments (if the language later extends beyond strictly structural recursion).
+* Ghost-state and refinement checking:
+
+  * Future extensions may use `C5` to enable expensive checks about ghost variables, cost models, or refinement types.
+* Meta-theoretic checks:
+
+  * Stronger internal consistency checks for the kernel's own invariants (e.g., certain self-checks or reflection-based sanity tests).
+
+**Use cases:**
+
+* Mechanized formalization of important algorithms and data structures.
+* Proofs intended to be exported to or cross-validated with external proof assistants (Coq/Agda/Lean).
+* Verification of tiny, critical kernels where compile time is negligible compared to assurance needs.
+
+### 21.9 Interaction with LLM Agents
+
+Correctness levels are especially useful in an LLM-driven workflow:
+
+* An agent can:
+
+  * Start at `C0` or `C1` for fast iteration.
+  * If extracted C misbehaves or fails external tests, recompile at `C2`–`C3` to obtain more precise diagnostics and stronger proof checking.
+  * For core library code, default to `C3`–`C4`.
+  * For critical kernels, enforce `C5`.
+
+A typical strategy for an agent:
+
+1. Generate code and compile at `C0`/`C1`.
+2. If the kernel rejects the module:
+
+   * Fix the structural/type issues and recompile.
+3. If the kernel accepts but external tests fail or C crashes:
+
+   * Re-run at `C2` or `C3` to trigger deeper analysis and more detailed error messages.
+4. For components designated as "trusted library":
+
+   * Always compile at `C3` or higher.
+
+This design allows CertiJSON to be:
+
+* **Fast enough** for interactive, LLM-driven development at low levels, and
+* **As rigorous as a full proof assistant** for critical components at high levels,
+  without compromising the soundness of the core type theory at any level.
 
 ---
 
