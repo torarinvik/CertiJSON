@@ -45,8 +45,8 @@
       "repr": {
         "name": "void",
         "kind": "primitive",
-        "c_type": "void*",
-        "size_bits": 64,
+        "c_type": "void",
+        "size_bits": 0,
         "signed": false
       }
     },
@@ -115,18 +115,18 @@
     },
     {
       "repr": {
-        "name": "Texture2D",
+        "name": "Texture",
         "kind": "primitive",
-        "c_type": "Texture2D",
+        "c_type": "Texture",
         "size_bits": 32,
         "signed": false
       }
     },
     {
       "repr": {
-        "name": "RenderTexture2D",
+        "name": "RenderTexture",
         "kind": "primitive",
-        "c_type": "RenderTexture2D",
+        "c_type": "RenderTexture",
         "size_bits": 32,
         "signed": false
       }
@@ -169,9 +169,9 @@
     },
     {
       "repr": {
-        "name": "Camera",
+        "name": "Camera3D",
         "kind": "primitive",
-        "c_type": "Camera",
+        "c_type": "Camera3D",
         "size_bits": 32,
         "signed": false
       }
@@ -1303,7 +1303,7 @@
             "arg": {
               "name": "opacity",
               "type": {
-                "prim": "Float64"
+                "prim": "Float"
               }
             },
             "result": {
@@ -2277,7 +2277,7 @@
         "args": [
           {
             "name": "camera",
-            "repr": "Camera"
+            "repr": "Camera3D"
           }
         ],
         "result": null,
@@ -2286,7 +2286,7 @@
             "arg": {
               "name": "camera",
               "type": {
-                "var": "Camera"
+                "var": "Camera3D"
               }
             },
             "result": {
@@ -3011,7 +3011,7 @@
           },
           {
             "name": "value",
-            "repr": "void"
+            "repr": "const void"
           },
           {
             "name": "uniformType",
@@ -3040,7 +3040,7 @@
                     "arg": {
                       "name": "value",
                       "type": {
-                        "var": "void"
+                        "var": "const void"
                       }
                     },
                     "result": {
@@ -3087,7 +3087,7 @@
           },
           {
             "name": "value",
-            "repr": "void"
+            "repr": "const void"
           },
           {
             "name": "uniformType",
@@ -3120,7 +3120,7 @@
                     "arg": {
                       "name": "value",
                       "type": {
-                        "var": "void"
+                        "var": "const void"
                       }
                     },
                     "result": {
@@ -3804,7 +3804,7 @@
                   "var": "IO"
                 },
                 {
-                  "prim": "Float64"
+                  "prim": "Float"
                 }
               ]
             }
@@ -3835,7 +3835,7 @@
                   "var": "IO"
                 },
                 {
-                  "prim": "Float64"
+                  "prim": "Float"
                 }
               ]
             }
@@ -3949,7 +3949,7 @@
             "arg": {
               "name": "seconds",
               "type": {
-                "prim": "Float64"
+                "prim": "Float"
               }
             },
             "result": {
@@ -4310,7 +4310,7 @@
         "args": [
           {
             "name": "callback",
-            "repr": "void"
+            "repr": "TraceLogCallback"
           }
         ],
         "result": null,
@@ -4319,7 +4319,7 @@
             "arg": {
               "name": "callback",
               "type": {
-                "var": "void"
+                "var": "TraceLogCallback"
               }
             },
             "result": {
@@ -4344,7 +4344,7 @@
         "args": [
           {
             "name": "callback",
-            "repr": "void"
+            "repr": "LoadFileDataCallback"
           }
         ],
         "result": null,
@@ -4353,7 +4353,7 @@
             "arg": {
               "name": "callback",
               "type": {
-                "var": "void"
+                "var": "LoadFileDataCallback"
               }
             },
             "result": {
@@ -4378,7 +4378,7 @@
         "args": [
           {
             "name": "callback",
-            "repr": "void"
+            "repr": "SaveFileDataCallback"
           }
         ],
         "result": null,
@@ -4387,7 +4387,7 @@
             "arg": {
               "name": "callback",
               "type": {
-                "var": "void"
+                "var": "SaveFileDataCallback"
               }
             },
             "result": {
@@ -4412,7 +4412,7 @@
         "args": [
           {
             "name": "callback",
-            "repr": "void"
+            "repr": "LoadFileTextCallback"
           }
         ],
         "result": null,
@@ -4421,7 +4421,7 @@
             "arg": {
               "name": "callback",
               "type": {
-                "var": "void"
+                "var": "LoadFileTextCallback"
               }
             },
             "result": {
@@ -4446,7 +4446,7 @@
         "args": [
           {
             "name": "callback",
-            "repr": "void"
+            "repr": "SaveFileTextCallback"
           }
         ],
         "result": null,
@@ -4455,7 +4455,7 @@
             "arg": {
               "name": "callback",
               "type": {
-                "var": "void"
+                "var": "SaveFileTextCallback"
               }
             },
             "result": {
@@ -4480,7 +4480,7 @@
         "args": [
           {
             "name": "data",
-            "repr": "void"
+            "repr": "unsigned char"
           }
         ],
         "result": null,
@@ -4489,7 +4489,7 @@
             "arg": {
               "name": "data",
               "type": {
-                "var": "void"
+                "var": "unsigned char"
               }
             },
             "result": {
@@ -4578,7 +4578,7 @@
         "args": [
           {
             "name": "data",
-            "repr": "void"
+            "repr": "const unsigned char"
           },
           {
             "name": "dataSize",
@@ -4597,7 +4597,7 @@
             "arg": {
               "name": "data",
               "type": {
-                "var": "void"
+                "var": "const unsigned char"
               }
             },
             "result": {
@@ -5262,7 +5262,7 @@
           }
         ],
         "result": {
-          "repr": "int"
+          "repr": "long"
         },
         "type": {
           "pi": {
@@ -5278,7 +5278,7 @@
                   "var": "IO"
                 },
                 {
-                  "prim": "Int32"
+                  "var": "long"
                 }
               ]
             }
@@ -5294,7 +5294,7 @@
         "args": [
           {
             "name": "data",
-            "repr": "void"
+            "repr": "unsigned char"
           },
           {
             "name": "dataSize",
@@ -5309,7 +5309,7 @@
             "arg": {
               "name": "data",
               "type": {
-                "var": "void"
+                "var": "unsigned char"
               }
             },
             "result": {
@@ -6235,7 +6235,7 @@
                       "var": "IO"
                     },
                     {
-                      "prim": "Float64"
+                      "prim": "Float"
                     }
                   ]
                 }
@@ -6318,7 +6318,7 @@
                 "arg": {
                   "name": "leftMotor",
                   "type": {
-                    "prim": "Float64"
+                    "prim": "Float"
                   }
                 },
                 "result": {
@@ -6326,7 +6326,7 @@
                     "arg": {
                       "name": "rightMotor",
                       "type": {
-                        "prim": "Float64"
+                        "prim": "Float"
                       }
                     },
                     "result": {
@@ -6334,7 +6334,7 @@
                         "arg": {
                           "name": "duration",
                           "type": {
-                            "prim": "Float64"
+                            "prim": "Float"
                           }
                         },
                         "result": {
@@ -6742,7 +6742,7 @@
             "arg": {
               "name": "scaleX",
               "type": {
-                "prim": "Float64"
+                "prim": "Float"
               }
             },
             "result": {
@@ -6750,7 +6750,7 @@
                 "arg": {
                   "name": "scaleY",
                   "type": {
-                    "prim": "Float64"
+                    "prim": "Float"
                   }
                 },
                 "result": {
@@ -6792,7 +6792,7 @@
                   "var": "IO"
                 },
                 {
-                  "prim": "Float64"
+                  "prim": "Float"
                 }
               ]
             }
@@ -7154,7 +7154,7 @@
                   "var": "IO"
                 },
                 {
-                  "prim": "Float64"
+                  "prim": "Float"
                 }
               ]
             }
@@ -7216,7 +7216,7 @@
                   "var": "IO"
                 },
                 {
-                  "prim": "Float64"
+                  "prim": "Float"
                 }
               ]
             }
@@ -7278,7 +7278,7 @@
                   "var": "IO"
                 },
                 {
-                  "prim": "Float64"
+                  "prim": "Float"
                 }
               ]
             }
@@ -7387,7 +7387,7 @@
                         "arg": {
                           "name": "zoom",
                           "type": {
-                            "prim": "Float64"
+                            "prim": "Float"
                           }
                         },
                         "result": {
@@ -7827,7 +7827,7 @@
                     "arg": {
                       "name": "thick",
                       "type": {
-                        "prim": "Float64"
+                        "prim": "Float"
                       }
                     },
                     "result": {
@@ -7866,7 +7866,7 @@
         "args": [
           {
             "name": "points",
-            "repr": "void"
+            "repr": "const Vector2"
           },
           {
             "name": "pointCount",
@@ -7883,7 +7883,7 @@
             "arg": {
               "name": "points",
               "type": {
-                "var": "void"
+                "var": "const Vector2"
               }
             },
             "result": {
@@ -7965,7 +7965,7 @@
                     "arg": {
                       "name": "thick",
                       "type": {
-                        "prim": "Float64"
+                        "prim": "Float"
                       }
                     },
                     "result": {
@@ -8041,7 +8041,7 @@
                     "arg": {
                       "name": "radius",
                       "type": {
-                        "prim": "Float64"
+                        "prim": "Float"
                       }
                     },
                     "result": {
@@ -8117,7 +8117,7 @@
                 "arg": {
                   "name": "radius",
                   "type": {
-                    "prim": "Float64"
+                    "prim": "Float"
                   }
                 },
                 "result": {
@@ -8125,7 +8125,7 @@
                     "arg": {
                       "name": "startAngle",
                       "type": {
-                        "prim": "Float64"
+                        "prim": "Float"
                       }
                     },
                     "result": {
@@ -8133,7 +8133,7 @@
                         "arg": {
                           "name": "endAngle",
                           "type": {
-                            "prim": "Float64"
+                            "prim": "Float"
                           }
                         },
                         "result": {
@@ -8221,7 +8221,7 @@
                 "arg": {
                   "name": "radius",
                   "type": {
-                    "prim": "Float64"
+                    "prim": "Float"
                   }
                 },
                 "result": {
@@ -8229,7 +8229,7 @@
                     "arg": {
                       "name": "startAngle",
                       "type": {
-                        "prim": "Float64"
+                        "prim": "Float"
                       }
                     },
                     "result": {
@@ -8237,7 +8237,7 @@
                         "arg": {
                           "name": "endAngle",
                           "type": {
-                            "prim": "Float64"
+                            "prim": "Float"
                           }
                         },
                         "result": {
@@ -8329,7 +8329,7 @@
                     "arg": {
                       "name": "radius",
                       "type": {
-                        "prim": "Float64"
+                        "prim": "Float"
                       }
                     },
                     "result": {
@@ -8403,7 +8403,7 @@
                 "arg": {
                   "name": "radius",
                   "type": {
-                    "prim": "Float64"
+                    "prim": "Float"
                   }
                 },
                 "result": {
@@ -8477,7 +8477,7 @@
                     "arg": {
                       "name": "radius",
                       "type": {
-                        "prim": "Float64"
+                        "prim": "Float"
                       }
                     },
                     "result": {
@@ -8541,7 +8541,7 @@
                 "arg": {
                   "name": "radius",
                   "type": {
-                    "prim": "Float64"
+                    "prim": "Float"
                   }
                 },
                 "result": {
@@ -8619,7 +8619,7 @@
                     "arg": {
                       "name": "radiusH",
                       "type": {
-                        "prim": "Float64"
+                        "prim": "Float"
                       }
                     },
                     "result": {
@@ -8627,7 +8627,7 @@
                         "arg": {
                           "name": "radiusV",
                           "type": {
-                            "prim": "Float64"
+                            "prim": "Float"
                           }
                         },
                         "result": {
@@ -8709,7 +8709,7 @@
                     "arg": {
                       "name": "radiusH",
                       "type": {
-                        "prim": "Float64"
+                        "prim": "Float"
                       }
                     },
                     "result": {
@@ -8717,7 +8717,7 @@
                         "arg": {
                           "name": "radiusV",
                           "type": {
-                            "prim": "Float64"
+                            "prim": "Float"
                           }
                         },
                         "result": {
@@ -8799,7 +8799,7 @@
                 "arg": {
                   "name": "innerRadius",
                   "type": {
-                    "prim": "Float64"
+                    "prim": "Float"
                   }
                 },
                 "result": {
@@ -8807,7 +8807,7 @@
                     "arg": {
                       "name": "outerRadius",
                       "type": {
-                        "prim": "Float64"
+                        "prim": "Float"
                       }
                     },
                     "result": {
@@ -8815,7 +8815,7 @@
                         "arg": {
                           "name": "startAngle",
                           "type": {
-                            "prim": "Float64"
+                            "prim": "Float"
                           }
                         },
                         "result": {
@@ -8823,7 +8823,7 @@
                             "arg": {
                               "name": "endAngle",
                               "type": {
-                                "prim": "Float64"
+                                "prim": "Float"
                               }
                             },
                             "result": {
@@ -8917,7 +8917,7 @@
                 "arg": {
                   "name": "innerRadius",
                   "type": {
-                    "prim": "Float64"
+                    "prim": "Float"
                   }
                 },
                 "result": {
@@ -8925,7 +8925,7 @@
                     "arg": {
                       "name": "outerRadius",
                       "type": {
-                        "prim": "Float64"
+                        "prim": "Float"
                       }
                     },
                     "result": {
@@ -8933,7 +8933,7 @@
                         "arg": {
                           "name": "startAngle",
                           "type": {
-                            "prim": "Float64"
+                            "prim": "Float"
                           }
                         },
                         "result": {
@@ -8941,7 +8941,7 @@
                             "arg": {
                               "name": "endAngle",
                               "type": {
-                                "prim": "Float64"
+                                "prim": "Float"
                               }
                             },
                             "result": {
@@ -9231,7 +9231,7 @@
                     "arg": {
                       "name": "rotation",
                       "type": {
-                        "prim": "Float64"
+                        "prim": "Float"
                       }
                     },
                     "result": {
@@ -9683,7 +9683,7 @@
                 "arg": {
                   "name": "lineThick",
                   "type": {
-                    "prim": "Float64"
+                    "prim": "Float"
                   }
                 },
                 "result": {
@@ -9749,7 +9749,7 @@
                 "arg": {
                   "name": "roundness",
                   "type": {
-                    "prim": "Float64"
+                    "prim": "Float"
                   }
                 },
                 "result": {
@@ -9825,7 +9825,7 @@
                 "arg": {
                   "name": "roundness",
                   "type": {
-                    "prim": "Float64"
+                    "prim": "Float"
                   }
                 },
                 "result": {
@@ -9905,7 +9905,7 @@
                 "arg": {
                   "name": "roundness",
                   "type": {
-                    "prim": "Float64"
+                    "prim": "Float"
                   }
                 },
                 "result": {
@@ -9921,7 +9921,7 @@
                         "arg": {
                           "name": "lineThick",
                           "type": {
-                            "prim": "Float64"
+                            "prim": "Float"
                           }
                         },
                         "result": {
@@ -10114,7 +10114,7 @@
         "args": [
           {
             "name": "points",
-            "repr": "void"
+            "repr": "const Vector2"
           },
           {
             "name": "pointCount",
@@ -10131,7 +10131,7 @@
             "arg": {
               "name": "points",
               "type": {
-                "var": "void"
+                "var": "const Vector2"
               }
             },
             "result": {
@@ -10176,7 +10176,7 @@
         "args": [
           {
             "name": "points",
-            "repr": "void"
+            "repr": "const Vector2"
           },
           {
             "name": "pointCount",
@@ -10193,7 +10193,7 @@
             "arg": {
               "name": "points",
               "type": {
-                "var": "void"
+                "var": "const Vector2"
               }
             },
             "result": {
@@ -10279,7 +10279,7 @@
                     "arg": {
                       "name": "radius",
                       "type": {
-                        "prim": "Float64"
+                        "prim": "Float"
                       }
                     },
                     "result": {
@@ -10287,7 +10287,7 @@
                         "arg": {
                           "name": "rotation",
                           "type": {
-                            "prim": "Float64"
+                            "prim": "Float"
                           }
                         },
                         "result": {
@@ -10369,7 +10369,7 @@
                     "arg": {
                       "name": "radius",
                       "type": {
-                        "prim": "Float64"
+                        "prim": "Float"
                       }
                     },
                     "result": {
@@ -10377,7 +10377,7 @@
                         "arg": {
                           "name": "rotation",
                           "type": {
-                            "prim": "Float64"
+                            "prim": "Float"
                           }
                         },
                         "result": {
@@ -10463,7 +10463,7 @@
                     "arg": {
                       "name": "radius",
                       "type": {
-                        "prim": "Float64"
+                        "prim": "Float"
                       }
                     },
                     "result": {
@@ -10471,7 +10471,7 @@
                         "arg": {
                           "name": "rotation",
                           "type": {
-                            "prim": "Float64"
+                            "prim": "Float"
                           }
                         },
                         "result": {
@@ -10479,7 +10479,7 @@
                             "arg": {
                               "name": "lineThick",
                               "type": {
-                                "prim": "Float64"
+                                "prim": "Float"
                               }
                             },
                             "result": {
@@ -10522,7 +10522,7 @@
         "args": [
           {
             "name": "points",
-            "repr": "void"
+            "repr": "const Vector2"
           },
           {
             "name": "pointCount",
@@ -10543,7 +10543,7 @@
             "arg": {
               "name": "points",
               "type": {
-                "var": "void"
+                "var": "const Vector2"
               }
             },
             "result": {
@@ -10559,7 +10559,7 @@
                     "arg": {
                       "name": "thick",
                       "type": {
-                        "prim": "Float64"
+                        "prim": "Float"
                       }
                     },
                     "result": {
@@ -10598,7 +10598,7 @@
         "args": [
           {
             "name": "points",
-            "repr": "void"
+            "repr": "const Vector2"
           },
           {
             "name": "pointCount",
@@ -10619,7 +10619,7 @@
             "arg": {
               "name": "points",
               "type": {
-                "var": "void"
+                "var": "const Vector2"
               }
             },
             "result": {
@@ -10635,7 +10635,7 @@
                     "arg": {
                       "name": "thick",
                       "type": {
-                        "prim": "Float64"
+                        "prim": "Float"
                       }
                     },
                     "result": {
@@ -10674,7 +10674,7 @@
         "args": [
           {
             "name": "points",
-            "repr": "void"
+            "repr": "const Vector2"
           },
           {
             "name": "pointCount",
@@ -10695,7 +10695,7 @@
             "arg": {
               "name": "points",
               "type": {
-                "var": "void"
+                "var": "const Vector2"
               }
             },
             "result": {
@@ -10711,7 +10711,7 @@
                     "arg": {
                       "name": "thick",
                       "type": {
-                        "prim": "Float64"
+                        "prim": "Float"
                       }
                     },
                     "result": {
@@ -10750,7 +10750,7 @@
         "args": [
           {
             "name": "points",
-            "repr": "void"
+            "repr": "const Vector2"
           },
           {
             "name": "pointCount",
@@ -10771,7 +10771,7 @@
             "arg": {
               "name": "points",
               "type": {
-                "var": "void"
+                "var": "const Vector2"
               }
             },
             "result": {
@@ -10787,7 +10787,7 @@
                     "arg": {
                       "name": "thick",
                       "type": {
-                        "prim": "Float64"
+                        "prim": "Float"
                       }
                     },
                     "result": {
@@ -10826,7 +10826,7 @@
         "args": [
           {
             "name": "points",
-            "repr": "void"
+            "repr": "const Vector2"
           },
           {
             "name": "pointCount",
@@ -10847,7 +10847,7 @@
             "arg": {
               "name": "points",
               "type": {
-                "var": "void"
+                "var": "const Vector2"
               }
             },
             "result": {
@@ -10863,7 +10863,7 @@
                     "arg": {
                       "name": "thick",
                       "type": {
-                        "prim": "Float64"
+                        "prim": "Float"
                       }
                     },
                     "result": {
@@ -10939,7 +10939,7 @@
                     "arg": {
                       "name": "thick",
                       "type": {
-                        "prim": "Float64"
+                        "prim": "Float"
                       }
                     },
                     "result": {
@@ -11039,7 +11039,7 @@
                             "arg": {
                               "name": "thick",
                               "type": {
-                                "prim": "Float64"
+                                "prim": "Float"
                               }
                             },
                             "result": {
@@ -11143,7 +11143,7 @@
                             "arg": {
                               "name": "thick",
                               "type": {
-                                "prim": "Float64"
+                                "prim": "Float"
                               }
                             },
                             "result": {
@@ -11235,7 +11235,7 @@
                         "arg": {
                           "name": "thick",
                           "type": {
-                            "prim": "Float64"
+                            "prim": "Float"
                           }
                         },
                         "result": {
@@ -11337,7 +11337,7 @@
                             "arg": {
                               "name": "thick",
                               "type": {
-                                "prim": "Float64"
+                                "prim": "Float"
                               }
                             },
                             "result": {
@@ -11415,7 +11415,7 @@
                     "arg": {
                       "name": "t",
                       "type": {
-                        "prim": "Float64"
+                        "prim": "Float"
                       }
                     },
                     "result": {
@@ -11503,7 +11503,7 @@
                             "arg": {
                               "name": "t",
                               "type": {
-                                "prim": "Float64"
+                                "prim": "Float"
                               }
                             },
                             "result": {
@@ -11595,7 +11595,7 @@
                             "arg": {
                               "name": "t",
                               "type": {
-                                "prim": "Float64"
+                                "prim": "Float"
                               }
                             },
                             "result": {
@@ -11675,7 +11675,7 @@
                         "arg": {
                           "name": "t",
                           "type": {
-                            "prim": "Float64"
+                            "prim": "Float"
                           }
                         },
                         "result": {
@@ -11765,7 +11765,7 @@
                             "arg": {
                               "name": "t",
                               "type": {
-                                "prim": "Float64"
+                                "prim": "Float"
                               }
                             },
                             "result": {
@@ -11879,7 +11879,7 @@
                 "arg": {
                   "name": "radius1",
                   "type": {
-                    "prim": "Float64"
+                    "prim": "Float"
                   }
                 },
                 "result": {
@@ -11895,7 +11895,7 @@
                         "arg": {
                           "name": "radius2",
                           "type": {
-                            "prim": "Float64"
+                            "prim": "Float"
                           }
                         },
                         "result": {
@@ -11953,7 +11953,7 @@
                 "arg": {
                   "name": "radius",
                   "type": {
-                    "prim": "Float64"
+                    "prim": "Float"
                   }
                 },
                 "result": {
@@ -12021,7 +12021,7 @@
                 "arg": {
                   "name": "radius",
                   "type": {
-                    "prim": "Float64"
+                    "prim": "Float"
                   }
                 },
                 "result": {
@@ -12153,7 +12153,7 @@
                     "arg": {
                       "name": "radius",
                       "type": {
-                        "prim": "Float64"
+                        "prim": "Float"
                       }
                     },
                     "result": {
@@ -12342,7 +12342,7 @@
           },
           {
             "name": "points",
-            "repr": "void"
+            "repr": "const Vector2"
           },
           {
             "name": "pointCount",
@@ -12365,7 +12365,7 @@
                 "arg": {
                   "name": "points",
                   "type": {
-                    "var": "void"
+                    "var": "const Vector2"
                   }
                 },
                 "result": {
@@ -12726,7 +12726,7 @@
           },
           {
             "name": "fileData",
-            "repr": "void"
+            "repr": "const unsigned char"
           },
           {
             "name": "dataSize",
@@ -12753,7 +12753,7 @@
                 "arg": {
                   "name": "fileData",
                   "type": {
-                    "var": "void"
+                    "var": "const unsigned char"
                   }
                 },
                 "result": {
@@ -12804,7 +12804,7 @@
           },
           {
             "name": "fileData",
-            "repr": "void"
+            "repr": "const unsigned char"
           },
           {
             "name": "dataSize",
@@ -12827,7 +12827,7 @@
                 "arg": {
                   "name": "fileData",
                   "type": {
-                    "var": "void"
+                    "var": "const unsigned char"
                   }
                 },
                 "result": {
@@ -13300,7 +13300,7 @@
                     "arg": {
                       "name": "density",
                       "type": {
-                        "prim": "Float64"
+                        "prim": "Float"
                       }
                     },
                     "result": {
@@ -13392,7 +13392,7 @@
                     "arg": {
                       "name": "density",
                       "type": {
-                        "prim": "Float64"
+                        "prim": "Float"
                       }
                     },
                     "result": {
@@ -13582,7 +13582,7 @@
                     "arg": {
                       "name": "factor",
                       "type": {
-                        "prim": "Float64"
+                        "prim": "Float"
                       }
                     },
                     "result": {
@@ -13670,7 +13670,7 @@
                             "arg": {
                               "name": "scale",
                               "type": {
-                                "prim": "Float64"
+                                "prim": "Float"
                               }
                             },
                             "result": {
@@ -14074,7 +14074,7 @@
                     "arg": {
                       "name": "fontSize",
                       "type": {
-                        "prim": "Float64"
+                        "prim": "Float"
                       }
                     },
                     "result": {
@@ -14082,7 +14082,7 @@
                         "arg": {
                           "name": "spacing",
                           "type": {
-                            "prim": "Float64"
+                            "prim": "Float"
                           }
                         },
                         "result": {
@@ -14288,7 +14288,7 @@
                 "arg": {
                   "name": "threshold",
                   "type": {
-                    "prim": "Float64"
+                    "prim": "Float"
                   }
                 },
                 "result": {
@@ -14348,7 +14348,7 @@
                     "arg": {
                       "name": "threshold",
                       "type": {
-                        "prim": "Float64"
+                        "prim": "Float"
                       }
                     },
                     "result": {
@@ -14511,7 +14511,7 @@
           },
           {
             "name": "kernel",
-            "repr": "void"
+            "repr": "const float"
           },
           {
             "name": "kernelSize",
@@ -14532,7 +14532,7 @@
                 "arg": {
                   "name": "kernel",
                   "type": {
-                    "var": "void"
+                    "var": "const float"
                   }
                 },
                 "result": {
@@ -15242,7 +15242,7 @@
                 "arg": {
                   "name": "contrast",
                   "type": {
-                    "prim": "Float64"
+                    "prim": "Float"
                   }
                 },
                 "result": {
@@ -15470,7 +15470,7 @@
                 "arg": {
                   "name": "threshold",
                   "type": {
-                    "prim": "Float64"
+                    "prim": "Float"
                   }
                 },
                 "result": {
@@ -17376,7 +17376,7 @@
                             "arg": {
                               "name": "fontSize",
                               "type": {
-                                "prim": "Float64"
+                                "prim": "Float"
                               }
                             },
                             "result": {
@@ -17384,7 +17384,7 @@
                                 "arg": {
                                   "name": "spacing",
                                   "type": {
-                                    "prim": "Float64"
+                                    "prim": "Float"
                                   }
                                 },
                                 "result": {
@@ -17509,7 +17509,7 @@
           }
         ],
         "result": {
-          "repr": "Texture2D"
+          "repr": "TextureCubemap"
         },
         "type": {
           "pi": {
@@ -17533,7 +17533,7 @@
                       "var": "IO"
                     },
                     {
-                      "var": "Texture2D"
+                      "var": "TextureCubemap"
                     }
                   ]
                 }
@@ -17745,7 +17745,7 @@
           },
           {
             "name": "pixels",
-            "repr": "void"
+            "repr": "const void"
           }
         ],
         "result": null,
@@ -17762,7 +17762,7 @@
                 "arg": {
                   "name": "pixels",
                   "type": {
-                    "var": "void"
+                    "var": "const void"
                   }
                 },
                 "result": {
@@ -17797,7 +17797,7 @@
           },
           {
             "name": "pixels",
-            "repr": "void"
+            "repr": "const void"
           }
         ],
         "result": null,
@@ -17822,7 +17822,7 @@
                     "arg": {
                       "name": "pixels",
                       "type": {
-                        "var": "void"
+                        "var": "const void"
                       }
                     },
                     "result": {
@@ -18160,7 +18160,7 @@
                     "arg": {
                       "name": "rotation",
                       "type": {
-                        "prim": "Float64"
+                        "prim": "Float"
                       }
                     },
                     "result": {
@@ -18168,7 +18168,7 @@
                         "arg": {
                           "name": "scale",
                           "type": {
-                            "prim": "Float64"
+                            "prim": "Float"
                           }
                         },
                         "result": {
@@ -18346,7 +18346,7 @@
                             "arg": {
                               "name": "rotation",
                               "type": {
-                                "prim": "Float64"
+                                "prim": "Float"
                               }
                             },
                             "result": {
@@ -18450,7 +18450,7 @@
                             "arg": {
                               "name": "rotation",
                               "type": {
-                                "prim": "Float64"
+                                "prim": "Float"
                               }
                             },
                             "result": {
@@ -18566,7 +18566,7 @@
                 "arg": {
                   "name": "alpha",
                   "type": {
-                    "prim": "Float64"
+                    "prim": "Float"
                   }
                 },
                 "result": {
@@ -18756,7 +18756,7 @@
             "arg": {
               "name": "hue",
               "type": {
-                "prim": "Float64"
+                "prim": "Float"
               }
             },
             "result": {
@@ -18764,7 +18764,7 @@
                 "arg": {
                   "name": "saturation",
                   "type": {
-                    "prim": "Float64"
+                    "prim": "Float"
                   }
                 },
                 "result": {
@@ -18772,7 +18772,7 @@
                     "arg": {
                       "name": "value",
                       "type": {
-                        "prim": "Float64"
+                        "prim": "Float"
                       }
                     },
                     "result": {
@@ -18874,7 +18874,7 @@
                 "arg": {
                   "name": "factor",
                   "type": {
-                    "prim": "Float64"
+                    "prim": "Float"
                   }
                 },
                 "result": {
@@ -18924,7 +18924,7 @@
                 "arg": {
                   "name": "contrast",
                   "type": {
-                    "prim": "Float64"
+                    "prim": "Float"
                   }
                 },
                 "result": {
@@ -18974,7 +18974,7 @@
                 "arg": {
                   "name": "alpha",
                   "type": {
-                    "prim": "Float64"
+                    "prim": "Float"
                   }
                 },
                 "result": {
@@ -19100,7 +19100,7 @@
                     "arg": {
                       "name": "factor",
                       "type": {
-                        "prim": "Float64"
+                        "prim": "Float"
                       }
                     },
                     "result": {
@@ -19122,20 +19122,18 @@
       }
     },
     {
-      "extern_c": {
+      "extern_io": {
         "name": "GetColor",
         "c_name": "GetColor",
         "header": "<raylib.h>",
-        "signature": {
-          "args": [
-            {
-              "name": "hexValue",
-              "repr": "int"
-            }
-          ],
-          "return": {
-            "repr": "Color"
+        "args": [
+          {
+            "name": "hexValue",
+            "repr": "int"
           }
+        ],
+        "result": {
+          "repr": "Color"
         },
         "type": {
           "pi": {
@@ -19146,7 +19144,14 @@
               }
             },
             "result": {
-              "var": "Color"
+              "app": [
+                {
+                  "var": "IO"
+                },
+                {
+                  "var": "Color"
+                }
+              ]
             }
           }
         }
@@ -19549,7 +19554,7 @@
           },
           {
             "name": "fileData",
-            "repr": "void"
+            "repr": "const unsigned char"
           },
           {
             "name": "dataSize",
@@ -19584,7 +19589,7 @@
                 "arg": {
                   "name": "fileData",
                   "type": {
-                    "var": "void"
+                    "var": "const unsigned char"
                   }
                 },
                 "result": {
@@ -19687,7 +19692,7 @@
         "args": [
           {
             "name": "glyphs",
-            "repr": "void"
+            "repr": "const GlyphInfo"
           },
           {
             "name": "*glyphRecs",
@@ -19718,7 +19723,7 @@
             "arg": {
               "name": "glyphs",
               "type": {
-                "var": "void"
+                "var": "const GlyphInfo"
               }
             },
             "result": {
@@ -20116,7 +20121,7 @@
                         "arg": {
                           "name": "fontSize",
                           "type": {
-                            "prim": "Float64"
+                            "prim": "Float"
                           }
                         },
                         "result": {
@@ -20124,7 +20129,7 @@
                             "arg": {
                               "name": "spacing",
                               "type": {
-                                "prim": "Float64"
+                                "prim": "Float"
                               }
                             },
                             "result": {
@@ -20236,7 +20241,7 @@
                             "arg": {
                               "name": "rotation",
                               "type": {
-                                "prim": "Float64"
+                                "prim": "Float"
                               }
                             },
                             "result": {
@@ -20244,7 +20249,7 @@
                                 "arg": {
                                   "name": "fontSize",
                                   "type": {
-                                    "prim": "Float64"
+                                    "prim": "Float"
                                   }
                                 },
                                 "result": {
@@ -20252,7 +20257,7 @@
                                     "arg": {
                                       "name": "spacing",
                                       "type": {
-                                        "prim": "Float64"
+                                        "prim": "Float"
                                       }
                                     },
                                     "result": {
@@ -20348,7 +20353,7 @@
                         "arg": {
                           "name": "fontSize",
                           "type": {
-                            "prim": "Float64"
+                            "prim": "Float"
                           }
                         },
                         "result": {
@@ -20393,7 +20398,7 @@
           },
           {
             "name": "codepoints",
-            "repr": "void"
+            "repr": "const int"
           },
           {
             "name": "codepointCount",
@@ -20430,7 +20435,7 @@
                 "arg": {
                   "name": "codepoints",
                   "type": {
-                    "var": "void"
+                    "var": "const int"
                   }
                 },
                 "result": {
@@ -20454,7 +20459,7 @@
                             "arg": {
                               "name": "fontSize",
                               "type": {
-                                "prim": "Float64"
+                                "prim": "Float"
                               }
                             },
                             "result": {
@@ -20462,7 +20467,7 @@
                                 "arg": {
                                   "name": "spacing",
                                   "type": {
-                                    "prim": "Float64"
+                                    "prim": "Float"
                                   }
                                 },
                                 "result": {
@@ -20630,7 +20635,7 @@
                     "arg": {
                       "name": "fontSize",
                       "type": {
-                        "prim": "Float64"
+                        "prim": "Float"
                       }
                     },
                     "result": {
@@ -20638,7 +20643,7 @@
                         "arg": {
                           "name": "spacing",
                           "type": {
-                            "prim": "Float64"
+                            "prim": "Float"
                           }
                         },
                         "result": {
@@ -21377,7 +21382,7 @@
                   "var": "IO"
                 },
                 {
-                  "prim": "Float64"
+                  "prim": "Float"
                 }
               ]
             }
@@ -21536,7 +21541,7 @@
                 "arg": {
                   "name": "radius",
                   "type": {
-                    "prim": "Float64"
+                    "prim": "Float"
                   }
                 },
                 "result": {
@@ -21552,7 +21557,7 @@
                         "arg": {
                           "name": "rotationAngle",
                           "type": {
-                            "prim": "Float64"
+                            "prim": "Float"
                           }
                         },
                         "result": {
@@ -21669,7 +21674,7 @@
         "args": [
           {
             "name": "points",
-            "repr": "void"
+            "repr": "const Vector3"
           },
           {
             "name": "pointCount",
@@ -21686,7 +21691,7 @@
             "arg": {
               "name": "points",
               "type": {
-                "var": "void"
+                "var": "const Vector3"
               }
             },
             "result": {
@@ -21764,7 +21769,7 @@
                 "arg": {
                   "name": "width",
                   "type": {
-                    "prim": "Float64"
+                    "prim": "Float"
                   }
                 },
                 "result": {
@@ -21772,7 +21777,7 @@
                     "arg": {
                       "name": "height",
                       "type": {
-                        "prim": "Float64"
+                        "prim": "Float"
                       }
                     },
                     "result": {
@@ -21780,7 +21785,7 @@
                         "arg": {
                           "name": "length",
                           "type": {
-                            "prim": "Float64"
+                            "prim": "Float"
                           }
                         },
                         "result": {
@@ -21916,7 +21921,7 @@
                 "arg": {
                   "name": "width",
                   "type": {
-                    "prim": "Float64"
+                    "prim": "Float"
                   }
                 },
                 "result": {
@@ -21924,7 +21929,7 @@
                     "arg": {
                       "name": "height",
                       "type": {
-                        "prim": "Float64"
+                        "prim": "Float"
                       }
                     },
                     "result": {
@@ -21932,7 +21937,7 @@
                         "arg": {
                           "name": "length",
                           "type": {
-                            "prim": "Float64"
+                            "prim": "Float"
                           }
                         },
                         "result": {
@@ -22060,7 +22065,7 @@
                 "arg": {
                   "name": "radius",
                   "type": {
-                    "prim": "Float64"
+                    "prim": "Float"
                   }
                 },
                 "result": {
@@ -22130,7 +22135,7 @@
                 "arg": {
                   "name": "radius",
                   "type": {
-                    "prim": "Float64"
+                    "prim": "Float"
                   }
                 },
                 "result": {
@@ -22220,7 +22225,7 @@
                 "arg": {
                   "name": "radius",
                   "type": {
-                    "prim": "Float64"
+                    "prim": "Float"
                   }
                 },
                 "result": {
@@ -22314,7 +22319,7 @@
                 "arg": {
                   "name": "radiusTop",
                   "type": {
-                    "prim": "Float64"
+                    "prim": "Float"
                   }
                 },
                 "result": {
@@ -22322,7 +22327,7 @@
                     "arg": {
                       "name": "radiusBottom",
                       "type": {
-                        "prim": "Float64"
+                        "prim": "Float"
                       }
                     },
                     "result": {
@@ -22330,7 +22335,7 @@
                         "arg": {
                           "name": "height",
                           "type": {
-                            "prim": "Float64"
+                            "prim": "Float"
                           }
                         },
                         "result": {
@@ -22426,7 +22431,7 @@
                     "arg": {
                       "name": "startRadius",
                       "type": {
-                        "prim": "Float64"
+                        "prim": "Float"
                       }
                     },
                     "result": {
@@ -22434,7 +22439,7 @@
                         "arg": {
                           "name": "endRadius",
                           "type": {
-                            "prim": "Float64"
+                            "prim": "Float"
                           }
                         },
                         "result": {
@@ -22522,7 +22527,7 @@
                 "arg": {
                   "name": "radiusTop",
                   "type": {
-                    "prim": "Float64"
+                    "prim": "Float"
                   }
                 },
                 "result": {
@@ -22530,7 +22535,7 @@
                     "arg": {
                       "name": "radiusBottom",
                       "type": {
-                        "prim": "Float64"
+                        "prim": "Float"
                       }
                     },
                     "result": {
@@ -22538,7 +22543,7 @@
                         "arg": {
                           "name": "height",
                           "type": {
-                            "prim": "Float64"
+                            "prim": "Float"
                           }
                         },
                         "result": {
@@ -22634,7 +22639,7 @@
                     "arg": {
                       "name": "startRadius",
                       "type": {
-                        "prim": "Float64"
+                        "prim": "Float"
                       }
                     },
                     "result": {
@@ -22642,7 +22647,7 @@
                         "arg": {
                           "name": "endRadius",
                           "type": {
-                            "prim": "Float64"
+                            "prim": "Float"
                           }
                         },
                         "result": {
@@ -22738,7 +22743,7 @@
                     "arg": {
                       "name": "radius",
                       "type": {
-                        "prim": "Float64"
+                        "prim": "Float"
                       }
                     },
                     "result": {
@@ -22842,7 +22847,7 @@
                     "arg": {
                       "name": "radius",
                       "type": {
-                        "prim": "Float64"
+                        "prim": "Float"
                       }
                     },
                     "result": {
@@ -23032,7 +23037,7 @@
                 "arg": {
                   "name": "spacing",
                   "type": {
-                    "prim": "Float64"
+                    "prim": "Float"
                   }
                 },
                 "result": {
@@ -23274,7 +23279,7 @@
                     "arg": {
                       "name": "scale",
                       "type": {
-                        "prim": "Float64"
+                        "prim": "Float"
                       }
                     },
                     "result": {
@@ -23366,7 +23371,7 @@
                         "arg": {
                           "name": "rotationAngle",
                           "type": {
-                            "prim": "Float64"
+                            "prim": "Float"
                           }
                         },
                         "result": {
@@ -23454,7 +23459,7 @@
                     "arg": {
                       "name": "scale",
                       "type": {
-                        "prim": "Float64"
+                        "prim": "Float"
                       }
                     },
                     "result": {
@@ -23546,7 +23551,7 @@
                         "arg": {
                           "name": "rotationAngle",
                           "type": {
-                            "prim": "Float64"
+                            "prim": "Float"
                           }
                         },
                         "result": {
@@ -23634,7 +23639,7 @@
                     "arg": {
                       "name": "scale",
                       "type": {
-                        "prim": "Float64"
+                        "prim": "Float"
                       }
                     },
                     "result": {
@@ -23726,7 +23731,7 @@
                         "arg": {
                           "name": "rotationAngle",
                           "type": {
-                            "prim": "Float64"
+                            "prim": "Float"
                           }
                         },
                         "result": {
@@ -23874,7 +23879,7 @@
                         "arg": {
                           "name": "scale",
                           "type": {
-                            "prim": "Float64"
+                            "prim": "Float"
                           }
                         },
                         "result": {
@@ -24116,7 +24121,7 @@
                                         "arg": {
                                           "name": "rotation",
                                           "type": {
-                                            "prim": "Float64"
+                                            "prim": "Float"
                                           }
                                         },
                                         "result": {
@@ -24221,7 +24226,7 @@
           },
           {
             "name": "data",
-            "repr": "void"
+            "repr": "const void"
           },
           {
             "name": "dataSize",
@@ -24254,7 +24259,7 @@
                     "arg": {
                       "name": "data",
                       "type": {
-                        "var": "void"
+                        "var": "const void"
                       }
                     },
                     "result": {
@@ -24407,7 +24412,7 @@
           },
           {
             "name": "transforms",
-            "repr": "void"
+            "repr": "const Matrix"
           },
           {
             "name": "instances",
@@ -24436,7 +24441,7 @@
                     "arg": {
                       "name": "transforms",
                       "type": {
-                        "var": "void"
+                        "var": "const Matrix"
                       }
                     },
                     "result": {
@@ -24668,7 +24673,7 @@
                 "arg": {
                   "name": "radius",
                   "type": {
-                    "prim": "Float64"
+                    "prim": "Float"
                   }
                 },
                 "result": {
@@ -24718,7 +24723,7 @@
             "arg": {
               "name": "width",
               "type": {
-                "prim": "Float64"
+                "prim": "Float"
               }
             },
             "result": {
@@ -24726,7 +24731,7 @@
                 "arg": {
                   "name": "length",
                   "type": {
-                    "prim": "Float64"
+                    "prim": "Float"
                   }
                 },
                 "result": {
@@ -24792,7 +24797,7 @@
             "arg": {
               "name": "width",
               "type": {
-                "prim": "Float64"
+                "prim": "Float"
               }
             },
             "result": {
@@ -24800,7 +24805,7 @@
                 "arg": {
                   "name": "height",
                   "type": {
-                    "prim": "Float64"
+                    "prim": "Float"
                   }
                 },
                 "result": {
@@ -24808,7 +24813,7 @@
                     "arg": {
                       "name": "length",
                       "type": {
-                        "prim": "Float64"
+                        "prim": "Float"
                       }
                     },
                     "result": {
@@ -24856,7 +24861,7 @@
             "arg": {
               "name": "radius",
               "type": {
-                "prim": "Float64"
+                "prim": "Float"
               }
             },
             "result": {
@@ -24920,7 +24925,7 @@
             "arg": {
               "name": "radius",
               "type": {
-                "prim": "Float64"
+                "prim": "Float"
               }
             },
             "result": {
@@ -24984,7 +24989,7 @@
             "arg": {
               "name": "radius",
               "type": {
-                "prim": "Float64"
+                "prim": "Float"
               }
             },
             "result": {
@@ -24992,7 +24997,7 @@
                 "arg": {
                   "name": "height",
                   "type": {
-                    "prim": "Float64"
+                    "prim": "Float"
                   }
                 },
                 "result": {
@@ -25048,7 +25053,7 @@
             "arg": {
               "name": "radius",
               "type": {
-                "prim": "Float64"
+                "prim": "Float"
               }
             },
             "result": {
@@ -25056,7 +25061,7 @@
                 "arg": {
                   "name": "height",
                   "type": {
-                    "prim": "Float64"
+                    "prim": "Float"
                   }
                 },
                 "result": {
@@ -25116,7 +25121,7 @@
             "arg": {
               "name": "radius",
               "type": {
-                "prim": "Float64"
+                "prim": "Float"
               }
             },
             "result": {
@@ -25124,7 +25129,7 @@
                 "arg": {
                   "name": "size",
                   "type": {
-                    "prim": "Float64"
+                    "prim": "Float"
                   }
                 },
                 "result": {
@@ -25194,7 +25199,7 @@
             "arg": {
               "name": "radius",
               "type": {
-                "prim": "Float64"
+                "prim": "Float"
               }
             },
             "result": {
@@ -25202,7 +25207,7 @@
                 "arg": {
                   "name": "size",
                   "type": {
-                    "prim": "Float64"
+                    "prim": "Float"
                   }
                 },
                 "result": {
@@ -25861,7 +25866,7 @@
                 "arg": {
                   "name": "radius1",
                   "type": {
-                    "prim": "Float64"
+                    "prim": "Float"
                   }
                 },
                 "result": {
@@ -25877,7 +25882,7 @@
                         "arg": {
                           "name": "radius2",
                           "type": {
-                            "prim": "Float64"
+                            "prim": "Float"
                           }
                         },
                         "result": {
@@ -25993,7 +25998,7 @@
                     "arg": {
                       "name": "radius",
                       "type": {
-                        "prim": "Float64"
+                        "prim": "Float"
                       }
                     },
                     "result": {
@@ -26057,7 +26062,7 @@
                     "arg": {
                       "name": "radius",
                       "type": {
-                        "prim": "Float64"
+                        "prim": "Float"
                       }
                     },
                     "result": {
@@ -26468,7 +26473,7 @@
             "arg": {
               "name": "volume",
               "type": {
-                "prim": "Float64"
+                "prim": "Float"
               }
             },
             "result": {
@@ -26508,7 +26513,7 @@
                   "var": "IO"
                 },
                 {
-                  "prim": "Float64"
+                  "prim": "Float"
                 }
               ]
             }
@@ -26564,7 +26569,7 @@
           },
           {
             "name": "fileData",
-            "repr": "void"
+            "repr": "const unsigned char"
           },
           {
             "name": "dataSize",
@@ -26587,7 +26592,7 @@
                 "arg": {
                   "name": "fileData",
                   "type": {
-                    "var": "void"
+                    "var": "const unsigned char"
                   }
                 },
                 "result": {
@@ -26808,7 +26813,7 @@
           },
           {
             "name": "data",
-            "repr": "void"
+            "repr": "const void"
           },
           {
             "name": "sampleCount",
@@ -26829,7 +26834,7 @@
                 "arg": {
                   "name": "data",
                   "type": {
-                    "var": "void"
+                    "var": "const void"
                   }
                 },
                 "result": {
@@ -27261,7 +27266,7 @@
                 "arg": {
                   "name": "volume",
                   "type": {
-                    "prim": "Float64"
+                    "prim": "Float"
                   }
                 },
                 "result": {
@@ -27309,7 +27314,7 @@
                 "arg": {
                   "name": "pitch",
                   "type": {
-                    "prim": "Float64"
+                    "prim": "Float"
                   }
                 },
                 "result": {
@@ -27357,7 +27362,7 @@
                 "arg": {
                   "name": "pan",
                   "type": {
-                    "prim": "Float64"
+                    "prim": "Float"
                   }
                 },
                 "result": {
@@ -27632,7 +27637,7 @@
           },
           {
             "name": "data",
-            "repr": "void"
+            "repr": "const unsigned char"
           },
           {
             "name": "dataSize",
@@ -27655,7 +27660,7 @@
                 "arg": {
                   "name": "data",
                   "type": {
-                    "var": "void"
+                    "var": "const unsigned char"
                   }
                 },
                 "result": {
@@ -27989,7 +27994,7 @@
                 "arg": {
                   "name": "position",
                   "type": {
-                    "prim": "Float64"
+                    "prim": "Float"
                   }
                 },
                 "result": {
@@ -28037,7 +28042,7 @@
                 "arg": {
                   "name": "volume",
                   "type": {
-                    "prim": "Float64"
+                    "prim": "Float"
                   }
                 },
                 "result": {
@@ -28085,7 +28090,7 @@
                 "arg": {
                   "name": "pitch",
                   "type": {
-                    "prim": "Float64"
+                    "prim": "Float"
                   }
                 },
                 "result": {
@@ -28133,7 +28138,7 @@
                 "arg": {
                   "name": "pan",
                   "type": {
-                    "prim": "Float64"
+                    "prim": "Float"
                   }
                 },
                 "result": {
@@ -28180,7 +28185,7 @@
                   "var": "IO"
                 },
                 {
-                  "prim": "Float64"
+                  "prim": "Float"
                 }
               ]
             }
@@ -28216,7 +28221,7 @@
                   "var": "IO"
                 },
                 {
-                  "prim": "Float64"
+                  "prim": "Float"
                 }
               ]
             }
@@ -28370,7 +28375,7 @@
           },
           {
             "name": "data",
-            "repr": "void"
+            "repr": "const void"
           },
           {
             "name": "frameCount",
@@ -28391,7 +28396,7 @@
                 "arg": {
                   "name": "data",
                   "type": {
-                    "var": "void"
+                    "var": "const void"
                   }
                 },
                 "result": {
@@ -28657,7 +28662,7 @@
                 "arg": {
                   "name": "volume",
                   "type": {
-                    "prim": "Float64"
+                    "prim": "Float"
                   }
                 },
                 "result": {
@@ -28705,7 +28710,7 @@
                 "arg": {
                   "name": "pitch",
                   "type": {
-                    "prim": "Float64"
+                    "prim": "Float"
                   }
                 },
                 "result": {
@@ -28753,7 +28758,7 @@
                 "arg": {
                   "name": "pan",
                   "type": {
-                    "prim": "Float64"
+                    "prim": "Float"
                   }
                 },
                 "result": {
@@ -28818,7 +28823,7 @@
           },
           {
             "name": "callback",
-            "repr": "void"
+            "repr": "AudioCallback"
           }
         ],
         "result": null,
@@ -28835,7 +28840,7 @@
                 "arg": {
                   "name": "callback",
                   "type": {
-                    "var": "void"
+                    "var": "AudioCallback"
                   }
                 },
                 "result": {
@@ -28866,7 +28871,7 @@
           },
           {
             "name": "processor",
-            "repr": "void"
+            "repr": "AudioCallback"
           }
         ],
         "result": null,
@@ -28883,7 +28888,7 @@
                 "arg": {
                   "name": "processor",
                   "type": {
-                    "var": "void"
+                    "var": "AudioCallback"
                   }
                 },
                 "result": {
@@ -28914,7 +28919,7 @@
           },
           {
             "name": "processor",
-            "repr": "void"
+            "repr": "AudioCallback"
           }
         ],
         "result": null,
@@ -28931,7 +28936,7 @@
                 "arg": {
                   "name": "processor",
                   "type": {
-                    "var": "void"
+                    "var": "AudioCallback"
                   }
                 },
                 "result": {
@@ -28958,7 +28963,7 @@
         "args": [
           {
             "name": "processor",
-            "repr": "void"
+            "repr": "AudioCallback"
           }
         ],
         "result": null,
@@ -28967,7 +28972,7 @@
             "arg": {
               "name": "processor",
               "type": {
-                "var": "void"
+                "var": "AudioCallback"
               }
             },
             "result": {
@@ -28992,7 +28997,7 @@
         "args": [
           {
             "name": "processor",
-            "repr": "void"
+            "repr": "AudioCallback"
           }
         ],
         "result": null,
@@ -29001,7 +29006,7 @@
             "arg": {
               "name": "processor",
               "type": {
-                "var": "void"
+                "var": "AudioCallback"
               }
             },
             "result": {
@@ -29047,7 +29052,7 @@
             "arg": {
               "name": "value",
               "type": {
-                "prim": "Float64"
+                "prim": "Float"
               }
             },
             "result": {
@@ -29055,7 +29060,7 @@
                 "arg": {
                   "name": "min",
                   "type": {
-                    "prim": "Float64"
+                    "prim": "Float"
                   }
                 },
                 "result": {
@@ -29063,11 +29068,11 @@
                     "arg": {
                       "name": "max",
                       "type": {
-                        "prim": "Float64"
+                        "prim": "Float"
                       }
                     },
                     "result": {
-                      "prim": "Float64"
+                      "prim": "Float"
                     }
                   }
                 }
@@ -29106,7 +29111,7 @@
             "arg": {
               "name": "start",
               "type": {
-                "prim": "Float64"
+                "prim": "Float"
               }
             },
             "result": {
@@ -29114,7 +29119,7 @@
                 "arg": {
                   "name": "end",
                   "type": {
-                    "prim": "Float64"
+                    "prim": "Float"
                   }
                 },
                 "result": {
@@ -29122,11 +29127,11 @@
                     "arg": {
                       "name": "amount",
                       "type": {
-                        "prim": "Float64"
+                        "prim": "Float"
                       }
                     },
                     "result": {
-                      "prim": "Float64"
+                      "prim": "Float"
                     }
                   }
                 }
@@ -29165,7 +29170,7 @@
             "arg": {
               "name": "value",
               "type": {
-                "prim": "Float64"
+                "prim": "Float"
               }
             },
             "result": {
@@ -29173,7 +29178,7 @@
                 "arg": {
                   "name": "start",
                   "type": {
-                    "prim": "Float64"
+                    "prim": "Float"
                   }
                 },
                 "result": {
@@ -29181,11 +29186,11 @@
                     "arg": {
                       "name": "end",
                       "type": {
-                        "prim": "Float64"
+                        "prim": "Float"
                       }
                     },
                     "result": {
-                      "prim": "Float64"
+                      "prim": "Float"
                     }
                   }
                 }
@@ -29232,7 +29237,7 @@
             "arg": {
               "name": "value",
               "type": {
-                "prim": "Float64"
+                "prim": "Float"
               }
             },
             "result": {
@@ -29240,7 +29245,7 @@
                 "arg": {
                   "name": "inputStart",
                   "type": {
-                    "prim": "Float64"
+                    "prim": "Float"
                   }
                 },
                 "result": {
@@ -29248,7 +29253,7 @@
                     "arg": {
                       "name": "inputEnd",
                       "type": {
-                        "prim": "Float64"
+                        "prim": "Float"
                       }
                     },
                     "result": {
@@ -29256,7 +29261,7 @@
                         "arg": {
                           "name": "outputStart",
                           "type": {
-                            "prim": "Float64"
+                            "prim": "Float"
                           }
                         },
                         "result": {
@@ -29264,11 +29269,11 @@
                             "arg": {
                               "name": "outputEnd",
                               "type": {
-                                "prim": "Float64"
+                                "prim": "Float"
                               }
                             },
                             "result": {
-                              "prim": "Float64"
+                              "prim": "Float"
                             }
                           }
                         }
@@ -29311,7 +29316,7 @@
             "arg": {
               "name": "value",
               "type": {
-                "prim": "Float64"
+                "prim": "Float"
               }
             },
             "result": {
@@ -29319,7 +29324,7 @@
                 "arg": {
                   "name": "min",
                   "type": {
-                    "prim": "Float64"
+                    "prim": "Float"
                   }
                 },
                 "result": {
@@ -29327,11 +29332,11 @@
                     "arg": {
                       "name": "max",
                       "type": {
-                        "prim": "Float64"
+                        "prim": "Float"
                       }
                     },
                     "result": {
-                      "prim": "Float64"
+                      "prim": "Float"
                     }
                   }
                 }
@@ -29366,7 +29371,7 @@
             "arg": {
               "name": "x",
               "type": {
-                "prim": "Float64"
+                "prim": "Float"
               }
             },
             "result": {
@@ -29374,7 +29379,7 @@
                 "arg": {
                   "name": "y",
                   "type": {
-                    "prim": "Float64"
+                    "prim": "Float"
                   }
                 },
                 "result": {
@@ -29516,7 +29521,7 @@
                 "arg": {
                   "name": "add",
                   "type": {
-                    "prim": "Float64"
+                    "prim": "Float"
                   }
                 },
                 "result": {
@@ -29606,7 +29611,7 @@
                 "arg": {
                   "name": "sub",
                   "type": {
-                    "prim": "Float64"
+                    "prim": "Float"
                   }
                 },
                 "result": {
@@ -29643,7 +29648,7 @@
               }
             },
             "result": {
-              "prim": "Float64"
+              "prim": "Float"
             }
           }
         }
@@ -29674,7 +29679,7 @@
               }
             },
             "result": {
-              "prim": "Float64"
+              "prim": "Float"
             }
           }
         }
@@ -29717,7 +29722,7 @@
                   }
                 },
                 "result": {
-                  "prim": "Float64"
+                  "prim": "Float"
                 }
               }
             }
@@ -29762,7 +29767,7 @@
                   }
                 },
                 "result": {
-                  "prim": "Float64"
+                  "prim": "Float"
                 }
               }
             }
@@ -29807,7 +29812,7 @@
                   }
                 },
                 "result": {
-                  "prim": "Float64"
+                  "prim": "Float"
                 }
               }
             }
@@ -29852,7 +29857,7 @@
                   }
                 },
                 "result": {
-                  "prim": "Float64"
+                  "prim": "Float"
                 }
               }
             }
@@ -29893,7 +29898,7 @@
                 "arg": {
                   "name": "scale",
                   "type": {
-                    "prim": "Float64"
+                    "prim": "Float"
                   }
                 },
                 "result": {
@@ -30147,7 +30152,7 @@
                     "arg": {
                       "name": "amount",
                       "type": {
-                        "prim": "Float64"
+                        "prim": "Float"
                       }
                     },
                     "result": {
@@ -30239,7 +30244,7 @@
                 "arg": {
                   "name": "angle",
                   "type": {
-                    "prim": "Float64"
+                    "prim": "Float"
                   }
                 },
                 "result": {
@@ -30296,7 +30301,7 @@
                     "arg": {
                       "name": "maxDistance",
                       "type": {
-                        "prim": "Float64"
+                        "prim": "Float"
                       }
                     },
                     "result": {
@@ -30437,7 +30442,7 @@
                 "arg": {
                   "name": "min",
                   "type": {
-                    "prim": "Float64"
+                    "prim": "Float"
                   }
                 },
                 "result": {
@@ -30445,7 +30450,7 @@
                     "arg": {
                       "name": "max",
                       "type": {
-                        "prim": "Float64"
+                        "prim": "Float"
                       }
                     },
                     "result": {
@@ -30634,7 +30639,7 @@
                 "arg": {
                   "name": "add",
                   "type": {
-                    "prim": "Float64"
+                    "prim": "Float"
                   }
                 },
                 "result": {
@@ -30724,7 +30729,7 @@
                 "arg": {
                   "name": "sub",
                   "type": {
-                    "prim": "Float64"
+                    "prim": "Float"
                   }
                 },
                 "result": {
@@ -30769,7 +30774,7 @@
                 "arg": {
                   "name": "scalar",
                   "type": {
-                    "prim": "Float64"
+                    "prim": "Float"
                   }
                 },
                 "result": {
@@ -30911,7 +30916,7 @@
           "args": [
             {
               "name": "v",
-              "repr": "void"
+              "repr": "const Vector3"
             }
           ],
           "return": {
@@ -30923,11 +30928,11 @@
             "arg": {
               "name": "v",
               "type": {
-                "var": "void"
+                "var": "const Vector3"
               }
             },
             "result": {
-              "prim": "Float64"
+              "prim": "Float"
             }
           }
         }
@@ -30942,7 +30947,7 @@
           "args": [
             {
               "name": "v",
-              "repr": "void"
+              "repr": "const Vector3"
             }
           ],
           "return": {
@@ -30954,11 +30959,11 @@
             "arg": {
               "name": "v",
               "type": {
-                "var": "void"
+                "var": "const Vector3"
               }
             },
             "result": {
-              "prim": "Float64"
+              "prim": "Float"
             }
           }
         }
@@ -31001,7 +31006,7 @@
                   }
                 },
                 "result": {
-                  "prim": "Float64"
+                  "prim": "Float"
                 }
               }
             }
@@ -31046,7 +31051,7 @@
                   }
                 },
                 "result": {
-                  "prim": "Float64"
+                  "prim": "Float"
                 }
               }
             }
@@ -31091,7 +31096,7 @@
                   }
                 },
                 "result": {
-                  "prim": "Float64"
+                  "prim": "Float"
                 }
               }
             }
@@ -31136,7 +31141,7 @@
                   }
                 },
                 "result": {
-                  "prim": "Float64"
+                  "prim": "Float"
                 }
               }
             }
@@ -31354,7 +31359,7 @@
             },
             {
               "name": "q",
-              "repr": "Vector4"
+              "repr": "Quaternion"
             }
           ],
           "return": {
@@ -31374,7 +31379,7 @@
                 "arg": {
                   "name": "q",
                   "type": {
-                    "var": "Vector4"
+                    "var": "Quaternion"
                   }
                 },
                 "result": {
@@ -31431,7 +31436,7 @@
                     "arg": {
                       "name": "angle",
                       "type": {
-                        "prim": "Float64"
+                        "prim": "Float"
                       }
                     },
                     "result": {
@@ -31490,7 +31495,7 @@
                     "arg": {
                       "name": "amount",
                       "type": {
-                        "prim": "Float64"
+                        "prim": "Float"
                       }
                     },
                     "result": {
@@ -31784,7 +31789,7 @@
             }
           ],
           "return": {
-            "repr": "void"
+            "repr": "float3"
           }
         },
         "type": {
@@ -31796,7 +31801,7 @@
               }
             },
             "result": {
-              "var": "void"
+              "var": "float3"
             }
           }
         }
@@ -31929,7 +31934,7 @@
                 "arg": {
                   "name": "min",
                   "type": {
-                    "prim": "Float64"
+                    "prim": "Float"
                   }
                 },
                 "result": {
@@ -31937,7 +31942,7 @@
                     "arg": {
                       "name": "max",
                       "type": {
-                        "prim": "Float64"
+                        "prim": "Float"
                       }
                     },
                     "result": {
@@ -32041,7 +32046,7 @@
                     "arg": {
                       "name": "r",
                       "type": {
-                        "prim": "Float64"
+                        "prim": "Float"
                       }
                     },
                     "result": {
@@ -32080,7 +32085,7 @@
               }
             },
             "result": {
-              "prim": "Float64"
+              "prim": "Float"
             }
           }
         }
@@ -32111,7 +32116,7 @@
               }
             },
             "result": {
-              "prim": "Float64"
+              "prim": "Float"
             }
           }
         }
@@ -32369,7 +32374,7 @@
             "arg": {
               "name": "x",
               "type": {
-                "prim": "Float64"
+                "prim": "Float"
               }
             },
             "result": {
@@ -32377,7 +32382,7 @@
                 "arg": {
                   "name": "y",
                   "type": {
-                    "prim": "Float64"
+                    "prim": "Float"
                   }
                 },
                 "result": {
@@ -32385,7 +32390,7 @@
                     "arg": {
                       "name": "z",
                       "type": {
-                        "prim": "Float64"
+                        "prim": "Float"
                       }
                     },
                     "result": {
@@ -32432,7 +32437,7 @@
                 "arg": {
                   "name": "angle",
                   "type": {
-                    "prim": "Float64"
+                    "prim": "Float"
                   }
                 },
                 "result": {
@@ -32465,7 +32470,7 @@
             "arg": {
               "name": "angle",
               "type": {
-                "prim": "Float64"
+                "prim": "Float"
               }
             },
             "result": {
@@ -32496,7 +32501,7 @@
             "arg": {
               "name": "angle",
               "type": {
-                "prim": "Float64"
+                "prim": "Float"
               }
             },
             "result": {
@@ -32527,7 +32532,7 @@
             "arg": {
               "name": "angle",
               "type": {
-                "prim": "Float64"
+                "prim": "Float"
               }
             },
             "result": {
@@ -32628,7 +32633,7 @@
             "arg": {
               "name": "x",
               "type": {
-                "prim": "Float64"
+                "prim": "Float"
               }
             },
             "result": {
@@ -32636,7 +32641,7 @@
                 "arg": {
                   "name": "y",
                   "type": {
-                    "prim": "Float64"
+                    "prim": "Float"
                   }
                 },
                 "result": {
@@ -32644,7 +32649,7 @@
                     "arg": {
                       "name": "z",
                       "type": {
-                        "prim": "Float64"
+                        "prim": "Float"
                       }
                     },
                     "result": {
@@ -32699,7 +32704,7 @@
             "arg": {
               "name": "left",
               "type": {
-                "prim": "Float64"
+                "prim": "Float"
               }
             },
             "result": {
@@ -32707,7 +32712,7 @@
                 "arg": {
                   "name": "right",
                   "type": {
-                    "prim": "Float64"
+                    "prim": "Float"
                   }
                 },
                 "result": {
@@ -32715,7 +32720,7 @@
                     "arg": {
                       "name": "bottom",
                       "type": {
-                        "prim": "Float64"
+                        "prim": "Float"
                       }
                     },
                     "result": {
@@ -32723,7 +32728,7 @@
                         "arg": {
                           "name": "top",
                           "type": {
-                            "prim": "Float64"
+                            "prim": "Float"
                           }
                         },
                         "result": {
@@ -32731,7 +32736,7 @@
                             "arg": {
                               "name": "near",
                               "type": {
-                                "prim": "Float64"
+                                "prim": "Float"
                               }
                             },
                             "result": {
@@ -32739,7 +32744,7 @@
                                 "arg": {
                                   "name": "far",
                                   "type": {
-                                    "prim": "Float64"
+                                    "prim": "Float"
                                   }
                                 },
                                 "result": {
@@ -32792,7 +32797,7 @@
             "arg": {
               "name": "fovy",
               "type": {
-                "prim": "Float64"
+                "prim": "Float"
               }
             },
             "result": {
@@ -32800,7 +32805,7 @@
                 "arg": {
                   "name": "aspect",
                   "type": {
-                    "prim": "Float64"
+                    "prim": "Float"
                   }
                 },
                 "result": {
@@ -32808,7 +32813,7 @@
                     "arg": {
                       "name": "near",
                       "type": {
-                        "prim": "Float64"
+                        "prim": "Float"
                       }
                     },
                     "result": {
@@ -32816,7 +32821,7 @@
                         "arg": {
                           "name": "far",
                           "type": {
-                            "prim": "Float64"
+                            "prim": "Float"
                           }
                         },
                         "result": {
@@ -32873,7 +32878,7 @@
             "arg": {
               "name": "left",
               "type": {
-                "prim": "Float64"
+                "prim": "Float"
               }
             },
             "result": {
@@ -32881,7 +32886,7 @@
                 "arg": {
                   "name": "right",
                   "type": {
-                    "prim": "Float64"
+                    "prim": "Float"
                   }
                 },
                 "result": {
@@ -32889,7 +32894,7 @@
                     "arg": {
                       "name": "bottom",
                       "type": {
-                        "prim": "Float64"
+                        "prim": "Float"
                       }
                     },
                     "result": {
@@ -32897,7 +32902,7 @@
                         "arg": {
                           "name": "top",
                           "type": {
-                            "prim": "Float64"
+                            "prim": "Float"
                           }
                         },
                         "result": {
@@ -32905,7 +32910,7 @@
                             "arg": {
                               "name": "near",
                               "type": {
-                                "prim": "Float64"
+                                "prim": "Float"
                               }
                             },
                             "result": {
@@ -32913,7 +32918,7 @@
                                 "arg": {
                                   "name": "far",
                                   "type": {
-                                    "prim": "Float64"
+                                    "prim": "Float"
                                   }
                                 },
                                 "result": {
@@ -33005,7 +33010,7 @@
             }
           ],
           "return": {
-            "repr": "void"
+            "repr": "float16"
           }
         },
         "type": {
@@ -33017,7 +33022,7 @@
               }
             },
             "result": {
-              "var": "void"
+              "var": "float16"
             }
           }
         }
@@ -33032,15 +33037,15 @@
           "args": [
             {
               "name": "q1",
-              "repr": "Vector4"
+              "repr": "Quaternion"
             },
             {
               "name": "q2",
-              "repr": "Vector4"
+              "repr": "Quaternion"
             }
           ],
           "return": {
-            "repr": "Vector4"
+            "repr": "Quaternion"
           }
         },
         "type": {
@@ -33048,7 +33053,7 @@
             "arg": {
               "name": "q1",
               "type": {
-                "var": "Vector4"
+                "var": "Quaternion"
               }
             },
             "result": {
@@ -33056,11 +33061,11 @@
                 "arg": {
                   "name": "q2",
                   "type": {
-                    "var": "Vector4"
+                    "var": "Quaternion"
                   }
                 },
                 "result": {
-                  "var": "Vector4"
+                  "var": "Quaternion"
                 }
               }
             }
@@ -33077,7 +33082,7 @@
           "args": [
             {
               "name": "q",
-              "repr": "Vector4"
+              "repr": "Quaternion"
             },
             {
               "name": "add",
@@ -33085,7 +33090,7 @@
             }
           ],
           "return": {
-            "repr": "Vector4"
+            "repr": "Quaternion"
           }
         },
         "type": {
@@ -33093,7 +33098,7 @@
             "arg": {
               "name": "q",
               "type": {
-                "var": "Vector4"
+                "var": "Quaternion"
               }
             },
             "result": {
@@ -33101,11 +33106,11 @@
                 "arg": {
                   "name": "add",
                   "type": {
-                    "prim": "Float64"
+                    "prim": "Float"
                   }
                 },
                 "result": {
-                  "var": "Vector4"
+                  "var": "Quaternion"
                 }
               }
             }
@@ -33122,15 +33127,15 @@
           "args": [
             {
               "name": "q1",
-              "repr": "Vector4"
+              "repr": "Quaternion"
             },
             {
               "name": "q2",
-              "repr": "Vector4"
+              "repr": "Quaternion"
             }
           ],
           "return": {
-            "repr": "Vector4"
+            "repr": "Quaternion"
           }
         },
         "type": {
@@ -33138,7 +33143,7 @@
             "arg": {
               "name": "q1",
               "type": {
-                "var": "Vector4"
+                "var": "Quaternion"
               }
             },
             "result": {
@@ -33146,11 +33151,11 @@
                 "arg": {
                   "name": "q2",
                   "type": {
-                    "var": "Vector4"
+                    "var": "Quaternion"
                   }
                 },
                 "result": {
-                  "var": "Vector4"
+                  "var": "Quaternion"
                 }
               }
             }
@@ -33167,7 +33172,7 @@
           "args": [
             {
               "name": "q",
-              "repr": "Vector4"
+              "repr": "Quaternion"
             },
             {
               "name": "sub",
@@ -33175,7 +33180,7 @@
             }
           ],
           "return": {
-            "repr": "Vector4"
+            "repr": "Quaternion"
           }
         },
         "type": {
@@ -33183,7 +33188,7 @@
             "arg": {
               "name": "q",
               "type": {
-                "var": "Vector4"
+                "var": "Quaternion"
               }
             },
             "result": {
@@ -33191,11 +33196,11 @@
                 "arg": {
                   "name": "sub",
                   "type": {
-                    "prim": "Float64"
+                    "prim": "Float"
                   }
                 },
                 "result": {
-                  "var": "Vector4"
+                  "var": "Quaternion"
                 }
               }
             }
@@ -33211,7 +33216,7 @@
         "signature": {
           "args": [],
           "return": {
-            "repr": "Vector4"
+            "repr": "Quaternion"
           }
         },
         "type": {
@@ -33223,7 +33228,7 @@
               }
             },
             "result": {
-              "var": "Vector4"
+              "var": "Quaternion"
             }
           }
         }
@@ -33238,7 +33243,7 @@
           "args": [
             {
               "name": "q",
-              "repr": "Vector4"
+              "repr": "Quaternion"
             }
           ],
           "return": {
@@ -33250,11 +33255,11 @@
             "arg": {
               "name": "q",
               "type": {
-                "var": "Vector4"
+                "var": "Quaternion"
               }
             },
             "result": {
-              "prim": "Float64"
+              "prim": "Float"
             }
           }
         }
@@ -33269,11 +33274,11 @@
           "args": [
             {
               "name": "q",
-              "repr": "Vector4"
+              "repr": "Quaternion"
             }
           ],
           "return": {
-            "repr": "Vector4"
+            "repr": "Quaternion"
           }
         },
         "type": {
@@ -33281,11 +33286,11 @@
             "arg": {
               "name": "q",
               "type": {
-                "var": "Vector4"
+                "var": "Quaternion"
               }
             },
             "result": {
-              "var": "Vector4"
+              "var": "Quaternion"
             }
           }
         }
@@ -33300,11 +33305,11 @@
           "args": [
             {
               "name": "q",
-              "repr": "Vector4"
+              "repr": "Quaternion"
             }
           ],
           "return": {
-            "repr": "Vector4"
+            "repr": "Quaternion"
           }
         },
         "type": {
@@ -33312,11 +33317,11 @@
             "arg": {
               "name": "q",
               "type": {
-                "var": "Vector4"
+                "var": "Quaternion"
               }
             },
             "result": {
-              "var": "Vector4"
+              "var": "Quaternion"
             }
           }
         }
@@ -33331,15 +33336,15 @@
           "args": [
             {
               "name": "q1",
-              "repr": "Vector4"
+              "repr": "Quaternion"
             },
             {
               "name": "q2",
-              "repr": "Vector4"
+              "repr": "Quaternion"
             }
           ],
           "return": {
-            "repr": "Vector4"
+            "repr": "Quaternion"
           }
         },
         "type": {
@@ -33347,7 +33352,7 @@
             "arg": {
               "name": "q1",
               "type": {
-                "var": "Vector4"
+                "var": "Quaternion"
               }
             },
             "result": {
@@ -33355,11 +33360,11 @@
                 "arg": {
                   "name": "q2",
                   "type": {
-                    "var": "Vector4"
+                    "var": "Quaternion"
                   }
                 },
                 "result": {
-                  "var": "Vector4"
+                  "var": "Quaternion"
                 }
               }
             }
@@ -33376,7 +33381,7 @@
           "args": [
             {
               "name": "q",
-              "repr": "Vector4"
+              "repr": "Quaternion"
             },
             {
               "name": "mul",
@@ -33384,7 +33389,7 @@
             }
           ],
           "return": {
-            "repr": "Vector4"
+            "repr": "Quaternion"
           }
         },
         "type": {
@@ -33392,7 +33397,7 @@
             "arg": {
               "name": "q",
               "type": {
-                "var": "Vector4"
+                "var": "Quaternion"
               }
             },
             "result": {
@@ -33400,11 +33405,11 @@
                 "arg": {
                   "name": "mul",
                   "type": {
-                    "prim": "Float64"
+                    "prim": "Float"
                   }
                 },
                 "result": {
-                  "var": "Vector4"
+                  "var": "Quaternion"
                 }
               }
             }
@@ -33421,15 +33426,15 @@
           "args": [
             {
               "name": "q1",
-              "repr": "Vector4"
+              "repr": "Quaternion"
             },
             {
               "name": "q2",
-              "repr": "Vector4"
+              "repr": "Quaternion"
             }
           ],
           "return": {
-            "repr": "Vector4"
+            "repr": "Quaternion"
           }
         },
         "type": {
@@ -33437,7 +33442,7 @@
             "arg": {
               "name": "q1",
               "type": {
-                "var": "Vector4"
+                "var": "Quaternion"
               }
             },
             "result": {
@@ -33445,11 +33450,11 @@
                 "arg": {
                   "name": "q2",
                   "type": {
-                    "var": "Vector4"
+                    "var": "Quaternion"
                   }
                 },
                 "result": {
-                  "var": "Vector4"
+                  "var": "Quaternion"
                 }
               }
             }
@@ -33466,11 +33471,11 @@
           "args": [
             {
               "name": "q1",
-              "repr": "Vector4"
+              "repr": "Quaternion"
             },
             {
               "name": "q2",
-              "repr": "Vector4"
+              "repr": "Quaternion"
             },
             {
               "name": "amount",
@@ -33478,7 +33483,7 @@
             }
           ],
           "return": {
-            "repr": "Vector4"
+            "repr": "Quaternion"
           }
         },
         "type": {
@@ -33486,7 +33491,7 @@
             "arg": {
               "name": "q1",
               "type": {
-                "var": "Vector4"
+                "var": "Quaternion"
               }
             },
             "result": {
@@ -33494,7 +33499,7 @@
                 "arg": {
                   "name": "q2",
                   "type": {
-                    "var": "Vector4"
+                    "var": "Quaternion"
                   }
                 },
                 "result": {
@@ -33502,11 +33507,11 @@
                     "arg": {
                       "name": "amount",
                       "type": {
-                        "prim": "Float64"
+                        "prim": "Float"
                       }
                     },
                     "result": {
-                      "var": "Vector4"
+                      "var": "Quaternion"
                     }
                   }
                 }
@@ -33525,11 +33530,11 @@
           "args": [
             {
               "name": "q1",
-              "repr": "Vector4"
+              "repr": "Quaternion"
             },
             {
               "name": "q2",
-              "repr": "Vector4"
+              "repr": "Quaternion"
             },
             {
               "name": "amount",
@@ -33537,7 +33542,7 @@
             }
           ],
           "return": {
-            "repr": "Vector4"
+            "repr": "Quaternion"
           }
         },
         "type": {
@@ -33545,7 +33550,7 @@
             "arg": {
               "name": "q1",
               "type": {
-                "var": "Vector4"
+                "var": "Quaternion"
               }
             },
             "result": {
@@ -33553,7 +33558,7 @@
                 "arg": {
                   "name": "q2",
                   "type": {
-                    "var": "Vector4"
+                    "var": "Quaternion"
                   }
                 },
                 "result": {
@@ -33561,11 +33566,11 @@
                     "arg": {
                       "name": "amount",
                       "type": {
-                        "prim": "Float64"
+                        "prim": "Float"
                       }
                     },
                     "result": {
-                      "var": "Vector4"
+                      "var": "Quaternion"
                     }
                   }
                 }
@@ -33584,11 +33589,11 @@
           "args": [
             {
               "name": "q1",
-              "repr": "Vector4"
+              "repr": "Quaternion"
             },
             {
               "name": "q2",
-              "repr": "Vector4"
+              "repr": "Quaternion"
             },
             {
               "name": "amount",
@@ -33596,7 +33601,7 @@
             }
           ],
           "return": {
-            "repr": "Vector4"
+            "repr": "Quaternion"
           }
         },
         "type": {
@@ -33604,7 +33609,7 @@
             "arg": {
               "name": "q1",
               "type": {
-                "var": "Vector4"
+                "var": "Quaternion"
               }
             },
             "result": {
@@ -33612,7 +33617,7 @@
                 "arg": {
                   "name": "q2",
                   "type": {
-                    "var": "Vector4"
+                    "var": "Quaternion"
                   }
                 },
                 "result": {
@@ -33620,11 +33625,11 @@
                     "arg": {
                       "name": "amount",
                       "type": {
-                        "prim": "Float64"
+                        "prim": "Float"
                       }
                     },
                     "result": {
-                      "var": "Vector4"
+                      "var": "Quaternion"
                     }
                   }
                 }
@@ -33651,7 +33656,7 @@
             }
           ],
           "return": {
-            "repr": "Vector4"
+            "repr": "Quaternion"
           }
         },
         "type": {
@@ -33671,7 +33676,7 @@
                   }
                 },
                 "result": {
-                  "var": "Vector4"
+                  "var": "Quaternion"
                 }
               }
             }
@@ -33692,7 +33697,7 @@
             }
           ],
           "return": {
-            "repr": "Vector4"
+            "repr": "Quaternion"
           }
         },
         "type": {
@@ -33704,7 +33709,7 @@
               }
             },
             "result": {
-              "var": "Vector4"
+              "var": "Quaternion"
             }
           }
         }
@@ -33719,7 +33724,7 @@
           "args": [
             {
               "name": "q",
-              "repr": "Vector4"
+              "repr": "Quaternion"
             }
           ],
           "return": {
@@ -33731,7 +33736,7 @@
             "arg": {
               "name": "q",
               "type": {
-                "var": "Vector4"
+                "var": "Quaternion"
               }
             },
             "result": {
@@ -33758,7 +33763,7 @@
             }
           ],
           "return": {
-            "repr": "Vector4"
+            "repr": "Quaternion"
           }
         },
         "type": {
@@ -33774,11 +33779,11 @@
                 "arg": {
                   "name": "angle",
                   "type": {
-                    "prim": "Float64"
+                    "prim": "Float"
                   }
                 },
                 "result": {
-                  "var": "Vector4"
+                  "var": "Quaternion"
                 }
               }
             }
@@ -33795,7 +33800,7 @@
           "args": [
             {
               "name": "q",
-              "repr": "Vector4"
+              "repr": "Quaternion"
             },
             {
               "name": "outAxis",
@@ -33815,7 +33820,7 @@
             "arg": {
               "name": "q",
               "type": {
-                "var": "Vector4"
+                "var": "Quaternion"
               }
             },
             "result": {
@@ -33866,7 +33871,7 @@
             }
           ],
           "return": {
-            "repr": "Vector4"
+            "repr": "Quaternion"
           }
         },
         "type": {
@@ -33874,7 +33879,7 @@
             "arg": {
               "name": "pitch",
               "type": {
-                "prim": "Float64"
+                "prim": "Float"
               }
             },
             "result": {
@@ -33882,7 +33887,7 @@
                 "arg": {
                   "name": "yaw",
                   "type": {
-                    "prim": "Float64"
+                    "prim": "Float"
                   }
                 },
                 "result": {
@@ -33890,11 +33895,11 @@
                     "arg": {
                       "name": "roll",
                       "type": {
-                        "prim": "Float64"
+                        "prim": "Float"
                       }
                     },
                     "result": {
-                      "var": "Vector4"
+                      "var": "Quaternion"
                     }
                   }
                 }
@@ -33913,7 +33918,7 @@
           "args": [
             {
               "name": "q",
-              "repr": "Vector4"
+              "repr": "Quaternion"
             }
           ],
           "return": {
@@ -33925,7 +33930,7 @@
             "arg": {
               "name": "q",
               "type": {
-                "var": "Vector4"
+                "var": "Quaternion"
               }
             },
             "result": {
@@ -33944,7 +33949,7 @@
           "args": [
             {
               "name": "q",
-              "repr": "Vector4"
+              "repr": "Quaternion"
             },
             {
               "name": "mat",
@@ -33952,7 +33957,7 @@
             }
           ],
           "return": {
-            "repr": "Vector4"
+            "repr": "Quaternion"
           }
         },
         "type": {
@@ -33960,7 +33965,7 @@
             "arg": {
               "name": "q",
               "type": {
-                "var": "Vector4"
+                "var": "Quaternion"
               }
             },
             "result": {
@@ -33972,7 +33977,7 @@
                   }
                 },
                 "result": {
-                  "var": "Vector4"
+                  "var": "Quaternion"
                 }
               }
             }
@@ -33989,11 +33994,11 @@
           "args": [
             {
               "name": "p",
-              "repr": "Vector4"
+              "repr": "Quaternion"
             },
             {
               "name": "q",
-              "repr": "Vector4"
+              "repr": "Quaternion"
             }
           ],
           "return": {
@@ -34005,7 +34010,7 @@
             "arg": {
               "name": "p",
               "type": {
-                "var": "Vector4"
+                "var": "Quaternion"
               }
             },
             "result": {
@@ -34013,7 +34018,7 @@
                 "arg": {
                   "name": "q",
                   "type": {
-                    "var": "Vector4"
+                    "var": "Quaternion"
                   }
                 },
                 "result": {
@@ -34027,17 +34032,86 @@
     },
     {
       "extern_c": {
-        "name": "TextFormat_Int",
-        "c_name": "TextFormat",
-        "header": "<raylib.h>",
+        "name": "MakeColor_Wrapper",
+        "c_name": "MakeColor_Wrapper",
+        "header": "\"raylib_helper.h\"",
         "signature": {
           "args": [
             {
-              "name": "text",
-              "repr": "char*"
+              "name": "r",
+              "repr": "int"
             },
             {
-              "name": "value",
+              "name": "g",
+              "repr": "int"
+            },
+            {
+              "name": "b",
+              "repr": "int"
+            },
+            {
+              "name": "a",
+              "repr": "int"
+            }
+          ],
+          "return": {
+            "repr": "Color"
+          }
+        },
+        "type": {
+          "pi": {
+            "arg": {
+              "name": "r",
+              "type": {
+                "prim": "Int32"
+              }
+            },
+            "result": {
+              "pi": {
+                "arg": {
+                  "name": "g",
+                  "type": {
+                    "prim": "Int32"
+                  }
+                },
+                "result": {
+                  "pi": {
+                    "arg": {
+                      "name": "b",
+                      "type": {
+                        "prim": "Int32"
+                      }
+                    },
+                    "result": {
+                      "pi": {
+                        "arg": {
+                          "name": "a",
+                          "type": {
+                            "prim": "Int32"
+                          }
+                        },
+                        "result": {
+                          "var": "Color"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "extern_c": {
+        "name": "IntToString",
+        "c_name": "IntToString",
+        "header": "\"raylib_helper.h\"",
+        "signature": {
+          "args": [
+            {
+              "name": "val",
               "repr": "int"
             }
           ],
@@ -34048,23 +34122,13 @@
         "type": {
           "pi": {
             "arg": {
-              "name": "text",
+              "name": "val",
               "type": {
-                "prim": "String"
+                "prim": "Int32"
               }
             },
             "result": {
-              "pi": {
-                "arg": {
-                  "name": "value",
-                  "type": {
-                    "prim": "Int32"
-                  }
-                },
-                "result": {
-                  "prim": "String"
-                }
-              }
+              "prim": "String"
             }
           }
         }

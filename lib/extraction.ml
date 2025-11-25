@@ -314,7 +314,8 @@ let extract_module (mod_ : Syntax.module_decl) (sig_ : Context.signature) : c_pr
       | Context.GExternIO { header; _ } -> if List.mem header acc then acc else header :: acc
       | _ -> acc
     in
-    Hashtbl.fold collect_includes full_sig.entries []
+    let incs = Hashtbl.fold collect_includes full_sig.entries [] in
+    List.sort String.compare incs
   in
   let structs =
     List.filter_map (function
@@ -330,6 +331,6 @@ let extract_module (mod_ : Syntax.module_decl) (sig_ : Context.signature) : c_pr
       | _ -> None
     ) mod_.declarations
   in
-  let includes = base_includes @ extra_includes in
+  let includes = base_includes @ (List.filter (fun i -> not (List.mem i base_includes)) extra_includes) in
   { includes; structs; funcs }
 

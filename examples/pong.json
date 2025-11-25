@@ -373,16 +373,7 @@
                                                                                                     {
                                                                                                       "app": [
                                                                                                         {
-                                                                                                          "var": "MakeColor_Wrapper"
-                                                                                                        },
-                                                                                                        {
-                                                                                                          "int32": 0
-                                                                                                        },
-                                                                                                        {
-                                                                                                          "int32": 0
-                                                                                                        },
-                                                                                                        {
-                                                                                                          "int32": 0
+                                                                                                          "var": "GetColor"
                                                                                                         },
                                                                                                         {
                                                                                                           "int32": 255
@@ -470,19 +461,10 @@
                                                                                                             {
                                                                                                               "app": [
                                                                                                                 {
-                                                                                                                  "var": "MakeColor_Wrapper"
+                                                                                                                  "var": "GetColor"
                                                                                                                 },
                                                                                                                 {
-                                                                                                                  "int32": 255
-                                                                                                                },
-                                                                                                                {
-                                                                                                                  "int32": 255
-                                                                                                                },
-                                                                                                                {
-                                                                                                                  "int32": 255
-                                                                                                                },
-                                                                                                                {
-                                                                                                                  "int32": 255
+                                                                                                                  "int32": -1
                                                                                                                 }
                                                                                                               ]
                                                                                                             }
@@ -567,19 +549,10 @@
                                                                                                                     {
                                                                                                                       "app": [
                                                                                                                         {
-                                                                                                                          "var": "MakeColor_Wrapper"
+                                                                                                                          "var": "GetColor"
                                                                                                                         },
                                                                                                                         {
-                                                                                                                          "int32": 255
-                                                                                                                        },
-                                                                                                                        {
-                                                                                                                          "int32": 255
-                                                                                                                        },
-                                                                                                                        {
-                                                                                                                          "int32": 255
-                                                                                                                        },
-                                                                                                                        {
-                                                                                                                          "int32": 255
+                                                                                                                          "int32": -1
                                                                                                                         }
                                                                                                                       ]
                                                                                                                     }
@@ -764,19 +737,10 @@
                                                                                                                             {
                                                                                                                               "app": [
                                                                                                                                 {
-                                                                                                                                  "var": "MakeColor_Wrapper"
+                                                                                                                                  "var": "GetColor"
                                                                                                                                 },
                                                                                                                                 {
-                                                                                                                                  "int32": 255
-                                                                                                                                },
-                                                                                                                                {
-                                                                                                                                  "int32": 255
-                                                                                                                                },
-                                                                                                                                {
-                                                                                                                                  "int32": 255
-                                                                                                                                },
-                                                                                                                                {
-                                                                                                                                  "int32": 255
+                                                                                                                                  "int32": -1
                                                                                                                                 }
                                                                                                                               ]
                                                                                                                             }
@@ -809,7 +773,10 @@
                                                                                                                                     {
                                                                                                                                       "app": [
                                                                                                                                         {
-                                                                                                                                          "var": "IntToString"
+                                                                                                                                          "var": "TextFormat_Int"
+                                                                                                                                        },
+                                                                                                                                        {
+                                                                                                                                          "string": "%d"
                                                                                                                                         },
                                                                                                                                         {
                                                                                                                                           "if": {
@@ -868,19 +835,10 @@
                                                                                                                                     {
                                                                                                                                       "app": [
                                                                                                                                         {
-                                                                                                                                          "var": "MakeColor_Wrapper"
+                                                                                                                                          "var": "GetColor"
                                                                                                                                         },
                                                                                                                                         {
-                                                                                                                                          "int32": 255
-                                                                                                                                        },
-                                                                                                                                        {
-                                                                                                                                          "int32": 255
-                                                                                                                                        },
-                                                                                                                                        {
-                                                                                                                                          "int32": 255
-                                                                                                                                        },
-                                                                                                                                        {
-                                                                                                                                          "int32": 255
+                                                                                                                                          "int32": -1
                                                                                                                                         }
                                                                                                                                       ]
                                                                                                                                     }
@@ -913,7 +871,10 @@
                                                                                                                                             {
                                                                                                                                               "app": [
                                                                                                                                                 {
-                                                                                                                                                  "var": "IntToString"
+                                                                                                                                                  "var": "TextFormat_Int"
+                                                                                                                                                },
+                                                                                                                                                {
+                                                                                                                                                  "string": "%d"
                                                                                                                                                 },
                                                                                                                                                 {
                                                                                                                                                   "if": {
@@ -972,19 +933,10 @@
                                                                                                                                             {
                                                                                                                                               "app": [
                                                                                                                                                 {
-                                                                                                                                                  "var": "MakeColor_Wrapper"
+                                                                                                                                                  "var": "GetColor"
                                                                                                                                                 },
                                                                                                                                                 {
-                                                                                                                                                  "int32": 255
-                                                                                                                                                },
-                                                                                                                                                {
-                                                                                                                                                  "int32": 255
-                                                                                                                                                },
-                                                                                                                                                {
-                                                                                                                                                  "int32": 255
-                                                                                                                                                },
-                                                                                                                                                {
-                                                                                                                                                  "int32": 255
+                                                                                                                                                  "int32": -1
                                                                                                                                                 }
                                                                                                                                               ]
                                                                                                                                             }
