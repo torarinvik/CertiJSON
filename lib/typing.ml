@@ -118,6 +118,12 @@ let rec whnf (ctx : context) (t : term) : term =
           | _ -> reconstruct ())
       | _ -> reconstruct ())
   | Rewrite { body; _ } -> whnf ctx body  (* rewrite is computationally identity *)
+  | If { cond; then_; else_ } -> (
+      let cond' = whnf ctx cond in
+      match cond'.desc with
+      | Literal (LitBool true) -> whnf ctx then_
+      | Literal (LitBool false) -> whnf ctx else_
+      | _ -> mk ?loc:t.loc (If { cond = cond'; then_; else_ }))
   | _ -> t
 
 (** Check structural equality ignoring locations. *)
@@ -146,6 +152,8 @@ let rec equal_ignoring_loc (t1 : term) (t2 : term) : bool =
       equal_ignoring_loc t1 t2 && equal_ignoring_loc v1 v2
   | Rewrite { proof = p1; body = b1 }, Rewrite { proof = p2; body = b2 } ->
       equal_ignoring_loc p1 p2 && equal_ignoring_loc b1 b2
+  | If { cond = c1; then_ = t1; else_ = e1 }, If { cond = c2; then_ = t2; else_ = e2 } ->
+      equal_ignoring_loc c1 c2 && equal_ignoring_loc t1 t2 && equal_ignoring_loc e1 e2
   | Match m1, Match m2 ->
       equal_ignoring_loc m1.scrutinee m2.scrutinee &&
       equal_ignoring_loc m1.motive m2.motive &&
@@ -320,6 +328,8 @@ let rec positive_occurrences (target : name) (positive : bool) (t : term) : bool
       go positive scrutinee
       && go positive motive
       && List.for_all (fun c -> go positive c.body) cases
+  | If { cond; then_; else_ } ->
+      go positive cond && go positive then_ && go positive else_
 
 (** {1 Type Inference} *)
 
@@ -490,6 +500,13 @@ let rec infer (ctx : context) (t : term) : term =
       in
       if missing <> [] then raise (TypeError (NonExhaustiveMatch missing));
       (match as_name with Some n -> subst n scrutinee motive | None -> motive)
+  | If { cond; then_; else_ } ->
+      let _ = check ctx cond (mk ?loc:cond.loc (PrimType Bool)) in
+      let then_ty = infer ctx then_ in
+      let else_ty = infer ctx else_ in
+      if not (conv ctx then_ty else_ty) then
+        raise (TypeError (TypeMismatch { expected = then_ty; actual = else_ty; context = "if branches"; loc = t.loc }));
+      then_ty
   | Global name -> (
       match lookup ctx name with
       | Some (`Global entry) -> (
@@ -532,6 +549,8 @@ let rec has_self_reference (self : name) (t : term) : bool =
       has_self_reference self scrutinee
       || has_self_reference self motive
       || List.exists (fun c -> has_self_reference self c.body) cases
+  | If { cond; then_; else_ } ->
+      has_self_reference self cond || has_self_reference self then_ || has_self_reference self else_
 
 let check_termination (def : def_decl) : unit =
   let params, _ = collect_pi_binders def.def_type in
@@ -690,6 +709,10 @@ let check_termination (def : def_decl) : unit =
                 in
                 check_term allowed' c.body)
               cases
+        | If { cond; then_; else_ } ->
+            check_term allowed cond;
+            check_term allowed then_;
+            check_term allowed else_
       in
       check_term initial_allowed lam_body)
 
@@ -796,7 +819,7 @@ let check_declaration (ctx : context) (decl : declaration) : unit =
       with_decl def.def_name def.def_loc (fun () ->
         let _ = check ctx def.def_type (mk ?loc:def.def_loc (Universe Type)) in
         check ctx def.def_body def.def_type;
-        check_termination def)
+        if def.def_role <> Runtime then check_termination def)
   | Theorem thm ->
       with_decl thm.thm_name thm.thm_loc (fun () ->
         let _ = check ctx thm.thm_type (mk ?loc:thm.thm_loc (Universe Prop)) in

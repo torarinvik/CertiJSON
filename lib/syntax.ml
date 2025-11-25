@@ -54,6 +54,7 @@ type term_desc =
   | Eq of { ty : term; lhs : term; rhs : term }
   | Refl of { ty : term; value : term }
   | Rewrite of { proof : term; body : term }
+  | If of { cond : term; then_ : term; else_ : term }
   | Match of {
       scrutinee : term;
       motive : term;
@@ -275,6 +276,8 @@ let rec subst (x : var) (s : term) (t : term) : term =
       with_loc t (Refl { ty = subst x s ty; value = subst x s value })
   | Rewrite { proof; body } ->
       with_loc t (Rewrite { proof = subst x s proof; body = subst x s body })
+  | If { cond; then_; else_ } ->
+      with_loc t (If { cond = subst x s cond; then_ = subst x s then_; else_ = subst x s else_ })
   | Match { scrutinee; motive; as_name; cases; coverage_hint } ->
       let scrutinee' = subst x s scrutinee in
       let motive' =
@@ -321,9 +324,11 @@ let free_vars (t : term) : var list =
         go (go (go acc ty) lhs) rhs
     | Refl { ty; value } ->
         go (go acc ty) value
-    | Rewrite { proof; body } ->
+  | Rewrite { proof; body } ->
         go (go acc proof) body
-    | Match { scrutinee; motive; as_name; cases; _ } ->
+  | If { cond; then_; else_ } ->
+        go (go (go acc cond) then_) else_
+  | Match { scrutinee; motive; as_name; cases; _ } ->
         let acc = go acc scrutinee in
         let acc =
           match as_name with

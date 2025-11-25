@@ -26,6 +26,7 @@ and neutral =
   | NVar of name
   | NApp of neutral * value list
   | NMatch of neutral * term * case list
+  | NIf of neutral * term * term
 
 (** Environment mapping variables to values. *)
 and env = (name * value) list
@@ -78,6 +79,13 @@ let rec eval (ctx : context) (env : env) (t : term) : value =
   | Match { scrutinee; cases; _ } ->
       let scrut_val = eval ctx env scrutinee in
       eval_match ctx env scrut_val cases
+  | If { cond; then_; else_ } ->
+      let cond_val = eval ctx env cond in
+      (match cond_val with
+      | VLiteral (LitBool true) -> eval ctx env then_
+      | VLiteral (LitBool false) -> eval ctx env else_
+      | VNeutral n -> VNeutral (NIf (n, then_, else_))
+      | _ -> failwith "Runtime error: If condition must be a boolean")
   | Global name -> (
       match lookup ctx name with
       | Some (`Global (GDefinition def)) when def.def_role <> ProofOnly ->
@@ -182,6 +190,8 @@ and quote_neutral (n : neutral) : term =
   | NApp (f, args) -> mk (App (quote_neutral f, List.map quote args))
   | NMatch (scrut, motive, cases) ->
       mk (Match { scrutinee = quote_neutral scrut; motive; as_name = None; cases; coverage_hint = Unknown })
+  | NIf (cond, then_, else_) ->
+      mk (If { cond = quote_neutral cond; then_; else_ })
 
 (** {1 Normalization} *)
 

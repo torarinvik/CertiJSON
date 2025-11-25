@@ -263,6 +263,18 @@ let rec parse_term ~(file : string option) (json : json) : term =
             };
         loc;
       }
+  | _ when has_field json "if" ->
+      let if_ = get_field json "if" in
+      {
+        desc =
+          If
+            {
+              cond = parse_term ~file (get_field if_ "cond");
+              then_ = parse_term ~file (get_field if_ "then");
+              else_ = parse_term ~file (get_field if_ "else");
+            };
+        loc;
+      }
   | _ when has_field json "match" ->
       let m = get_field json "match" in
       let scrutinee = parse_term ~file (get_field m "scrutinee") in
@@ -323,7 +335,7 @@ let parse_binder ~(file : string option) (json : json) : binder =
 let parse_role (s : string) : role =
   match s with
   | "runtime" -> Runtime
-  | "proof-only" -> ProofOnly
+  | "proof-only" | "proof_only" -> ProofOnly
   | "both" -> Both
   | _ -> raise (ParseError (InvalidValue ("role", s)))
 
