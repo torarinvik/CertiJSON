@@ -151,11 +151,87 @@ let test_nat_plus_match () =
       | Error e -> fail (Typing.show_typing_error e)
       | Ok _ -> ())
 
+let test_recursion_without_rec_args () =
+  let json = {|
+    {
+      "module": "Test",
+      "imports": [],
+      "declarations": [
+        {
+          "def": {
+            "name": "bad",
+            "type": {
+              "pi": {
+                "arg": { "name": "n", "type": { "universe": "Type" } },
+                "result": { "universe": "Type" }
+              }
+            },
+            "body": {
+              "lambda": {
+                "arg": { "name": "n", "type": { "universe": "Type" } },
+                "body": { "app": [{ "var": "bad" }, { "var": "n" }] }
+              }
+            }
+          }
+        }
+      ]
+    }
+  |} in
+  match Json_parser.parse_string json with
+  | Error e -> fail (Json_parser.show_parse_error e)
+  | Ok m -> (
+      match Typing.check_module m with
+      | Ok _ -> fail "expected termination failure"
+      | Error (Typing.TerminationCheckFailed "bad") -> ()
+      | Error e -> fail (Typing.show_typing_error e))
+
+let test_positivity_failure () =
+  let json = {|
+    {
+      "module": "Test",
+      "imports": [],
+      "declarations": [
+        {
+          "inductive": {
+            "name": "Bad",
+            "params": [],
+            "universe": "Type",
+            "constructors": [
+              {
+                "name": "mk",
+                "args": [
+                  {
+                    "name": "f",
+                    "type": {
+                      "pi": {
+                        "arg": { "name": "_", "type": { "var": "Bad" } },
+                        "result": { "universe": "Type" }
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    }
+  |} in
+  match Json_parser.parse_string json with
+  | Error e -> fail (Json_parser.show_parse_error e)
+  | Ok m -> (
+      match Typing.check_module m with
+      | Ok _ -> fail "expected positivity failure"
+      | Error (Typing.PositivityCheckFailed ("Bad", "f")) -> ()
+      | Error e -> fail (Typing.show_typing_error e))
+
 let () =
   run "Typing" [
     "basic", [
       test_case "identity function" `Quick test_identity_function;
       test_case "nat definition" `Quick test_nat_definition;
       test_case "nat plus match" `Quick test_nat_plus_match;
+      test_case "recursion without rec_args" `Quick test_recursion_without_rec_args;
+      test_case "positivity failure" `Quick test_positivity_failure;
     ]
   ]

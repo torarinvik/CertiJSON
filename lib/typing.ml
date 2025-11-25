@@ -17,7 +17,7 @@ type typing_error =
   | NonExhaustiveMatch of name list  (* Missing constructors *)
   | InvalidPattern of string
   | TerminationCheckFailed of name
-  | PositivityCheckFailed of name * name  (* inductive, problematic param *)
+  | PositivityCheckFailed of name * name  (* inductive, problematic param/ctor arg *)
   | InvalidRecursiveArg of name * int
   | UnknownConstructor of name
   | UnknownInductive of name
@@ -25,6 +25,10 @@ type typing_error =
 [@@deriving show]
 
 exception TypeError of typing_error
+
+(** {1 Utilities} *)
+
+module StringSet = Set.Make (String)
 
 (** {1 Universe Checking} *)
 
@@ -127,6 +131,53 @@ and conv_whnf (ctx : context) (t1 : term) (t2 : term) : bool =
 (** Substitute a list of (name, term) pairs into a term. *)
 let subst_many (substs : (name * term) list) (t : term) : term =
   List.fold_left (fun acc (x, s) -> subst x s acc) t substs
+
+(** Collect leading Π binders from a type. *)
+let rec collect_pi_binders (t : term) : binder list * term =
+  match t with
+  | Pi { arg; result } ->
+      let bs, res = collect_pi_binders result in
+      (arg :: bs, res)
+  | _ -> ([], t)
+
+(** Collect leading lambda binders from a term. *)
+let rec collect_lambda_binders (t : term) : binder list * term =
+  match t with
+  | Lambda { arg; body } ->
+      let bs, core = collect_lambda_binders body in
+      (arg :: bs, core)
+  | _ -> ([], t)
+
+let rec take_n n xs =
+  match (n, xs) with
+  | 0, _ -> []
+  | _, [] -> []
+  | n, x :: tl -> x :: take_n (n - 1) tl
+
+(** Positivity checking: ensure inductive appears only in strictly positive positions. *)
+let rec positive_occurrences (target : name) (positive : bool) (t : term) : bool =
+  let go = positive_occurrences target in
+  match t with
+  | Var x | Global x ->
+      if String.equal x target then positive else true
+  | Universe _ | PrimType _ | Literal _ -> true
+  | Pi { arg; result } ->
+      (* Domain flips polarity; codomain keeps current polarity. *)
+      go (not positive) arg.ty && go positive result
+  | Lambda { arg; body } ->
+      go positive arg.ty && go positive body
+  | App (f, args) ->
+      go positive f && List.for_all (go positive) args
+  | Eq { ty; lhs; rhs } ->
+      go positive ty && go positive lhs && go positive rhs
+  | Refl { ty; value } ->
+      go positive ty && go positive value
+  | Rewrite { proof; body } ->
+      go positive proof && go positive body
+  | Match { scrutinee; motive; cases; _ } ->
+      go positive scrutinee
+      && go positive motive
+      && List.for_all (fun c -> go positive c.body) cases
 
 (** {1 Type Inference} *)
 
@@ -304,6 +355,160 @@ and check (ctx : context) (t : term) (expected : term) : unit =
   if not (conv ctx actual expected) then
     raise (TypeError (TypeMismatch { expected; actual; context = "check" }))
 
+(** {1 Termination Checking} *)
+
+let rec has_self_reference (self : name) (t : term) : bool =
+  match t with
+  | Var x | Global x -> String.equal x self
+  | Universe _ | PrimType _ | Literal _ -> false
+  | Pi { arg; result } -> has_self_reference self arg.ty || has_self_reference self result
+  | Lambda { arg; body } -> has_self_reference self arg.ty || has_self_reference self body
+  | App (f, args) ->
+      has_self_reference self f || List.exists (has_self_reference self) args
+  | Eq { ty; lhs; rhs } ->
+      has_self_reference self ty || has_self_reference self lhs || has_self_reference self rhs
+  | Refl { ty; value } ->
+      has_self_reference self ty || has_self_reference self value
+  | Rewrite { proof; body } ->
+      has_self_reference self proof || has_self_reference self body
+  | Match { scrutinee; motive; cases; _ } ->
+      has_self_reference self scrutinee
+      || has_self_reference self motive
+      || List.exists (fun c -> has_self_reference self c.body) cases
+
+let check_termination (def : def_decl) : unit =
+  let params, _ = collect_pi_binders def.def_type in
+  let param_count = List.length params in
+  let lam_params, lam_body = collect_lambda_binders def.def_body in
+  if List.length lam_params < param_count then
+    raise (TypeError (TerminationCheckFailed def.def_name));
+  let param_names = take_n param_count (List.map (fun b -> b.name) lam_params) in
+  match def.rec_args with
+  | None ->
+      if has_self_reference def.def_name lam_body then
+        raise (TypeError (TerminationCheckFailed def.def_name))
+  | Some rec_args ->
+      if rec_args = [] then (
+        if has_self_reference def.def_name lam_body then
+          raise (TypeError (TerminationCheckFailed def.def_name))
+      ) else (
+      let rec validate_indices = function
+        | [] -> ()
+        | idx :: rest ->
+            if idx < 0 || idx >= param_count then
+              raise (TypeError (InvalidRecursiveArg (def.def_name, idx)));
+            validate_indices rest
+      in
+      validate_indices rec_args;
+      let rec_param_names =
+        List.fold_left
+          (fun acc idx ->
+            match List.nth_opt param_names idx with
+            | Some n -> (idx, n) :: acc
+            | None -> acc)
+          [] rec_args
+      in
+      let rec_param_by_name =
+        let tbl = Hashtbl.create (List.length rec_param_names) in
+        List.iter (fun (i, n) -> Hashtbl.add tbl n i) rec_param_names;
+        tbl
+      in
+      let initial_allowed =
+        List.map (fun idx -> (idx, StringSet.empty)) rec_args
+      in
+      let rec get_allowed allowed idx =
+        match allowed with
+        | [] -> StringSet.empty
+        | (i, set) :: rest -> if i = idx then set else get_allowed rest idx
+      in
+      let rec update_allowed allowed idx names =
+        match allowed with
+        | [] ->
+            let set =
+              List.fold_left (fun acc n -> StringSet.add n acc) StringSet.empty names
+            in
+            [ (idx, set) ]
+        | (i, set) :: rest when i = idx ->
+            (i, List.fold_left (fun acc n -> StringSet.add n acc) set names) :: rest
+        | entry :: rest -> entry :: update_allowed rest idx names
+      in
+      let rec_index_of_var allowed v =
+        match Hashtbl.find_opt rec_param_by_name v with
+        | Some i -> Some i
+        | None ->
+            List.find_map
+              (fun (i, set) -> if StringSet.mem v set then Some i else None)
+              allowed
+      in
+      let rec check_term allowed t =
+        match t with
+        | Var x | Global x ->
+            if String.equal x def.def_name then
+              raise (TypeError (TerminationCheckFailed def.def_name))
+        | Universe _ | PrimType _ | Literal _ -> ()
+        | Pi { arg; result } ->
+            check_term allowed arg.ty;
+            check_term allowed result
+        | Lambda { arg; body } ->
+            check_term allowed arg.ty;
+            check_term allowed body
+        | App (f, args) ->
+            let is_self =
+              match f with
+              | Var x | Global x -> String.equal x def.def_name
+              | _ -> false
+            in
+            if is_self then (
+              let required_arity =
+                match List.fold_left max 0 rec_args with
+                | max_idx -> max_idx + 1
+              in
+              if List.length args < required_arity then
+                raise (TypeError (TerminationCheckFailed def.def_name));
+              List.iter
+                (fun idx ->
+                  match List.nth_opt args idx with
+                  | Some (Var v) ->
+                      let allowed_set = get_allowed allowed idx in
+                      if not (StringSet.mem v allowed_set) then
+                        raise (TypeError (TerminationCheckFailed def.def_name))
+                  | Some _ -> raise (TypeError (TerminationCheckFailed def.def_name))
+                  | None -> raise (TypeError (TerminationCheckFailed def.def_name)))
+                rec_args);
+            if not is_self then check_term allowed f;
+            List.iter (check_term allowed) args
+        | Eq { ty; lhs; rhs } ->
+            check_term allowed ty;
+            check_term allowed lhs;
+            check_term allowed rhs
+        | Refl { ty; value } ->
+            check_term allowed ty;
+            check_term allowed value
+        | Rewrite { proof; body } ->
+            check_term allowed proof;
+            check_term allowed body
+        | Match { scrutinee; motive; cases; _ } ->
+            check_term allowed scrutinee;
+            check_term allowed motive;
+            let rec_idx =
+              match scrutinee with
+              | Var v -> rec_index_of_var allowed v
+              | _ -> None
+            in
+            List.iter
+              (fun c ->
+                let allowed' =
+                  match rec_idx with
+                  | Some idx ->
+                      let names = List.map (fun a -> a.arg_name) c.pattern.args in
+                      update_allowed allowed idx names
+                  | None -> allowed
+                in
+                check_term allowed' c.body)
+              cases
+      in
+      check_term initial_allowed lam_body)
+
 (** {1 Declaration Checking} *)
 
 (** Check a single declaration. *)
@@ -325,10 +530,20 @@ let check_declaration (ctx : context) (decl : declaration) : unit =
             (fun arg -> check ctx' arg.ty (Universe Type))
             ctor.ctor_args)
         ind.constructors
+      (* Strict positivity: inductive must not appear in negative position in args. *)
+      ;
+      List.iter
+        (fun ctor ->
+          List.iter
+            (fun arg ->
+              if not (positive_occurrences ind.ind_name true arg.ty) then
+                raise (TypeError (PositivityCheckFailed (ind.ind_name, arg.name))))
+            ctor.ctor_args)
+        ind.constructors
   | Definition def ->
       let _ = check ctx def.def_type (Universe Type) in
       check ctx def.def_body def.def_type
-      (* TODO: termination checking for recursive definitions *)
+      ; check_termination def
   | Theorem thm ->
       let _ = check ctx thm.thm_type (Universe Prop) in
       check ctx thm.thm_proof thm.thm_type
