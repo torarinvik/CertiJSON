@@ -25,6 +25,7 @@ type typing_error =
   | RoleMismatch of name * role * role  (* name, expected, actual *)
   | InvalidRepr of name * string
   | InvalidExternC of name * string
+  | InvalidExternIO of name * string
   | InDeclaration of name * Loc.t option * typing_error
 [@@deriving show]
 
@@ -290,6 +291,8 @@ let rec string_of_typing_error (err : typing_error) : string =
       Format.sprintf "Invalid representation %s: %s" name msg
   | InvalidExternC (name, msg) ->
       Format.sprintf "Invalid extern_c %s: %s" name msg
+  | InvalidExternIO (name, msg) ->
+      Format.sprintf "Invalid extern_io %s: %s" name msg
   | InDeclaration (name, _loc, err) ->
       Format.sprintf "While checking %s: %s" name (string_of_typing_error err)
 
@@ -334,6 +337,7 @@ let rec infer (ctx : context) (t : term) : term =
           | Some (`Global (GInductive ind)) -> constructor_type ind ctor
           | _ -> raise (TypeError (UnknownInductive parent)))
       | Some (`Global (GExternC ext)) -> ext.logical_type
+      | Some (`Global (GExternIO ext)) -> ext.logical_type
       | Some (`Global (GRepr _)) ->
           raise (TypeError (TypeMismatch { expected = mk ?loc:t.loc (Universe Type); actual = t; context = "repr is not a term"; loc = t.loc }))
       | None -> raise (TypeError (UnboundVariable x)))
@@ -500,6 +504,7 @@ let rec infer (ctx : context) (t : term) : term =
           | GDefinition def -> def.def_type
           | GTheorem thm -> thm.thm_type
           | GExternC ext -> ext.logical_type
+          | GExternIO ext -> ext.logical_type
           | GRepr _ -> raise (TypeError (TypeMismatch { expected = mk ?loc:t.loc (Universe Type); actual = t; context = "repr"; loc = t.loc })))
       | _ -> raise (TypeError (UnboundVariable name)))
 
@@ -737,6 +742,25 @@ let check_extern_c (ctx : context) (ext : extern_c_decl) : unit =
   let _ = check ctx ext.logical_type (mk ?loc:ext.extern_loc (Universe Type)) in
   ()
 
+let check_extern_io (ctx : context) (ext : extern_io_decl) : unit =
+  (* Check logical type *)
+  let _ = check ctx ext.logical_type (mk ?loc:ext.extern_io_loc (Universe Type)) in
+  (* Check result repr *)
+  (match ext.result_repr with
+  | Some r -> (
+      match lookup ctx r with
+      | Some (`Global (GRepr _)) -> ()
+      | _ -> raise (TypeError (InvalidExternIO (ext.extern_io_name, Printf.sprintf "unknown result repr %s" r)))
+    )
+  | None -> ());
+  (* Check arg reprs *)
+  List.iter (fun arg ->
+    match lookup ctx arg.extern_arg_repr with
+    | Some (`Global (GRepr _)) -> ()
+    | _ -> raise (TypeError (InvalidExternIO (ext.extern_io_name, Printf.sprintf "unknown arg repr %s for %s" arg.extern_arg_repr arg.extern_arg_name)))
+  ) ext.args;
+  ()
+
 (** Check a single declaration. *)
 let check_declaration (ctx : context) (decl : declaration) : unit =
   let with_decl name loc f =
@@ -783,6 +807,8 @@ let check_declaration (ctx : context) (decl : declaration) : unit =
       with_decl repr.repr_name repr.repr_loc (fun () -> check_repr ctx repr)
   | ExternC ext ->
       with_decl ext.extern_name ext.extern_loc (fun () -> check_extern_c ctx ext)
+  | ExternIO ext ->
+      with_decl ext.extern_io_name ext.extern_io_loc (fun () -> check_extern_io ctx ext)
 
 (** Check an entire module. *)
 let check_module (mod_ : module_decl) : (signature, typing_error) result =

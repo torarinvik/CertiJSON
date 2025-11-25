@@ -449,6 +449,41 @@ let parse_extern_c ~(file : string option) (json : json) : extern_c_decl =
   in
   { extern_name = name; c_name; header; return_repr; args; logical_type; safety; axioms; extern_loc = Some (Loc.loc_of_range ?file json.loc) }
 
+let parse_extern_io ~(file : string option) (json : json) : extern_io_decl =
+  let name = get_string (get_field json "name") in
+  let c_name = get_string (get_field json "c_name") in
+  let header = get_string (get_field json "header") in
+  let args =
+    match get_field_opt json "args" with
+    | Some args_json ->
+        List.map
+          (fun a ->
+            {
+              extern_arg_name = get_string (get_field a "name");
+              extern_arg_repr = get_string (get_field a "repr");
+            })
+          (get_list args_json)
+    | None -> []
+  in
+  let result_repr =
+    match get_field_opt json "result" with
+    | Some j -> (
+        match j.value with
+        | JNull -> None
+        | _ -> Some (get_string (get_field j "repr")))
+    | None -> None
+  in
+  let logical_type = parse_term ~file (get_field json "type") in
+  let pre_cond, post_cond =
+    match get_field_opt json "spec" with
+    | Some j ->
+        let pre = Option.map get_string (get_field_opt j "pre") in
+        let post = Option.map get_string (get_field_opt j "post") in
+        (pre, post)
+    | None -> (None, None)
+  in
+  { extern_io_name = name; c_name; header; args; result_repr; logical_type; pre_cond; post_cond; extern_io_loc = Some (Loc.loc_of_range ?file json.loc) }
+
 let parse_declaration ~file (json : json) : declaration =
   if has_field json "inductive" then
     Inductive (parse_inductive ~file (get_field json "inductive"))
@@ -460,6 +495,8 @@ let parse_declaration ~file (json : json) : declaration =
     Repr (parse_repr ~file (get_field json "repr"))
   else if has_field json "extern_c" then
     ExternC (parse_extern_c ~file (get_field json "extern_c"))
+  else if has_field json "extern_io" then
+    ExternIO (parse_extern_io ~file (get_field json "extern_io"))
   else
     raise (ParseError (InvalidNodeKind (json_to_string json)))
 
@@ -492,7 +529,9 @@ let parse_module ~(file : string option) ?(loc_of_name = (fun _ -> None)) (json 
            | Repr repr ->
                Repr { repr with repr_loc = loc_of_name repr.repr_name }
            | ExternC ext ->
-               ExternC { ext with extern_loc = loc_of_name ext.extern_name })
+               ExternC { ext with extern_loc = loc_of_name ext.extern_name }
+           | ExternIO ext ->
+               ExternIO { ext with extern_io_loc = loc_of_name ext.extern_io_name })
   in
   let module_loc =
     match loc_of_name module_name with

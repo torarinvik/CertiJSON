@@ -167,6 +167,19 @@ type extern_c_decl = {
 }
 [@@deriving show, eq]
 
+type extern_io_decl = {
+  extern_io_name : name;
+  c_name : string;
+  header : string;
+  args : extern_arg list;
+  result_repr : name option;
+  logical_type : term;
+  pre_cond : string option;
+  post_cond : string option;
+  extern_io_loc : Loc.t option;
+}
+[@@deriving show, eq]
+
 (** {1 Inductive Definitions} *)
 
 type constructor_decl = {
@@ -213,6 +226,7 @@ type declaration =
   | Theorem of theorem_decl
   | Repr of repr_decl
   | ExternC of extern_c_decl
+  | ExternIO of extern_io_decl
 [@@deriving show, eq]
 
 (** {1 Modules} *)

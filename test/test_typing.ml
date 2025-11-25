@@ -527,6 +527,79 @@ let test_ffi_error () =
       | Error (Typing.InDeclaration ("BadStruct", _, Typing.InvalidRepr ("BadStruct", _))) -> ()
       | Error e -> fail (Typing.string_of_typing_error e))
 
+let test_extern_io () =
+  let json = {|
+    {
+      "module": "TestIO",
+      "imports": [],
+      "declarations": [
+        {
+          "inductive": {
+            "name": "Unit",
+            "params": [],
+            "universe": "Type",
+            "constructors": [{ "name": "tt", "args": [] }]
+          }
+        },
+        {
+          "inductive": {
+            "name": "String",
+            "params": [],
+            "universe": "Type",
+            "constructors": []
+          }
+        },
+        {
+          "repr": {
+            "name": "StringRepr",
+            "kind": "primitive",
+            "c_type": "char*",
+            "size_bits": 64,
+            "signed": false
+          }
+        },
+        {
+          "def": {
+            "name": "IO",
+            "type": {
+              "pi": {
+                "arg": { "name": "A", "type": { "universe": "Type" } },
+                "result": { "universe": "Type" }
+              }
+            },
+            "body": {
+              "lambda": {
+                "arg": { "name": "A", "type": { "universe": "Type" } },
+                "body": { "var": "A" } 
+              }
+            }
+          }
+        },
+        {
+          "extern_io": {
+            "name": "print_line",
+            "c_name": "cj_print_line",
+            "header": "<certijson_io.h>",
+            "args": [{ "name": "s", "repr": "StringRepr" }],
+            "result": null,
+            "type": {
+              "pi": {
+                "arg": { "name": "s", "type": { "var": "String" } },
+                "result": { "app": [{ "var": "IO" }, { "var": "Unit" }] }
+              }
+            }
+          }
+        }
+      ]
+    }
+  |} in
+  match Json_parser.parse_string json with
+  | Error e -> fail (Json_parser.show_parse_error e)
+  | Ok m -> (
+      match Typing.check_module m with
+      | Error e -> fail (Typing.string_of_typing_error e)
+      | Ok _ -> ())
+
 let test_list_length_nil () =
   let json = {|
     {
@@ -763,5 +836,6 @@ let () =
     "ffi", [
       test_case "ffi validation" `Quick test_ffi_validation;
       test_case "ffi error" `Quick test_ffi_error;
+      test_case "extern io" `Quick test_extern_io;
     ]
   ]

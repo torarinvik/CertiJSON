@@ -43,6 +43,7 @@ type global_entry =
   | GTheorem of theorem_decl
   | GRepr of repr_decl
   | GExternC of extern_c_decl
+  | GExternIO of extern_io_decl
 
 (** Global signature Σ. *)
 type signature = {
@@ -117,7 +118,9 @@ let build_signature (decls : declaration list) : signature =
       | Repr repr ->
           add_entry sig_ repr.repr_name (GRepr repr)
       | ExternC ext ->
-          add_entry sig_ ext.extern_name (GExternC ext))
+          add_entry sig_ ext.extern_name (GExternC ext)
+      | ExternIO ext ->
+          add_entry sig_ ext.extern_io_name (GExternIO ext))
     decls;
   sig_
 

@@ -126,6 +126,8 @@ let pp_declaration fmt = function
       Format.fprintf fmt "repr %s" repr.repr_name
   | ExternC ext ->
       Format.fprintf fmt "extern_c %s = \"%s\"" ext.extern_name ext.c_name
+  | ExternIO ext ->
+      Format.fprintf fmt "extern_io %s = \"%s\"" ext.extern_io_name ext.c_name
 
 let pp_module fmt { module_name; imports; declarations; _ } =
   Format.fprintf fmt "@[<v>module %s@,@,imports: %a@,@,@[<v>%a@]@]"
