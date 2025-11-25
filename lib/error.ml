@@ -80,6 +80,11 @@ let rec typing_location ?file (e : Typing.typing_error) : location =
       match loc with
       | Some l -> Loc.with_file f l
       | None -> typing_location ~file:f inner)
+  | Some f, Typing.TypeMismatch { loc = Some l; _ } -> Loc.with_file f l
+  | Some f, Typing.NotAFunction (_, Some l) -> Loc.with_file f l
+  | Some f, Typing.NotAType (_, Some l) -> Loc.with_file f l
+  | Some f, Typing.NotAProp (_, Some l) -> Loc.with_file f l
+  | Some f, Typing.InvalidApplication (_, _, Some l) -> Loc.with_file f l
   | Some f, _ -> { file = Some f; line = None; column = None }
   | None, _ -> no_loc
 

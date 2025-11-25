@@ -9,11 +9,11 @@ open Context
 
 type typing_error =
   | UnboundVariable of name
-  | TypeMismatch of { expected : term; actual : term; context : string }
-  | NotAFunction of term
-  | NotAType of term
-  | NotAProp of term
-  | InvalidApplication of term * term
+  | TypeMismatch of { expected : term; actual : term; context : string; loc : Loc.t option }
+  | NotAFunction of term * Loc.t option
+  | NotAType of term * Loc.t option
+  | NotAProp of term * Loc.t option
+  | InvalidApplication of term * term * Loc.t option
   | NonExhaustiveMatch of name list  (* Missing constructors *)
   | InvalidPattern of string
   | TerminationCheckFailed of name
@@ -168,13 +168,13 @@ let rec string_of_typing_error (err : typing_error) : string =
   let pp_term = Pretty.term_to_string in
   match err with
   | UnboundVariable x -> Format.sprintf "Unbound variable %s" x
-  | TypeMismatch { expected; actual; context } ->
+  | TypeMismatch { expected; actual; context; _ } ->
       Format.sprintf "Type mismatch in %s: expected %s but got %s"
         context (pp_term expected) (pp_term actual)
-  | NotAFunction t -> Format.sprintf "Cannot apply non-function term: %s" (pp_term t)
-  | NotAType t -> Format.sprintf "Expected a type, but got %s" (pp_term t)
-  | NotAProp t -> Format.sprintf "Expected a proposition, but got %s" (pp_term t)
-  | InvalidApplication (f, arg) ->
+  | NotAFunction (t, _) -> Format.sprintf "Cannot apply non-function term: %s" (pp_term t)
+  | NotAType (t, _) -> Format.sprintf "Expected a type, but got %s" (pp_term t)
+  | NotAProp (t, _) -> Format.sprintf "Expected a proposition, but got %s" (pp_term t)
+  | InvalidApplication (f, arg, _) ->
       Format.sprintf "Invalid application: %s applied to %s" (pp_term f) (pp_term arg)
   | NonExhaustiveMatch ctors ->
       Format.sprintf "Non-exhaustive match; missing cases for: %s"
@@ -239,7 +239,7 @@ let rec infer (ctx : context) (t : term) : term =
           | _ -> raise (TypeError (UnknownInductive parent)))
       | Some (`Global (GExternC ext)) -> ext.logical_type
       | Some (`Global (GRepr _)) ->
-          raise (TypeError (TypeMismatch { expected = mk ?loc:t.loc (Universe Type); actual = t; context = "repr is not a term" }))
+          raise (TypeError (TypeMismatch { expected = mk ?loc:t.loc (Universe Type); actual = t; context = "repr is not a term"; loc = t.loc }))
       | None -> raise (TypeError (UnboundVariable x)))
   | Universe Type -> mk ?loc:t.loc (Universe Type)  (* Type : Type - impredicative for simplicity *)
   | Universe Prop -> mk ?loc:t.loc (Universe Type)  (* Prop : Type *)
@@ -254,7 +254,7 @@ let rec infer (ctx : context) (t : term) : term =
       let result_ty = infer ctx' result in
       (match result_ty with
       | { desc = Universe u; _ } -> mk ?loc:t.loc (Universe u)
-      | _ -> raise (TypeError (NotAType result)))
+      | _ -> raise (TypeError (NotAType (result, result.loc))))
   | Lambda { arg; body } ->
       let _ = check ctx arg.ty (mk ?loc:arg.b_loc (Universe Type)) in
       let ctx' = extend ctx arg.name arg.ty in
@@ -268,7 +268,7 @@ let rec infer (ctx : context) (t : term) : term =
           | Pi { arg = param; result } ->
               let _ = check ctx arg param.ty in
               subst param.name arg result
-          | _ -> raise (TypeError (NotAFunction f_ty')))
+          | _ -> raise (TypeError (NotAFunction (f_ty', f_ty'.loc))))
         (infer ctx f) args
   | Eq { ty; lhs; rhs } ->
       let _ = check ctx ty (mk ?loc:ty.loc (Universe Type)) in
@@ -302,6 +302,7 @@ let rec infer (ctx : context) (t : term) : term =
                            });
                     actual = proof_ty';
                     context = "rewrite proof";
+                    loc = proof_ty'.loc;
                   })))
   | Match { scrutinee; motive; as_name; cases; coverage_hint = _ } ->
       let scrut_ty = infer ctx scrutinee in
@@ -320,7 +321,7 @@ let rec infer (ctx : context) (t : term) : term =
         | _ -> raise (TypeError (InvalidPattern "scrutinee is not an inductive type"))
       in
       if List.length args <> List.length ind.params then
-        raise (TypeError (TypeMismatch { expected = inductive_type ind; actual = scrut_ty; context = "match scrutinee parameters" }));
+        raise (TypeError (TypeMismatch { expected = inductive_type ind; actual = scrut_ty; context = "match scrutinee parameters"; loc = t.loc }));
       (* Instantiate inductive parameters and check their types. *)
       let param_substs =
         let rec build acc params args =
@@ -342,7 +343,7 @@ let rec infer (ctx : context) (t : term) : term =
       let motive_type = whnf ctx (infer motive_ctx motive) in
       (match motive_type.desc with
       | Universe u -> u
-      | _ -> raise (TypeError (NotAType motive_type))) |> ignore;
+      | _ -> raise (TypeError (NotAType (motive_type, motive_type.loc)))) |> ignore;
       let seen = Hashtbl.create (List.length cases) in
       let find_ctor name =
         match List.find_opt (fun c -> String.equal c.ctor_name name) ind.constructors with
@@ -403,14 +404,14 @@ let rec infer (ctx : context) (t : term) : term =
           | GDefinition def -> def.def_type
           | GTheorem thm -> thm.thm_type
           | GExternC ext -> ext.logical_type
-          | GRepr _ -> raise (TypeError (TypeMismatch { expected = mk ?loc:t.loc (Universe Type); actual = t; context = "repr" })))
+          | GRepr _ -> raise (TypeError (TypeMismatch { expected = mk ?loc:t.loc (Universe Type); actual = t; context = "repr"; loc = t.loc })))
       | _ -> raise (TypeError (UnboundVariable name)))
 
 (** Check that a term has a given type. *)
 and check (ctx : context) (t : term) (expected : term) : unit =
   let actual = infer ctx t in
   if not (conv ctx actual expected) then
-    raise (TypeError (TypeMismatch { expected; actual; context = "check" }))
+    raise (TypeError (TypeMismatch { expected; actual; context = "check"; loc = t.loc }))
 
 (** {1 Termination Checking} *)
 

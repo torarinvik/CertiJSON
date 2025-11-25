@@ -43,7 +43,7 @@ let test_identity_function () =
   | Error e -> fail (Json_parser.show_parse_error e)
   | Ok m ->
       match Typing.check_module m with
-      | Error e -> fail (Typing.show_typing_error e)
+      | Error e -> fail (Typing.string_of_typing_error e)
       | Ok _ -> ()
 
 let test_nat_definition () =
@@ -70,7 +70,7 @@ let test_nat_definition () =
   | Error e -> fail (Json_parser.show_parse_error e)
   | Ok m ->
       match Typing.check_module m with
-      | Error e -> fail (Typing.show_typing_error e)
+      | Error e -> fail (Typing.string_of_typing_error e)
       | Ok _ -> ()
 
 let test_nat_plus_match () =
@@ -148,7 +148,7 @@ let test_nat_plus_match () =
   | Error e -> fail (Json_parser.show_parse_error e)
   | Ok m -> (
       match Typing.check_module m with
-      | Error e -> fail (Typing.show_typing_error e)
+      | Error e -> fail (Typing.string_of_typing_error e)
       | Ok _ -> ())
 
 let test_recursion_without_rec_args () =
@@ -184,7 +184,7 @@ let test_recursion_without_rec_args () =
       | Ok _ -> fail "expected termination failure"
       | Error (Typing.TerminationCheckFailed "bad") -> ()
       | Error (Typing.InDeclaration ("bad", _, Typing.TerminationCheckFailed "bad")) -> ()
-      | Error e -> fail (Typing.show_typing_error e))
+      | Error e -> fail (Typing.string_of_typing_error e))
 
 let test_positivity_failure () =
   let json = {|
@@ -225,7 +225,7 @@ let test_positivity_failure () =
       | Ok _ -> fail "expected positivity failure"
       | Error (Typing.PositivityCheckFailed ("Bad", "f")) -> ()
       | Error (Typing.InDeclaration ("Bad", _, Typing.PositivityCheckFailed ("Bad", "f"))) -> ()
-      | Error e -> fail (Typing.show_typing_error e))
+      | Error e -> fail (Typing.string_of_typing_error e))
 
 let test_rec_arg_not_inductive () =
   let json = {|
@@ -261,7 +261,7 @@ let test_rec_arg_not_inductive () =
       | Ok _ -> fail "expected rec_args inductive failure"
       | Error (Typing.RecArgNotInductive ("bad_rec", 0)) -> ()
       | Error (Typing.InDeclaration ("bad_rec", _, Typing.RecArgNotInductive ("bad_rec", 0))) -> ()
-      | Error e -> fail (Typing.show_typing_error e))
+      | Error e -> fail (Typing.string_of_typing_error e))
 
 let () =
   run "Typing" [
