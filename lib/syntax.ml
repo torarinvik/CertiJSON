@@ -27,6 +27,7 @@ type prim_type =
   | Int64
   | Float64
   | Bool
+  | String
   | Size
 [@@deriving show, eq]
 
@@ -37,6 +38,7 @@ type literal =
   | LitInt64 of int64
   | LitFloat64 of float
   | LitBool of bool
+  | LitString of string
 [@@deriving show, eq]
 
 (** {1 Terms with locations} *)

@@ -18,6 +18,8 @@ type value =
   | VLiteral of literal
   | VPrimType of prim_type
   | VNeutral of neutral
+  | VWorld
+  | VExternIO of extern_io_decl * value list
 
 (** Neutral terms (stuck computations). *)
 and neutral =
@@ -46,7 +48,15 @@ let rec eval (ctx : context) (env : env) (t : term) : value =
   | Var x -> (
       match lookup_env env x with
       | Some v -> v
-      | None -> VNeutral (NVar x))
+      | None -> (
+          match lookup ctx x with
+          | Some (`Global (GDefinition def)) when def.def_role <> ProofOnly ->
+              eval ctx env def.def_body
+          | Some (`Global (GConstructor _)) ->
+              VConstructor (x, [])
+          | Some (`Global (GExternIO ext)) ->
+              VExternIO (ext, [])
+          | _ -> VNeutral (NVar x)))
   | Universe u -> VUniverse u
   | PrimType p -> VPrimType p
   | Literal l -> VLiteral l
@@ -74,6 +84,8 @@ let rec eval (ctx : context) (env : env) (t : term) : value =
           eval ctx env def.def_body
       | Some (`Global (GConstructor _)) ->
           VConstructor (name, [])
+      | Some (`Global (GExternIO ext)) ->
+          VExternIO (ext, [])
       | _ -> VNeutral (NVar name))
 
 (** Apply a value to arguments. *)
@@ -87,6 +99,39 @@ and apply (ctx : context) (f : value) (arg : value) : value =
       eval ctx env' body
   | VConstructor (name, args) ->
       VConstructor (name, args @ [arg])
+  | VExternIO (ext, args) ->
+      if List.length args < List.length ext.args then
+        VExternIO (ext, args @ [arg])
+      else
+        (* Expecting World argument *)
+        (match arg with
+        | VWorld ->
+            (* Execute IO effect *)
+            let result = match ext.c_name with
+            | "cj_print_line" | "cj_println" -> (
+                match args with
+                | [VLiteral (LitString s)] -> print_endline s; VConstructor ("tt", [])
+                | [VConstructor ("mk_string", [VLiteral (LitString s)])] -> print_endline s; VConstructor ("tt", [])
+                | _ -> Printf.printf "[IO] %s\n" ext.extern_io_name; VConstructor ("tt", [])
+              )
+            | "cj_print" -> (
+                match args with
+                | [VLiteral (LitString s)] -> print_string s; VConstructor ("tt", [])
+                | _ -> Printf.printf "[IO] %s\n" ext.extern_io_name; VConstructor ("tt", [])
+              )
+            | "cj_read_line" -> (
+                try
+                  let s = read_line () in
+                  VLiteral (LitString s)
+                with End_of_file -> VLiteral (LitString "")
+              )
+            | "cj_random_u64" -> (
+                VLiteral (LitInt64 (Int64.of_int (Random.int 1000000))) (* Mock implementation *)
+              )
+            | _ -> Printf.printf "[IO] %s (c_name: %s)\n" ext.extern_io_name ext.c_name; VConstructor ("tt", [])
+            in
+            VConstructor ("pair", [result; VWorld])
+        | _ -> VNeutral (NApp (NVar "_stuck_io_", [f; arg])))
   | VNeutral n ->
       VNeutral (NApp (n, [arg]))
   | _ -> VNeutral (NApp (NVar "_stuck_", [f; arg]))
@@ -125,6 +170,10 @@ let rec quote (v : value) : term =
       mk (Refl { ty = quote ty; value = quote value })
   | VLiteral l -> mk (Literal l)
   | VPrimType p -> mk (PrimType p)
+  | VWorld -> mk (Var "World") (* Should not happen in normal terms *)
+  | VExternIO (ext, args) ->
+      let head = mk (Global ext.extern_io_name) in
+      mk (App (head, List.map quote args))
   | VNeutral n -> quote_neutral n
 
 and quote_neutral (n : neutral) : term =
@@ -145,6 +194,12 @@ let normalize (ctx : context) (t : term) : term =
 (** Evaluate a closed term. *)
 let eval_closed (ctx : context) (t : term) : value =
   eval ctx empty_env t
+
+(** Run an IO program. *)
+let run_io (ctx : context) (t : term) : unit =
+  let v = eval ctx empty_env t in
+  let _ = apply ctx v VWorld in
+  ()
 
 (** Check if two values are equal (for testing). *)
 let rec value_eq (v1 : value) (v2 : value) : bool =

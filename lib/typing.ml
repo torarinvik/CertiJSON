@@ -348,6 +348,7 @@ let rec infer (ctx : context) (t : term) : term =
   | Literal (LitInt64 _) -> mk ?loc:t.loc (PrimType Int64)
   | Literal (LitFloat64 _) -> mk ?loc:t.loc (PrimType Float64)
   | Literal (LitBool _) -> mk ?loc:t.loc (PrimType Bool)
+  | Literal (LitString _) -> mk ?loc:t.loc (PrimType String)
   | Pi { arg; result } ->
       let _ = check ctx arg.ty (mk ?loc:arg.b_loc (Universe Type)) in
       let ctx' = extend ctx arg.name arg.ty in

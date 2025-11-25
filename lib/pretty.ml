@@ -15,6 +15,7 @@ let pp_prim_type fmt = function
   | Int64 -> Format.fprintf fmt "Int64"
   | Float64 -> Format.fprintf fmt "Float64"
   | Bool -> Format.fprintf fmt "Bool"
+  | String -> Format.fprintf fmt "String"
   | Size -> Format.fprintf fmt "Size"
 
 let pp_literal fmt = function
@@ -22,6 +23,7 @@ let pp_literal fmt = function
   | LitInt64 n -> Format.fprintf fmt "%Ld" n
   | LitFloat64 f -> Format.fprintf fmt "%f" f
   | LitBool b -> Format.fprintf fmt "%b" b
+  | LitString s -> Format.fprintf fmt "%S" s
 
 let rec pp_term fmt (t : term) =
   match t.desc with

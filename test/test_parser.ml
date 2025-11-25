@@ -107,13 +107,20 @@ let test_literals () =
             "type": { "var": "Int32" },
             "body": { "int32": 42 }
           }
+        },
+        {
+          "def": {
+            "name": "hello",
+            "type": { "prim": "String" },
+            "body": { "string": "Hello" }
+          }
         }
       ]
     }
   |} in
   match Json_parser.parse_string json with
   | Ok m ->
-      check int "declarations" 1 (List.length m.declarations)
+      check int "declarations" 2 (List.length m.declarations)
   | Error e ->
       fail (Json_parser.show_parse_error e)
 

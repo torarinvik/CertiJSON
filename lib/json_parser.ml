@@ -176,6 +176,7 @@ let rec parse_term ~(file : string option) (json : json) : term =
             | "Int64" -> Int64
             | "Float64" -> Float64
             | "Bool" -> Bool
+            | "String" -> String
             | "Size" -> Size
             | _ -> raise (ParseError (InvalidValue ("prim", p))));
         loc;
@@ -285,6 +286,8 @@ let rec parse_term ~(file : string option) (json : json) : term =
       { desc = Literal (LitFloat64 (get_float (get_field json "float64"))); loc }
   | _ when has_field json "bool" ->
       { desc = Literal (LitBool (get_bool (get_field json "bool"))); loc }
+  | _ when has_field json "string" ->
+      { desc = Literal (LitString (get_string (get_field json "string"))); loc }
   | _ ->
       raise (ParseError (InvalidNodeKind (json_to_string json)))
 

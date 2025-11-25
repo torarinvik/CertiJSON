@@ -86,10 +86,45 @@ let eval_cmd =
   let cmd_info = Cmd.info "eval" ~doc in
   Cmd.v cmd_info Term.(ret (const do_eval $ file $ def_name))
 
+let run_cmd =
+  let file =
+    let doc = "The CertiJSON source file to run." in
+    Arg.(required & pos 0 (some file) None & info [] ~docv:"FILE" ~doc)
+  in
+  let def_name =
+    let doc = "The name of the IO definition to run (default: main)." in
+    Arg.(value & opt string "main" & info ["entry"] ~docv:"NAME" ~doc)
+  in
+  let do_run file def_name =
+    match CJ.Json_parser.parse_file file with
+    | Error e ->
+        let err = CJ.Error.error_of_parse ~file e in
+        Fmt.epr "%a@." CJ.Error.pp_error err;
+        `Error (false, "parsing failed")
+    | Ok mod_ ->
+        match CJ.Typing.check_module mod_ with
+        | Error e ->
+            let err = CJ.Error.error_of_typing ~file e in
+            Fmt.epr "%a@." CJ.Error.pp_error err;
+            `Error (false, "type checking failed")
+        | Ok sig_ ->
+            let ctx = CJ.Context.make_ctx sig_ in
+            let term = CJ.Syntax.mk (CJ.Syntax.Global def_name) in
+            try
+              CJ.Eval.run_io ctx term;
+              `Ok ()
+            with e ->
+              Fmt.epr "Runtime error: %s@." (Printexc.to_string e);
+              `Error (false, "runtime error")
+  in
+  let doc = "Run a CertiJSON IO program." in
+  let info = Cmd.info "run" ~doc in
+  Cmd.v info Term.(ret (const do_run $ file $ def_name))
+
 (** {1 Main} *)
 
 let () =
   let doc = "A proof-based programming language for agentic LLMs" in
   let info = Cmd.info "certijson" ~version:"0.1.0" ~doc in
-  let cmds = [check_cmd; parse_cmd; eval_cmd] in
+  let cmds = [check_cmd; parse_cmd; eval_cmd; run_cmd] in
   exit (Cmd.eval (Cmd.group info cmds))
