@@ -308,12 +308,13 @@ let extract_module (mod_ : Syntax.module_decl) (sig_ : Context.signature) : c_pr
   in
   let base_includes = ["<stdio.h>"; "<stdint.h>"; "<stdbool.h>"; "<certijson_io.h>"] in
   let extra_includes =
-    let collect_includes acc = function
-      | Syntax.ExternC { header; _ } -> if List.mem header acc then acc else header :: acc
-      | Syntax.ExternIO { header; _ } -> if List.mem header acc then acc else header :: acc
+    let collect_includes _ entry acc =
+      match entry with
+      | Context.GExternC { header; _ } -> if List.mem header acc then acc else header :: acc
+      | Context.GExternIO { header; _ } -> if List.mem header acc then acc else header :: acc
       | _ -> acc
     in
-    List.fold_left collect_includes [] mod_.declarations
+    Hashtbl.fold collect_includes full_sig.entries []
   in
   let structs =
     List.filter_map (function

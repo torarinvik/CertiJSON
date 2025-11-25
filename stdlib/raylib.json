@@ -1,0 +1,613 @@
+{
+  "module": "Raylib",
+  "imports": [
+    "Std.IO",
+    "Std.Math"
+  ],
+  "declarations": [
+    {
+      "repr": {
+        "name": "int",
+        "kind": "primitive",
+        "c_type": "int",
+        "size_bits": 32,
+        "signed": true
+      }
+    },
+    {
+      "repr": {
+        "name": "bool",
+        "kind": "primitive",
+        "c_type": "bool",
+        "size_bits": 8,
+        "signed": false
+      }
+    },
+    {
+      "repr": {
+        "name": "char*",
+        "kind": "primitive",
+        "c_type": "char*",
+        "size_bits": 64,
+        "signed": false
+      }
+    },
+    {
+      "repr": {
+        "name": "Color",
+        "kind": "primitive",
+        "c_type": "Color",
+        "size_bits": 32,
+        "signed": false
+      }
+    },
+    {
+      "extern_io": {
+        "name": "InitWindow",
+        "c_name": "InitWindow",
+        "header": "<raylib.h>",
+        "args": [
+          {
+            "name": "width",
+            "repr": "int"
+          },
+          {
+            "name": "height",
+            "repr": "int"
+          },
+          {
+            "name": "title",
+            "repr": "char*"
+          }
+        ],
+        "result": null,
+        "type": {
+          "pi": {
+            "arg": {
+              "name": "width",
+              "type": {
+                "prim": "Int32"
+              }
+            },
+            "result": {
+              "pi": {
+                "arg": {
+                  "name": "height",
+                  "type": {
+                    "prim": "Int32"
+                  }
+                },
+                "result": {
+                  "pi": {
+                    "arg": {
+                      "name": "title",
+                      "type": {
+                        "prim": "String"
+                      }
+                    },
+                    "result": {
+                      "app": [
+                        {
+                          "var": "IO"
+                        },
+                        {
+                          "var": "Unit"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "extern_io": {
+        "name": "WindowShouldClose",
+        "c_name": "WindowShouldClose",
+        "header": "<raylib.h>",
+        "args": [],
+        "result": {
+          "repr": "bool"
+        },
+        "type": {
+          "pi": {
+            "arg": {
+              "name": "_",
+              "type": {
+                "var": "Unit"
+              }
+            },
+            "result": {
+              "app": [
+                {
+                  "var": "IO"
+                },
+                {
+                  "prim": "Bool"
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "extern_io": {
+        "name": "CloseWindow",
+        "c_name": "CloseWindow",
+        "header": "<raylib.h>",
+        "args": [],
+        "result": null,
+        "type": {
+          "pi": {
+            "arg": {
+              "name": "_",
+              "type": {
+                "var": "Unit"
+              }
+            },
+            "result": {
+              "app": [
+                {
+                  "var": "IO"
+                },
+                {
+                  "var": "Unit"
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "extern_io": {
+        "name": "BeginDrawing",
+        "c_name": "BeginDrawing",
+        "header": "<raylib.h>",
+        "args": [],
+        "result": null,
+        "type": {
+          "pi": {
+            "arg": {
+              "name": "_",
+              "type": {
+                "var": "Unit"
+              }
+            },
+            "result": {
+              "app": [
+                {
+                  "var": "IO"
+                },
+                {
+                  "var": "Unit"
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "extern_io": {
+        "name": "EndDrawing",
+        "c_name": "EndDrawing",
+        "header": "<raylib.h>",
+        "args": [],
+        "result": null,
+        "type": {
+          "pi": {
+            "arg": {
+              "name": "_",
+              "type": {
+                "var": "Unit"
+              }
+            },
+            "result": {
+              "app": [
+                {
+                  "var": "IO"
+                },
+                {
+                  "var": "Unit"
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "extern_io": {
+        "name": "ClearBackground",
+        "c_name": "ClearBackground",
+        "header": "<raylib.h>",
+        "args": [
+          {
+            "name": "color",
+            "repr": "Color"
+          }
+        ],
+        "result": null,
+        "type": {
+          "pi": {
+            "arg": {
+              "name": "color",
+              "type": {
+                "var": "Color"
+              }
+            },
+            "result": {
+              "app": [
+                {
+                  "var": "IO"
+                },
+                {
+                  "var": "Unit"
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "extern_c": {
+        "name": "MakeColor_Wrapper",
+        "c_name": "MakeColor_Wrapper",
+        "header": "\"raylib_helper.h\"",
+        "signature": {
+          "args": [
+            {
+              "name": "r",
+              "repr": "int"
+            },
+            {
+              "name": "g",
+              "repr": "int"
+            },
+            {
+              "name": "b",
+              "repr": "int"
+            },
+            {
+              "name": "a",
+              "repr": "int"
+            }
+          ],
+          "return": {
+            "repr": "Color"
+          }
+        },
+        "type": {
+          "pi": {
+            "arg": {
+              "name": "r",
+              "type": {
+                "prim": "Int32"
+              }
+            },
+            "result": {
+              "pi": {
+                "arg": {
+                  "name": "g",
+                  "type": {
+                    "prim": "Int32"
+                  }
+                },
+                "result": {
+                  "pi": {
+                    "arg": {
+                      "name": "b",
+                      "type": {
+                        "prim": "Int32"
+                      }
+                    },
+                    "result": {
+                      "pi": {
+                        "arg": {
+                          "name": "a",
+                          "type": {
+                            "prim": "Int32"
+                          }
+                        },
+                        "result": {
+                          "var": "Color"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "extern_io": {
+        "name": "DrawRectangle",
+        "c_name": "DrawRectangle",
+        "header": "<raylib.h>",
+        "args": [
+          {
+            "name": "posX",
+            "repr": "int"
+          },
+          {
+            "name": "posY",
+            "repr": "int"
+          },
+          {
+            "name": "width",
+            "repr": "int"
+          },
+          {
+            "name": "height",
+            "repr": "int"
+          },
+          {
+            "name": "color",
+            "repr": "Color"
+          }
+        ],
+        "result": null,
+        "type": {
+          "pi": {
+            "arg": {
+              "name": "posX",
+              "type": {
+                "prim": "Int32"
+              }
+            },
+            "result": {
+              "pi": {
+                "arg": {
+                  "name": "posY",
+                  "type": {
+                    "prim": "Int32"
+                  }
+                },
+                "result": {
+                  "pi": {
+                    "arg": {
+                      "name": "width",
+                      "type": {
+                        "prim": "Int32"
+                      }
+                    },
+                    "result": {
+                      "pi": {
+                        "arg": {
+                          "name": "height",
+                          "type": {
+                            "prim": "Int32"
+                          }
+                        },
+                        "result": {
+                          "pi": {
+                            "arg": {
+                              "name": "color",
+                              "type": {
+                                "var": "Color"
+                              }
+                            },
+                            "result": {
+                              "app": [
+                                {
+                                  "var": "IO"
+                                },
+                                {
+                                  "var": "Unit"
+                                }
+                              ]
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "extern_io": {
+        "name": "DrawText",
+        "c_name": "DrawText",
+        "header": "<raylib.h>",
+        "args": [
+          {
+            "name": "text",
+            "repr": "char*"
+          },
+          {
+            "name": "posX",
+            "repr": "int"
+          },
+          {
+            "name": "posY",
+            "repr": "int"
+          },
+          {
+            "name": "fontSize",
+            "repr": "int"
+          },
+          {
+            "name": "color",
+            "repr": "Color"
+          }
+        ],
+        "result": null,
+        "type": {
+          "pi": {
+            "arg": {
+              "name": "text",
+              "type": {
+                "prim": "String"
+              }
+            },
+            "result": {
+              "pi": {
+                "arg": {
+                  "name": "posX",
+                  "type": {
+                    "prim": "Int32"
+                  }
+                },
+                "result": {
+                  "pi": {
+                    "arg": {
+                      "name": "posY",
+                      "type": {
+                        "prim": "Int32"
+                      }
+                    },
+                    "result": {
+                      "pi": {
+                        "arg": {
+                          "name": "fontSize",
+                          "type": {
+                            "prim": "Int32"
+                          }
+                        },
+                        "result": {
+                          "pi": {
+                            "arg": {
+                              "name": "color",
+                              "type": {
+                                "var": "Color"
+                              }
+                            },
+                            "result": {
+                              "app": [
+                                {
+                                  "var": "IO"
+                                },
+                                {
+                                  "var": "Unit"
+                                }
+                              ]
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "extern_io": {
+        "name": "IsKeyDown",
+        "c_name": "IsKeyDown",
+        "header": "<raylib.h>",
+        "args": [
+          {
+            "name": "key",
+            "repr": "int"
+          }
+        ],
+        "result": {
+          "repr": "bool"
+        },
+        "type": {
+          "pi": {
+            "arg": {
+              "name": "key",
+              "type": {
+                "prim": "Int32"
+              }
+            },
+            "result": {
+              "app": [
+                {
+                  "var": "IO"
+                },
+                {
+                  "prim": "Bool"
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "extern_io": {
+        "name": "SetTargetFPS",
+        "c_name": "SetTargetFPS",
+        "header": "<raylib.h>",
+        "args": [
+          {
+            "name": "fps",
+            "repr": "int"
+          }
+        ],
+        "result": null,
+        "type": {
+          "pi": {
+            "arg": {
+              "name": "fps",
+              "type": {
+                "prim": "Int32"
+              }
+            },
+            "result": {
+              "app": [
+                {
+                  "var": "IO"
+                },
+                {
+                  "var": "Unit"
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "extern_c": {
+        "name": "IntToString",
+        "c_name": "IntToString",
+        "header": "\"raylib_helper.h\"",
+        "signature": {
+          "args": [
+            {
+              "name": "val",
+              "repr": "int"
+            }
+          ],
+          "return": {
+            "repr": "char*"
+          }
+        },
+        "type": {
+          "pi": {
+            "arg": {
+              "name": "val",
+              "type": {
+                "prim": "Int32"
+              }
+            },
+            "result": {
+              "prim": "String"
+            }
+          }
+        }
+      }
+    }
+  ]
+}

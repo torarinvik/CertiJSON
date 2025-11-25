@@ -1,0 +1,370 @@
+{
+  "module": "Std.Math",
+  "imports": [],
+  "declarations": [
+    {
+      "def": {
+        "name": "add",
+        "role": "proof_only",
+        "type": {
+          "pi": {
+            "arg": {
+              "name": "a",
+              "type": {
+                "prim": "Int32"
+              }
+            },
+            "result": {
+              "pi": {
+                "arg": {
+                  "name": "b",
+                  "type": {
+                    "prim": "Int32"
+                  }
+                },
+                "result": {
+                  "prim": "Int32"
+                }
+              }
+            }
+          }
+        },
+        "body": {
+          "lambda": {
+            "arg": {
+              "name": "a",
+              "type": {
+                "prim": "Int32"
+              }
+            },
+            "body": {
+              "lambda": {
+                "arg": {
+                  "name": "b",
+                  "type": {
+                    "prim": "Int32"
+                  }
+                },
+                "body": {
+                  "int32": 0
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "def": {
+        "name": "sub",
+        "role": "proof_only",
+        "type": {
+          "pi": {
+            "arg": {
+              "name": "a",
+              "type": {
+                "prim": "Int32"
+              }
+            },
+            "result": {
+              "pi": {
+                "arg": {
+                  "name": "b",
+                  "type": {
+                    "prim": "Int32"
+                  }
+                },
+                "result": {
+                  "prim": "Int32"
+                }
+              }
+            }
+          }
+        },
+        "body": {
+          "lambda": {
+            "arg": {
+              "name": "a",
+              "type": {
+                "prim": "Int32"
+              }
+            },
+            "body": {
+              "lambda": {
+                "arg": {
+                  "name": "b",
+                  "type": {
+                    "prim": "Int32"
+                  }
+                },
+                "body": {
+                  "int32": 0
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "def": {
+        "name": "mul",
+        "role": "proof_only",
+        "type": {
+          "pi": {
+            "arg": {
+              "name": "a",
+              "type": {
+                "prim": "Int32"
+              }
+            },
+            "result": {
+              "pi": {
+                "arg": {
+                  "name": "b",
+                  "type": {
+                    "prim": "Int32"
+                  }
+                },
+                "result": {
+                  "prim": "Int32"
+                }
+              }
+            }
+          }
+        },
+        "body": {
+          "lambda": {
+            "arg": {
+              "name": "a",
+              "type": {
+                "prim": "Int32"
+              }
+            },
+            "body": {
+              "lambda": {
+                "arg": {
+                  "name": "b",
+                  "type": {
+                    "prim": "Int32"
+                  }
+                },
+                "body": {
+                  "int32": 0
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "def": {
+        "name": "div",
+        "role": "proof_only",
+        "type": {
+          "pi": {
+            "arg": {
+              "name": "a",
+              "type": {
+                "prim": "Int32"
+              }
+            },
+            "result": {
+              "pi": {
+                "arg": {
+                  "name": "b",
+                  "type": {
+                    "prim": "Int32"
+                  }
+                },
+                "result": {
+                  "prim": "Int32"
+                }
+              }
+            }
+          }
+        },
+        "body": {
+          "lambda": {
+            "arg": {
+              "name": "a",
+              "type": {
+                "prim": "Int32"
+              }
+            },
+            "body": {
+              "lambda": {
+                "arg": {
+                  "name": "b",
+                  "type": {
+                    "prim": "Int32"
+                  }
+                },
+                "body": {
+                  "int32": 0
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "def": {
+        "name": "lt",
+        "role": "proof_only",
+        "type": {
+          "pi": {
+            "arg": {
+              "name": "a",
+              "type": {
+                "prim": "Int32"
+              }
+            },
+            "result": {
+              "pi": {
+                "arg": {
+                  "name": "b",
+                  "type": {
+                    "prim": "Int32"
+                  }
+                },
+                "result": {
+                  "prim": "Bool"
+                }
+              }
+            }
+          }
+        },
+        "body": {
+          "lambda": {
+            "arg": {
+              "name": "a",
+              "type": {
+                "prim": "Int32"
+              }
+            },
+            "body": {
+              "lambda": {
+                "arg": {
+                  "name": "b",
+                  "type": {
+                    "prim": "Int32"
+                  }
+                },
+                "body": {
+                  "bool": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "def": {
+        "name": "gt",
+        "role": "proof_only",
+        "type": {
+          "pi": {
+            "arg": {
+              "name": "a",
+              "type": {
+                "prim": "Int32"
+              }
+            },
+            "result": {
+              "pi": {
+                "arg": {
+                  "name": "b",
+                  "type": {
+                    "prim": "Int32"
+                  }
+                },
+                "result": {
+                  "prim": "Bool"
+                }
+              }
+            }
+          }
+        },
+        "body": {
+          "lambda": {
+            "arg": {
+              "name": "a",
+              "type": {
+                "prim": "Int32"
+              }
+            },
+            "body": {
+              "lambda": {
+                "arg": {
+                  "name": "b",
+                  "type": {
+                    "prim": "Int32"
+                  }
+                },
+                "body": {
+                  "bool": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "def": {
+        "name": "eq",
+        "role": "proof_only",
+        "type": {
+          "pi": {
+            "arg": {
+              "name": "a",
+              "type": {
+                "prim": "Int32"
+              }
+            },
+            "result": {
+              "pi": {
+                "arg": {
+                  "name": "b",
+                  "type": {
+                    "prim": "Int32"
+                  }
+                },
+                "result": {
+                  "prim": "Bool"
+                }
+              }
+            }
+          }
+        },
+        "body": {
+          "lambda": {
+            "arg": {
+              "name": "a",
+              "type": {
+                "prim": "Int32"
+              }
+            },
+            "body": {
+              "lambda": {
+                "arg": {
+                  "name": "b",
+                  "type": {
+                    "prim": "Int32"
+                  }
+                },
+                "body": {
+                  "bool": false
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

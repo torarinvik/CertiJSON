@@ -3,6 +3,7 @@
 #include <stdbool.h>
 #include <certijson_io.h>
 #include "raylib_helper.h"
+#include <certijson_io.h>
 #include <raylib.h>
 
 

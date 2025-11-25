@@ -41,7 +41,3 @@ struct Point make_point(int x, int y) {
     struct Point p = {x, y};
     return p;
 }
-
-void DrawPixel(int x, int y, unsigned int color) {
-    printf("DrawPixel(%d, %d, %08X)\n", x, y, color);
-}

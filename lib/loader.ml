@@ -25,8 +25,10 @@ let resolve_import (name : name) : string option =
   (* Or we can just map "Std.IO" -> "std_io.json" and look in stdlib. *)
   
   let filename = 
-    if name = "Std.IO" then "std_io.json"
-    else name ^ ".json" 
+    match name with
+    | "Std.IO" -> "std_io.json"
+    | "Std.Math" -> "std_math.json"
+    | _ -> name ^ ".json" 
   in
   let paths = ["."; "stdlib"] in
   List.find_map (fun dir ->
