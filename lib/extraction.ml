@@ -87,6 +87,14 @@ let rec pp_c_stmt fmt = function
       | Some e -> Format.fprintf fmt " else %a" pp_c_stmt e
       | None -> ())
 
+let pp_c_func_sig fmt f =
+  Format.fprintf fmt "%a %s(%a);"
+    pp_c_type f.ret_type
+    f.name
+    (Format.pp_print_list ~pp_sep:(fun fmt () -> Format.fprintf fmt ", ")
+       (fun fmt (ty, name) -> Format.fprintf fmt "%a %s" pp_c_type ty name))
+    f.args
+
 let pp_c_func fmt f =
   Format.fprintf fmt "%a %s(%a) %a"
     pp_c_type f.ret_type
@@ -100,6 +108,8 @@ let pp_c_program fmt p =
   List.iter (fun inc -> Format.fprintf fmt "#include %s@\n" inc) p.includes;
   Format.fprintf fmt "@\n";
   List.iter (fun s -> Format.fprintf fmt "%s@\n" s) p.structs;
+  Format.fprintf fmt "@\n";
+  List.iter (fun f -> Format.fprintf fmt "%a@\n" pp_c_func_sig f) p.funcs;
   Format.fprintf fmt "@\n";
   List.iter (fun f -> Format.fprintf fmt "%a@\n@\n" pp_c_func f) p.funcs
 
@@ -143,14 +153,18 @@ let rec translate_type (ctx : Context.context) (t : Syntax.term) : c_type =
        | _ -> CUserType name)
   | _ -> CVoid (* Fallback *)
 
-let rec translate_term (ctx : Context.context) (t : Syntax.term) : c_expr =
+let rec translate_term (ctx : Context.context) (env : (string * string) list) (t : Syntax.term) : c_expr =
   match t.desc with
   | Literal (LitInt32 i) -> CLitInt32 i
   | Literal (LitInt64 i) -> CLitInt64 i
   | Literal (LitFloat64 f) -> CLitFloat f
   | Literal (LitBool b) -> CLitBool b
   | Literal (LitString s) -> CLitString s
-  | Var x -> CVar x
+  | Var x -> (
+      match List.assoc_opt x env with
+      | Some fresh -> CVar fresh
+      | None -> CVar x
+    )
   | App (f, args) -> (
       let name_opt =
         match f.desc with
@@ -159,16 +173,16 @@ let rec translate_term (ctx : Context.context) (t : Syntax.term) : c_expr =
         | _ -> None
       in
       match name_opt with
-      | Some "add" -> (match args with [a; b] -> CBinOp ("+", translate_term ctx a, translate_term ctx b) | _ -> CVar "<invalid_add>")
-      | Some "sub" -> (match args with [a; b] -> CBinOp ("-", translate_term ctx a, translate_term ctx b) | _ -> CVar "<invalid_sub>")
-      | Some "mul" -> (match args with [a; b] -> CBinOp ("*", translate_term ctx a, translate_term ctx b) | _ -> CVar "<invalid_mul>")
-      | Some "div" -> (match args with [a; b] -> CBinOp ("/", translate_term ctx a, translate_term ctx b) | _ -> CVar "<invalid_div>")
-      | Some "lt" -> (match args with [a; b] -> CBinOp ("<", translate_term ctx a, translate_term ctx b) | _ -> CVar "<invalid_lt>")
-      | Some "gt" -> (match args with [a; b] -> CBinOp (">", translate_term ctx a, translate_term ctx b) | _ -> CVar "<invalid_gt>")
-      | Some "eq" -> (match args with [a; b] -> CBinOp ("==", translate_term ctx a, translate_term ctx b) | _ -> CVar "<invalid_eq>")
+      | Some "add" -> (match args with [a; b] -> CBinOp ("+", translate_term ctx env a, translate_term ctx env b) | _ -> CVar "<invalid_add>")
+      | Some "sub" -> (match args with [a; b] -> CBinOp ("-", translate_term ctx env a, translate_term ctx env b) | _ -> CVar "<invalid_sub>")
+      | Some "mul" -> (match args with [a; b] -> CBinOp ("*", translate_term ctx env a, translate_term ctx env b) | _ -> CVar "<invalid_mul>")
+      | Some "div" -> (match args with [a; b] -> CBinOp ("/", translate_term ctx env a, translate_term ctx env b) | _ -> CVar "<invalid_div>")
+      | Some "lt" -> (match args with [a; b] -> CBinOp ("<", translate_term ctx env a, translate_term ctx env b) | _ -> CVar "<invalid_lt>")
+      | Some "gt" -> (match args with [a; b] -> CBinOp (">", translate_term ctx env a, translate_term ctx env b) | _ -> CVar "<invalid_gt>")
+      | Some "eq" -> (match args with [a; b] -> CBinOp ("==", translate_term ctx env a, translate_term ctx env b) | _ -> CVar "<invalid_eq>")
       | Some name -> (
           let args' = 
-            List.map (translate_term ctx) args 
+            List.map (translate_term ctx env) args 
             |> List.filter (function CVar "tt" -> false | _ -> true)
           in
           match Context.lookup ctx name with
@@ -178,10 +192,10 @@ let rec translate_term (ctx : Context.context) (t : Syntax.term) : c_expr =
               CCall (ext.c_name, args')
           | _ -> CCall (name, args')
         )
-      | None -> CCall ("<indirect>", List.map (translate_term ctx) args)
+      | None -> CCall ("<indirect>", List.map (translate_term ctx env) args)
     )
   | If { cond; then_; else_ } ->
-      CTernary (translate_term ctx cond, translate_term ctx then_, translate_term ctx else_)
+      CTernary (translate_term ctx env cond, translate_term ctx env then_, translate_term ctx env else_)
   | _ -> CVar "<unsupported>"
 
 let rec returns_universe (t : Syntax.term) : bool =
@@ -201,50 +215,6 @@ let rec get_return_type (t : Syntax.term) : Syntax.term =
   match t.desc with
   | Pi { result; _ } -> get_return_type result
   | _ -> t
-
-let rec translate_io (ctx : Context.context) (t : Syntax.term) (res_var : string option) : c_stmt list =
-  let is_global name t =
-    match t.desc with
-    | Global n | Var n -> String.equal n name
-    | _ -> false
-  in
-  match t.desc with
-  | App (f, [_; _; m; lam]) when is_global "bind" f ->
-      (match lam.desc with
-       | Lambda { arg; body } ->
-           let var_name = arg.name in (* TODO: fresh name *)
-           let ty = translate_type ctx arg.ty in
-           let res_var_for_m = if ty = CVoid then None else Some var_name in
-           let m_stmts = translate_io ctx m res_var_for_m in
-           let decl = 
-             if ty = CVoid then [] 
-             else [CDecl (ty, var_name, None)]
-           in
-           let f_stmts = translate_io ctx body res_var in
-           decl @ m_stmts @ f_stmts
-       | _ -> [CExpr (CVar "/* bind with non-lambda */")]
-      )
-  | App (f, [_; x]) when is_global "return" f ->
-      (match res_var with
-       | Some v -> [CExpr (CAssign (v, translate_term ctx x))]
-       | None -> []
-      )
-  | App (_, _) ->
-      let call = translate_term ctx t in
-      (match res_var with
-       | Some v -> [CExpr (CAssign (v, call))] 
-       | None -> [CExpr call]
-      )
-  | If { cond; then_; else_ } ->
-      let cond_expr = translate_term ctx cond in
-      let then_stmts = translate_io ctx then_ res_var in
-      let else_stmts = translate_io ctx else_ res_var in
-      let then_block = CBlock then_stmts in
-      let else_block = match else_stmts with [] -> None | _ -> Some (CBlock else_stmts) in
-      [CIf (cond_expr, then_block, else_block)]
-  | _ -> 
-      Format.eprintf "translate_io fallback: %a@." Syntax.pp_term t;
-      [CExpr (translate_term ctx t)]
 
 let extract_def (ctx : Context.context) (def : Syntax.def_decl) : c_func option =
   if def.def_role = Syntax.ProofOnly || returns_universe def.def_type 
@@ -266,9 +236,61 @@ let extract_def (ctx : Context.context) (def : Syntax.def_decl) : c_func option 
            | _ -> false)
       | _ -> false
     in
+
+    let counter = ref 0 in
+    let fresh_name base =
+      incr counter;
+      Printf.sprintf "%s_%d" base !counter
+    in
+
+    let rec translate_io (ctx : Context.context) (env : (string * string) list) (t : Syntax.term) (res_var : string option) : c_stmt list =
+      let is_global name t =
+        match t.desc with
+        | Global n | Var n -> String.equal n name
+        | _ -> false
+      in
+      match t.desc with
+      | App (f, [_; _; m; lam]) when is_global "bind" f ->
+          (match lam.desc with
+           | Lambda { arg; body } ->
+               let var_name = fresh_name arg.name in
+               let env' = (arg.name, var_name) :: env in
+               let ty = translate_type ctx arg.ty in
+               let res_var_for_m = if ty = CVoid then None else Some var_name in
+               let m_stmts = translate_io ctx env m res_var_for_m in
+               let decl = 
+                 if ty = CVoid then [] 
+                 else [CDecl (ty, var_name, None)]
+               in
+               let f_stmts = translate_io ctx env' body res_var in
+               decl @ m_stmts @ f_stmts
+           | _ -> [CExpr (CVar "/* bind with non-lambda */")]
+          )
+      | App (f, [_; x]) when is_global "return" f ->
+          (match res_var with
+           | Some v -> [CExpr (CAssign (v, translate_term ctx env x))]
+           | None -> []
+          )
+      | App (_, _) ->
+          let call = translate_term ctx env t in
+          (match res_var with
+           | Some v -> [CExpr (CAssign (v, call))] 
+           | None -> [CExpr call]
+          )
+      | If { cond; then_; else_ } ->
+          let cond_expr = translate_term ctx env cond in
+          let then_stmts = translate_io ctx env then_ res_var in
+          let else_stmts = translate_io ctx env else_ res_var in
+          let then_block = CBlock then_stmts in
+          let else_block = match else_stmts with [] -> None | _ -> Some (CBlock else_stmts) in
+          [CIf (cond_expr, then_block, else_block)]
+      | _ -> 
+          Format.eprintf "translate_io fallback: %a@." Syntax.pp_term t;
+          [CExpr (translate_term ctx env t)]
+    in
     
     if is_io then
-      let body_stmts = translate_io ctx body None in
+      let body_stmts = translate_io ctx [] body None in
       if String.equal def.def_name "main" then
         Some {
           name = "main";
@@ -284,7 +306,7 @@ let extract_def (ctx : Context.context) (def : Syntax.def_decl) : c_func option 
           body = CBlock body_stmts;
         }
     else
-      let body_expr = translate_term ctx body in
+      let body_expr = translate_term ctx [] body in
       let stmt =
         if ret_type = CVoid then CExpr body_expr
         else CReturn body_expr
