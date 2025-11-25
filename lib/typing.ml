@@ -119,10 +119,51 @@ let rec whnf (ctx : context) (t : term) : term =
   | Rewrite { body; _ } -> whnf ctx body  (* rewrite is computationally identity *)
   | _ -> t
 
+(** Check structural equality ignoring locations. *)
+let rec equal_ignoring_loc (t1 : term) (t2 : term) : bool =
+  match (t1.desc, t2.desc) with
+  | Var x, Var y -> String.equal x y
+  | Universe u1, Universe u2 -> equal_universe u1 u2
+  | PrimType p1, PrimType p2 -> equal_prim_type p1 p2
+  | Literal l1, Literal l2 -> equal_literal l1 l2
+  | Global n1, Global n2 -> String.equal n1 n2
+  | Pi { arg = a1; result = r1 }, Pi { arg = a2; result = r2 } ->
+      String.equal a1.name a2.name &&
+      equal_ignoring_loc a1.ty a2.ty &&
+      equal_ignoring_loc r1 r2
+  | Lambda { arg = a1; body = b1 }, Lambda { arg = a2; body = b2 } ->
+      String.equal a1.name a2.name &&
+      equal_ignoring_loc a1.ty a2.ty &&
+      equal_ignoring_loc b1 b2
+  | App (f1, args1), App (f2, args2) ->
+      equal_ignoring_loc f1 f2 &&
+      List.length args1 = List.length args2 &&
+      List.for_all2 equal_ignoring_loc args1 args2
+  | Eq { ty = t1; lhs = l1; rhs = r1 }, Eq { ty = t2; lhs = l2; rhs = r2 } ->
+      equal_ignoring_loc t1 t2 && equal_ignoring_loc l1 l2 && equal_ignoring_loc r1 r2
+  | Refl { ty = t1; value = v1 }, Refl { ty = t2; value = v2 } ->
+      equal_ignoring_loc t1 t2 && equal_ignoring_loc v1 v2
+  | Rewrite { proof = p1; body = b1 }, Rewrite { proof = p2; body = b2 } ->
+      equal_ignoring_loc p1 p2 && equal_ignoring_loc b1 b2
+  | Match m1, Match m2 ->
+      equal_ignoring_loc m1.scrutinee m2.scrutinee &&
+      equal_ignoring_loc m1.motive m2.motive &&
+      Option.equal String.equal m1.as_name m2.as_name &&
+      List.length m1.cases = List.length m2.cases &&
+      List.for_all2 (fun c1 c2 ->
+        String.equal c1.pattern.ctor c2.pattern.ctor &&
+        List.length c1.pattern.args = List.length c2.pattern.args &&
+        List.for_all2 (fun a1 a2 -> String.equal a1.arg_name a2.arg_name) c1.pattern.args c2.pattern.args &&
+        equal_ignoring_loc c1.body c2.body
+      ) m1.cases m2.cases
+  | _ -> false
+
 (** Check definitional equality of two terms. *)
 let rec conv (ctx : context) (t1 : term) (t2 : term) : bool =
+  if equal_ignoring_loc t1 t2 then true else
   let t1' = whnf ctx t1 in
   let t2' = whnf ctx t2 in
+  if equal_ignoring_loc t1' t2' then true else
   conv_whnf ctx t1' t2'
 
 and conv_whnf (ctx : context) (t1 : term) (t2 : term) : bool =
@@ -148,6 +189,39 @@ and conv_whnf (ctx : context) (t1 : term) (t2 : term) : bool =
       conv ctx t1 t2 && conv ctx l1 l2 && conv ctx r1 r2
   | Refl { ty = t1; value = v1 }, Refl { ty = t2; value = v2 } ->
       conv ctx t1 t2 && conv ctx v1 v2
+  | Match { scrutinee = s1; motive = m1; as_name = as1; cases = c1; _ },
+    Match { scrutinee = s2; motive = m2; as_name = as2; cases = c2; _ } ->
+      conv ctx s1 s2 &&
+      (match (as1, as2) with
+       | None, None -> conv ctx m1 m2
+       | Some n1, Some n2 ->
+           let m2' = subst n2 (mk (Var n1)) m2 in
+           conv ctx m1 m2'
+       | _ -> false) &&
+      List.length c1 = List.length c2 &&
+      List.for_all2 (fun case1 case2 ->
+        String.equal case1.pattern.ctor case2.pattern.ctor &&
+        List.length case1.pattern.args = List.length case2.pattern.args &&
+        let substs =
+          List.map2 (fun a1 a2 -> (a2.arg_name, mk (Var a1.arg_name)))
+            case1.pattern.args case2.pattern.args
+        in
+        let body2 = List.fold_left (fun acc (x, s) -> subst x s acc) case2.body substs in
+        let body2 =
+          match (as1, as2) with
+          | Some n1, Some n2 -> subst n2 (mk (Var n1)) body2
+          | _ -> body2
+        in
+        let ctx' =
+          List.fold_left (fun c a -> extend c a.arg_name (mk (Universe Type))) ctx case1.pattern.args
+        in
+        let ctx' =
+          match as1 with
+          | Some n -> extend ctx' n (mk (Universe Type))
+          | None -> ctx'
+        in
+        conv ctx' case1.body body2
+      ) c1 c2
   | _ -> false
 
 (** Substitute a list of (name, term) pairs into a term. *)

@@ -646,6 +646,93 @@ let test_list_length_nil () =
               }
             }
           }
+        },
+        {
+          "theorem": {
+            "name": "length_cons",
+            "type": {
+              "forall": {
+                "arg": { "name": "A", "type": { "universe": "Type" } },
+                "result": {
+                  "forall": {
+                    "arg": { "name": "x", "type": { "var": "A" } },
+                    "result": {
+                      "forall": {
+                        "arg": { "name": "xs", "type": { "app": [{ "var": "List" }, { "var": "A" }] } },
+                        "result": {
+                          "eq": {
+                            "type": { "var": "Nat" },
+                            "lhs": {
+                              "app": [
+                                { "var": "length" },
+                                { "var": "A" },
+                                {
+                                  "app": [
+                                    { "var": "cons" },
+                                    { "var": "A" },
+                                    { "var": "x" },
+                                    { "var": "xs" }
+                                  ]
+                                }
+                              ]
+                            },
+                            "rhs": {
+                              "app": [
+                                { "var": "succ" },
+                                {
+                                  "app": [
+                                    { "var": "length" },
+                                    { "var": "A" },
+                                    { "var": "xs" }
+                                  ]
+                                }
+                              ]
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "proof": {
+              "lambda": {
+                "arg": { "name": "A", "type": { "universe": "Type" } },
+                "body": {
+                  "lambda": {
+                    "arg": { "name": "x", "type": { "var": "A" } },
+                    "body": {
+                      "lambda": {
+                        "arg": { "name": "xs", "type": { "app": [{ "var": "List" }, { "var": "A" }] } },
+                        "body": {
+                          "refl": {
+                            "eq": {
+                              "type": { "var": "Nat" },
+                              "lhs": {
+                                "app": [
+                                  { "var": "length" },
+                                  { "var": "A" },
+                                  {
+                                    "app": [
+                                      { "var": "cons" },
+                                      { "var": "A" },
+                                      { "var": "x" },
+                                      { "var": "xs" }
+                                    ]
+                                  }
+                                ]
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
         }
       ]
     }
