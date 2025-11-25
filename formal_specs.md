@@ -1903,6 +1903,42 @@ This design allows CertiJSON to be:
         },
         "rec_args": [1]
       }
+    },
+    {
+      "theorem": {
+        "name": "length_nil",
+        "type": {
+          "forall": {
+            "arg": { "name": "A", "type": { "universe": "Type" } },
+            "result": {
+              "eq": {
+                "type": { "var": "Nat" },
+                "lhs": {
+                  "app": [
+                    { "var": "length" },
+                    { "var": "A" },
+                    { "app": [{ "var": "nil" }, { "var": "A" }] }
+                  ]
+                },
+                "rhs": { "var": "zero" }
+              }
+            }
+          }
+        },
+        "proof": {
+          "lambda": {
+            "arg": { "name": "A", "type": { "universe": "Type" } },
+            "body": {
+              "refl": {
+                "eq": {
+                  "type": { "var": "Nat" },
+                  "lhs": { "var": "zero" }
+                }
+              }
+            }
+          }
+        }
+      }
     }
   ]
 }

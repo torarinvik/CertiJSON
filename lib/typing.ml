@@ -73,33 +73,49 @@ let rec whnf (ctx : context) (t : term) : term =
       | Some (`Global (GDefinition def)) when def.def_role <> ProofOnly ->
           whnf ctx def.def_body
       | _ -> t)
-  | Match { scrutinee; cases; _ } -> (
+  | Match { scrutinee; motive; as_name; cases; coverage_hint } -> (
       let scrut' = whnf ctx scrutinee in
+      let reconstruct () =
+        mk ?loc:t.loc
+          (Match { scrutinee = scrut'; motive; as_name; cases; coverage_hint })
+      in
       match scrut'.desc with
       | App ({ desc = Global ctor_name | Var ctor_name; _ }, ctor_args) -> (
           match
             List.find_opt (fun c -> String.equal c.pattern.ctor ctor_name) cases
           with
           | Some case ->
-              let bindings =
-                List.combine (List.map (fun a -> a.arg_name) case.pattern.args) ctor_args
-              in
-              let body =
-                List.fold_left
-                  (fun acc (x, v) -> subst x v acc)
-                  case.body bindings
-              in
-              whnf ctx body
-          | None ->
-              mk ?loc:t.loc
-                (Match { scrutinee = scrut'; motive = t; as_name = None; cases; coverage_hint = Unknown }))
+              let pat_args = List.map (fun a -> a.arg_name) case.pattern.args in
+              let num_pat_args = List.length pat_args in
+              let num_ctor_args = List.length ctor_args in
+              if num_ctor_args < num_pat_args then
+                reconstruct ()
+              else
+                let field_args =
+                  let skip = num_ctor_args - num_pat_args in
+                  let rec drop n xs =
+                    match n, xs with
+                    | 0, _ -> xs
+                    | k, _ :: ys -> drop (k - 1) ys
+                    | _, [] -> []
+                  in
+                  drop skip ctor_args
+                in
+                let bindings = List.combine pat_args field_args in
+                let body =
+                  List.fold_left
+                    (fun acc (x, v) -> subst x v acc)
+                    case.body bindings
+                in
+                whnf ctx body
+          | None -> reconstruct ())
       | Global ctor_name | Var ctor_name -> (
           match
             List.find_opt (fun c -> String.equal c.pattern.ctor ctor_name) cases
           with
           | Some case when case.pattern.args = [] -> whnf ctx case.body
-          | _ -> t)
-      | _ -> t)
+          | _ -> reconstruct ())
+      | _ -> reconstruct ())
   | Rewrite { body; _ } -> whnf ctx body  (* rewrite is computationally identity *)
   | _ -> t
 

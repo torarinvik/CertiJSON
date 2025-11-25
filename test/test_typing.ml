@@ -527,6 +527,136 @@ let test_ffi_error () =
       | Error (Typing.InDeclaration ("BadStruct", _, Typing.InvalidRepr ("BadStruct", _))) -> ()
       | Error e -> fail (Typing.string_of_typing_error e))
 
+let test_list_length_nil () =
+  let json = {|
+    {
+      "module": "Std.List",
+      "imports": [],
+      "declarations": [
+        {
+          "inductive": {
+            "name": "Nat",
+            "params": [],
+            "universe": "Type",
+            "constructors": [
+              { "name": "zero", "args": [] },
+              { "name": "succ", "args": [{ "name": "n", "type": { "var": "Nat" } }] }
+            ]
+          }
+        },
+        {
+          "inductive": {
+            "name": "List",
+            "params": [{ "name": "A", "type": { "universe": "Type" } }],
+            "universe": "Type",
+            "constructors": [
+              { "name": "nil", "args": [] },
+              {
+                "name": "cons",
+                "args": [
+                  { "name": "x", "type": { "var": "A" } },
+                  { "name": "rest", "type": { "app": [{ "var": "List" }, { "var": "A" }] } }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "def": {
+            "name": "length",
+            "type": {
+              "forall": {
+                "arg": { "name": "A", "type": { "universe": "Type" } },
+                "result": {
+                  "pi": {
+                    "arg": { "name": "xs", "type": { "app": [{ "var": "List" }, { "var": "A" }] } },
+                    "result": { "var": "Nat" }
+                  }
+                }
+              }
+            },
+            "body": {
+              "lambda": {
+                "arg": { "name": "A", "type": { "universe": "Type" } },
+                "body": {
+                  "lambda": {
+                    "arg": { "name": "xs", "type": { "app": [{ "var": "List" }, { "var": "A" }] } },
+                    "body": {
+                      "match": {
+                        "scrutinee": { "var": "xs" },
+                        "motive": { "var": "Nat" },
+                        "as": "z",
+                        "cases": [
+                          {
+                            "pattern": { "ctor": "nil", "args": [] },
+                            "body": { "var": "zero" }
+                          },
+                          {
+                            "pattern": { "ctor": "cons", "args": [{ "name": "x" }, { "name": "rest" }] },
+                            "body": {
+                              "app": [
+                                { "var": "succ" },
+                                { "app": [{ "var": "length" }, { "var": "A" }, { "var": "rest" }] }
+                              ]
+                            }
+                          }
+                        ],
+                        "coverage_hint": "complete"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "rec_args": [1]
+          }
+        },
+        {
+          "theorem": {
+            "name": "length_nil",
+            "type": {
+              "forall": {
+                "arg": { "name": "A", "type": { "universe": "Type" } },
+                "result": {
+                  "eq": {
+                    "type": { "var": "Nat" },
+                    "lhs": {
+                      "app": [
+                        { "var": "length" },
+                        { "var": "A" },
+                        { "app": [{ "var": "nil" }, { "var": "A" }] }
+                      ]
+                    },
+                    "rhs": { "var": "zero" }
+                  }
+                }
+              }
+            },
+            "proof": {
+              "lambda": {
+                "arg": { "name": "A", "type": { "universe": "Type" } },
+                "body": {
+                  "refl": {
+                    "eq": {
+                      "type": { "var": "Nat" },
+                      "lhs": { "var": "zero" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  |} in
+  match Json_parser.parse_string json with
+  | Error e -> fail (Json_parser.show_parse_error e)
+  | Ok m -> (
+      match Typing.check_module m with
+      | Error e -> fail (Typing.string_of_typing_error e)
+      | Ok _ -> ())
+
 let () =
   run "Typing" [
     "basic", [
@@ -541,6 +671,7 @@ let () =
       test_case "simple refl theorem" `Quick test_simple_refl_theorem;
       test_case "computational refl theorem" `Quick test_computational_refl_theorem;
       test_case "refl type mismatch" `Quick test_refl_type_mismatch;
+      test_case "list length nil" `Quick test_list_length_nil;
     ];
     "ffi", [
       test_case "ffi validation" `Quick test_ffi_validation;
