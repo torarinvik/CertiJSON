@@ -28,6 +28,7 @@ let resolve_import (name : name) : string option =
     match name with
     | "Std.IO" -> "std_io.json"
     | "Std.Math" -> "std_math.json"
+    | "Std.Memory" -> "std_memory.json"
     | _ -> name ^ ".json" 
   in
   let paths = ["."; "stdlib"] in
