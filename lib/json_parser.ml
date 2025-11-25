@@ -49,7 +49,7 @@ let parse_error_of_jsonm err =
   let msg = Format.asprintf "%a" Jsonm.pp_error err in
   ParseError (JsonError msg)
 
-let combine_range ((s1, _), _) (_, (e2, _)) = ((s1, 0), (e2, 0))
+let combine_range ((s1, c1), _) (_, (e2, c2)) = ((s1, c1), (e2, c2))
 
 let next dec =
   match Jsonm.decode dec with

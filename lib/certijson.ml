@@ -6,6 +6,7 @@
 
 module Syntax = Syntax
 module Json_parser = Json_parser
+module Loc = Loc
 
 (** {1 Type System} *)
 
