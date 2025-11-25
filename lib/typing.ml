@@ -478,12 +478,9 @@ let rec infer (ctx : context) (t : term) : term =
             else mk (App (mk (Var ctor.ctor_name), ctor_args))
           in
           let expected_branch_ty =
-            let with_scrut =
-              match as_name with
-              | Some n -> subst n ctor_term motive
-              | None -> motive
-            in
-            subst_many param_substs with_scrut
+            match as_name with
+            | Some n -> subst n ctor_term motive
+            | None -> motive
           in
           check branch_ctx case.body expected_branch_ty)
         cases;

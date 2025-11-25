@@ -1,0 +1,239 @@
+{
+  "module": "Std.IO",
+  "imports": [],
+  "declarations": [
+    {
+      "inductive": {
+        "name": "Unit",
+        "params": [],
+        "universe": "Type",
+        "constructors": [{ "name": "tt", "args": [] }]
+      }
+    },
+    {
+      "inductive": {
+        "name": "World",
+        "params": [],
+        "universe": "Type",
+        "constructors": [{ "name": "world_token", "args": [] }]
+      }
+    },
+    {
+      "inductive": {
+        "name": "Pair",
+        "params": [
+            { "name": "A", "type": { "universe": "Type" } },
+            { "name": "B", "type": { "universe": "Type" } }
+        ],
+        "universe": "Type",
+        "constructors": [
+            { 
+                "name": "pair", 
+                "args": [
+                    { "name": "fst", "type": { "var": "A" } },
+                    { "name": "snd", "type": { "var": "B" } }
+                ] 
+            }
+        ]
+      }
+    },
+    {
+      "def": {
+        "name": "IO",
+        "type": {
+          "pi": {
+            "arg": { "name": "A", "type": { "universe": "Type" } },
+            "result": { "universe": "Type" }
+          }
+        },
+        "body": {
+          "lambda": {
+            "arg": { "name": "A", "type": { "universe": "Type" } },
+            "body": {
+                "pi": {
+                    "arg": { "name": "w", "type": { "var": "World" } },
+                    "result": { 
+                        "app": [
+                            { "var": "Pair" }, 
+                            { "var": "A" }, 
+                            { "var": "World" }
+                        ] 
+                    }
+                }
+            }
+          }
+        }
+      }
+    },
+    {
+      "def": {
+        "name": "return",
+        "type": {
+          "forall": {
+            "arg": { "name": "A", "type": { "universe": "Type" } },
+            "result": {
+              "pi": {
+                "arg": { "name": "x", "type": { "var": "A" } },
+                "result": { "app": [{ "var": "IO" }, { "var": "A" }] }
+              }
+            }
+          }
+        },
+        "body": {
+          "lambda": {
+            "arg": { "name": "A", "type": { "universe": "Type" } },
+            "body": {
+              "lambda": {
+                "arg": { "name": "x", "type": { "var": "A" } },
+                "body": {
+                  "lambda": {
+                    "arg": { "name": "w", "type": { "var": "World" } },
+                    "body": {
+                      "app": [
+                        { "var": "pair" },
+                        { "var": "A" },
+                        { "var": "World" },
+                        { "var": "x" },
+                        { "var": "w" }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "def": {
+        "name": "bind",
+        "type": {
+          "forall": {
+            "arg": { "name": "A", "type": { "universe": "Type" } },
+            "result": {
+              "forall": {
+                "arg": { "name": "B", "type": { "universe": "Type" } },
+                "result": {
+                  "pi": {
+                    "arg": { "name": "m", "type": { "app": [{ "var": "IO" }, { "var": "A" }] } },
+                    "result": {
+                      "pi": {
+                        "arg": { 
+                          "name": "f", 
+                          "type": { 
+                            "pi": { 
+                              "arg": { "name": "x", "type": { "var": "A" } }, 
+                              "result": { "app": [{ "var": "IO" }, { "var": "B" }] } 
+                            } 
+                          } 
+                        },
+                        "result": { "app": [{ "var": "IO" }, { "var": "B" }] }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "body": {
+          "lambda": {
+            "arg": { "name": "A", "type": { "universe": "Type" } },
+            "body": {
+              "lambda": {
+                "arg": { "name": "B", "type": { "universe": "Type" } },
+                "body": {
+                  "lambda": {
+                    "arg": { "name": "m", "type": { "app": [{ "var": "IO" }, { "var": "A" }] } },
+                    "body": {
+                      "lambda": {
+                        "arg": { "name": "f", "type": { "pi": { "arg": { "name": "x", "type": { "var": "A" } }, "result": { "app": [{ "var": "IO" }, { "var": "B" }] } } } },
+                        "body": {
+                          "lambda": {
+                            "arg": { "name": "w", "type": { "var": "World" } },
+                            "body": {
+                              "match": {
+                                "scrutinee": { "app": [{ "var": "m" }, { "var": "w" }] },
+                                "motive": { "app": [{ "var": "Pair" }, { "var": "B" }, { "var": "World" }] },
+                                "cases": [
+                                  {
+                                    "pattern": { 
+                                      "ctor": "pair", 
+                                      "args": [{ "name": "a" }, { "name": "w_prime" }] 
+                                    },
+                                    "body": {
+                                      "app": [
+                                        { "var": "f" },
+                                        { "var": "a" },
+                                        { "var": "w_prime" }
+                                      ]
+                                    }
+                                  }
+                                ],
+                                "coverage_hint": "complete"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "repr": {
+        "name": "StringRepr",
+        "kind": "primitive",
+        "c_type": "char*",
+        "size_bits": 64,
+        "signed": false
+      }
+    },
+    {
+      "extern_io": {
+        "name": "print_line",
+        "c_name": "cj_print_line",
+        "header": "<certijson_io.h>",
+        "args": [{ "name": "s", "repr": "StringRepr" }],
+        "result": null,
+        "type": {
+          "pi": {
+            "arg": { "name": "s", "type": { "prim": "String" } },
+            "result": { "app": [{ "var": "IO" }, { "var": "Unit" }] }
+          }
+        }
+      }
+    },
+    {
+      "extern_io": {
+        "name": "print_string",
+        "c_name": "cj_print",
+        "header": "<certijson_io.h>",
+        "args": [{ "name": "s", "repr": "StringRepr" }],
+        "result": null,
+        "type": {
+          "pi": {
+            "arg": { "name": "s", "type": { "prim": "String" } },
+            "result": { "app": [{ "var": "IO" }, { "var": "Unit" }] }
+          }
+        }
+      }
+    },
+    {
+      "extern_io": {
+        "name": "read_line",
+        "c_name": "cj_read_line",
+        "header": "<certijson_io.h>",
+        "args": [],
+        "result": { "repr": "StringRepr" },
+        "type": { "app": [{ "var": "IO" }, { "prim": "String" }] }
+      }
+    }
+  ]
+}

@@ -17,6 +17,10 @@ module Typing = Typing
 
 module Eval = Eval
 
+(** {1 Extraction} *)
+
+module Extraction = Extraction
+
 (** {1 Utilities} *)
 
 module Error = Error

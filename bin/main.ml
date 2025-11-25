@@ -121,10 +121,36 @@ let run_cmd =
   let info = Cmd.info "run" ~doc in
   Cmd.v info Term.(ret (const do_run $ file $ def_name))
 
+let extract_cmd =
+  let file =
+    let doc = "The CertiJSON source file to extract." in
+    Arg.(required & pos 0 (some file) None & info [] ~docv:"FILE" ~doc)
+  in
+  let do_extract file =
+    match CJ.Json_parser.parse_file file with
+    | Error e ->
+        let err = CJ.Error.error_of_parse ~file e in
+        Fmt.epr "%a@." CJ.Error.pp_error err;
+        `Error (false, "parsing failed")
+    | Ok mod_ ->
+        match CJ.Typing.check_module mod_ with
+        | Error e ->
+            let err = CJ.Error.error_of_typing ~file e in
+            Fmt.epr "%a@." CJ.Error.pp_error err;
+            `Error (false, "type checking failed")
+        | Ok _ ->
+            let prog = CJ.Extraction.extract_module mod_ in
+            CJ.Extraction.pp_c_program Format.std_formatter prog;
+            `Ok ()
+  in
+  let doc = "Extract a CertiJSON file to C." in
+  let info = Cmd.info "extract" ~doc in
+  Cmd.v info Term.(ret (const do_extract $ file))
+
 (** {1 Main} *)
 
 let () =
   let doc = "A proof-based programming language for agentic LLMs" in
   let info = Cmd.info "certijson" ~version:"0.1.0" ~doc in
-  let cmds = [check_cmd; parse_cmd; eval_cmd; run_cmd] in
+  let cmds = [check_cmd; parse_cmd; eval_cmd; run_cmd; extract_cmd] in
   exit (Cmd.eval (Cmd.group info cmds))
