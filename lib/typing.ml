@@ -207,7 +207,11 @@ let rec conv (ctx : context) (t1 : term) (t2 : term) : bool =
 
 and conv_whnf (ctx : context) (t1 : term) (t2 : term) : bool =
   match (t1.desc, t2.desc) with
-  | Var x, Var y -> String.equal x y
+  | Var x, Var y ->
+      String.equal x y ||
+      (match (lookup ctx x, lookup ctx y) with
+       | (Some (`Global e1), Some (`Global e2)) -> e1 == e2
+       | _ -> false)
   | Universe u1, Universe u2 -> equal_universe u1 u2
   | PrimType p1, PrimType p2 -> equal_prim_type p1 p2
   | Literal l1, Literal l2 -> equal_literal l1 l2

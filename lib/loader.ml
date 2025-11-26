@@ -56,6 +56,8 @@ let resolve_import (config : config) (name : name) : string option =
     | "Std.Fin" -> ["std_fin.json"]
     | "Std.Array" -> ["std_array.json"]
     | "Std.Either" -> ["std_either.json"]
+    | "Std.Pointer" -> ["std_pointer.json"]
+    | "Std.Vec" -> ["std_vec.json"]
     | _ ->
         [ name ^ ".json";
           String.lowercase_ascii name ^ ".json";

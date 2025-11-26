@@ -116,18 +116,18 @@
                                 { "var": "cons" },
                                 { "var": "A" },
                                 { "var": "h" },
-                                { "subset_elim": { "var": "t" } }
+                                { "subset_elim": { "value": { "var": "t" } } }
                               ]
                             },
                             "proof": {
                               "rewrite": {
-                                "proof": { "subset_proof": { "var": "t" } },
+                                "proof": { "subset_proof": { "value": { "var": "t" } } },
                                 "in": {
                                   "refl": {
                                     "eq": {
                                       "type": { "var": "Nat" },
-                                      "lhs": { "app": [{ "var": "succ" }, { "var": "n" }] },
-                                      "rhs": { "app": [{ "var": "succ" }, { "var": "n" }] }
+                                      "lhs": { "app": [{ "var": "succ" }, { "app": [{ "var": "length" }, { "var": "A" }, { "subset_elim": { "value": { "var": "t" } } }] }] },
+                                      "rhs": { "app": [{ "var": "succ" }, { "app": [{ "var": "length" }, { "var": "A" }, { "subset_elim": { "value": { "var": "t" } } }] }] }
                                     }
                                   }
                                 }

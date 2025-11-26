@@ -63,6 +63,8 @@ let rec parse_type state =
        | "Float64" -> mk_term (PrimType Float64) None None
        | "Bool" -> mk_term (PrimType Bool) None None
        | "String" -> mk_term (PrimType String) None None
+       | "Type" -> mk_term (Universe Type) None None
+       | "Prop" -> mk_term (Universe Prop) None None
        | _ ->
            (match peek state with
             | LPAREN ->
@@ -83,9 +85,6 @@ let rec parse_type state =
              let result = parse_type state in
              mk_term (Pi { arg = { name; ty; role = Runtime; b_loc = None }; result }) None None
            ) else (
-              (* Assume it was a type name in parens, e.g. (Int) *)
-              (* But we consumed IDENT. We need to parse the rest of the type? *)
-              (* For now, let's just support (x: A) -> B *)
               raise (ParseError "Only dependent function types (x: A) -> B supported in parens")
            )
        | _ -> raise (ParseError "Expected identifier in dependent type"))
@@ -162,44 +161,59 @@ and parse_unary_expr state =
   | _ -> parse_primary_expr state
 
 and parse_primary_expr state =
+  let base =
+    match peek state with
+    | IDENT name ->
+        advance state;
+        let rec parse_dotted acc =
+          match peek state with
+          | DOT ->
+              advance state;
+              (match peek state with
+               | IDENT "value" -> state.pos <- state.pos - 1; acc
+               | IDENT "proof" -> state.pos <- state.pos - 1; acc
+               | IDENT n -> advance state; parse_dotted (acc ^ "." ^ n)
+               | RETURN -> advance state; parse_dotted (acc ^ ".return")
+               | _ -> raise (ParseError ("Expected identifier after dot, got " ^ (show_token (peek state)))))
+          | _ -> acc
+        in
+        let full_name = parse_dotted name in
+        (match full_name with
+         | "Int32" -> mk_term (PrimType Int32) None None
+         | "Int64" -> mk_term (PrimType Int64) None None
+         | "Float64" -> mk_term (PrimType Float64) None None
+         | "Bool" -> mk_term (PrimType Bool) None None
+         | "String" -> mk_term (PrimType String) None None
+         | "Type" -> mk_term (Universe Type) None None
+         | "Prop" -> mk_term (Universe Prop) None None
+         | _ -> mk_term (Var full_name) None None)
+    | INT i -> advance state; mk_term (Literal (LitInt32 i)) None None
+    | INT64 i -> advance state; mk_term (Literal (LitInt64 i)) None None
+    | STRING s -> advance state; mk_term (Literal (LitString s)) None None
+    | BOOL b -> advance state; mk_term (Literal (LitBool b)) None None
+    | LPAREN ->
+        advance state;
+        let e = parse_expr state in
+        expect state RPAREN "Expected ')'";
+        e
+    | _ -> raise (ParseError ("Unexpected token in expression: " ^ (show_token (peek state))))
+  in
+  parse_postfix state base
+
+and parse_postfix state term =
   match peek state with
-  | IDENT name ->
+  | DOT ->
       advance state;
-      let rec parse_dotted acc =
-        match peek state with
-        | DOT ->
-            advance state;
-            (match peek state with
-             | IDENT n -> advance state; parse_dotted (acc ^ "." ^ n)
-             | RETURN -> advance state; parse_dotted (acc ^ ".return")
-             | _ -> raise (ParseError ("Expected identifier after dot, got " ^ (show_token (peek state)))))
-        | _ -> acc
-      in
-      let full_name = parse_dotted name in
-      (match full_name with
-       | "Int32" -> mk_term (PrimType Int32) None None
-       | "Int64" -> mk_term (PrimType Int64) None None
-       | "Float64" -> mk_term (PrimType Float64) None None
-       | "Bool" -> mk_term (PrimType Bool) None None
-       | "String" -> mk_term (PrimType String) None None
-       | _ ->
-           (match peek state with
-            | LPAREN ->
-                advance state;
-                let args = parse_args state in
-                expect state RPAREN "Expected ')'";
-                mk_term (App (mk_term (Var full_name) None None, args)) None None
-            | _ -> mk_term (Var full_name) None None))
-  | INT i -> advance state; mk_term (Literal (LitInt32 i)) None None
-  | INT64 i -> advance state; mk_term (Literal (LitInt64 i)) None None
-  | STRING s -> advance state; mk_term (Literal (LitString s)) None None
-  | BOOL b -> advance state; mk_term (Literal (LitBool b)) None None
+      (match peek state with
+       | IDENT "value" -> advance state; parse_postfix state (mk_term (SubsetElim term) None None)
+       | IDENT "proof" -> advance state; parse_postfix state (mk_term (SubsetProof term) None None)
+       | _ -> raise (ParseError "Expected 'value' or 'proof' after dot"))
   | LPAREN ->
       advance state;
-      let e = parse_expr state in
+      let args = parse_args state in
       expect state RPAREN "Expected ')'";
-      e
-  | _ -> raise (ParseError ("Unexpected token in expression: " ^ (show_token (peek state))))
+      parse_postfix state (mk_term (App (term, args)) None None)
+  | _ -> term
 
 and parse_args state =
   match peek state with
@@ -219,21 +233,95 @@ let rec guess_io_type (t : term) : term =
   | Match { cases; _ } -> (match cases with [] -> mk_term (Var "Unit") None None | c :: _ -> guess_io_type c.body)
   | _ -> mk_term (Var "Unit") None None
 
-let rec parse_block state =
+let is_capitalized s =
+  String.length s > 0 && let c = s.[0] in c >= 'A' && c <= 'Z'
+
+let parse_pattern_arg state =
+  match peek state with
+  | IDENT name ->
+      advance state;
+      { arg_name = name; arg_loc = None }
+  | _ -> raise (ParseError "Expected pattern argument")
+
+let rec parse_pattern_args state =
+  match peek state with
+  | RPAREN -> []
+  | _ ->
+      let arg = parse_pattern_arg state in
+      match peek state with
+      | COMMA -> advance state; arg :: parse_pattern_args state
+      | _ -> [arg]
+
+let parse_pattern state =
+  match peek state with
+  | IDENT name ->
+      advance state;
+      (match peek state with
+       | LPAREN ->
+           advance state;
+           let args = parse_pattern_args state in
+           expect state RPAREN "Expected ')' in pattern";
+           { ctor = name; args; pat_loc = None }
+       | _ -> 
+           { ctor = name; args = []; pat_loc = None }
+      )
+  | _ -> raise (ParseError "Expected pattern")
+
+let rec fold_stmts stmts =
+  match stmts with
+  | [] -> mk_term (Var "tt") None None
+  | [f] -> f (mk_term (Var "tt") None None)
+  | f :: rest -> f (fold_stmts rest)
+
+let rec parse_block state ret_ty =
   expect state INDENT "Expected indented block";
-  let stmts = parse_stmts state in
+  let stmts = parse_stmts state ret_ty in
   expect state DEDENT "Expected dedent";
   stmts
 
-and parse_stmts state =
+and parse_cases state ret_ty =
+  match peek state with
+  | CASE ->
+      advance state;
+      let pat = parse_pattern state in
+      expect state COLON "Expected ':' after case pattern";
+      expect state NEWLINE "Expected newline after case";
+      let stmts = parse_block state ret_ty in
+      let body = fold_stmts stmts in
+      { pattern = pat; body = body; case_loc = None } :: parse_cases state ret_ty
+  | DEDENT -> []
+  | NEWLINE -> advance state; parse_cases state ret_ty
+  | _ -> raise (ParseError "Expected 'case' or dedent")
+
+and parse_stmts state ret_ty =
   match peek state with
   | DEDENT | EOF -> []
   | _ ->
-      let stmt = parse_stmt state in
-      stmt :: parse_stmts state
+      let stmt = parse_stmt state ret_ty in
+      stmt :: parse_stmts state ret_ty
 
-and parse_stmt state =
+and parse_stmt state ret_ty =
   match peek state with
+  | MATCH ->
+      advance state;
+      let scrutinee = parse_expr state in
+      expect state COLON "Expected ':' after match scrutinee";
+      expect state NEWLINE "Expected newline after match";
+      expect state INDENT "Expected indented block for match cases";
+      let cases = parse_cases state ret_ty in
+      expect state DEDENT "Expected dedent after match cases";
+      (fun rest ->
+         let motive = match ret_ty with Some t -> t | None -> mk_term (Var "Unit") None None in
+         let match_term = mk_term (Match { scrutinee; motive; as_name = None; cases; coverage_hint = Unknown }) None None in
+         match rest.desc with
+         | Var "tt" -> match_term
+         | _ ->
+             let b_ty = guess_io_type rest in
+             mk_term (App (mk_term (Var "bind") None None, 
+               [mk_term (Var "Unit") None None;
+                b_ty;
+                match_term;
+                mk_term (Lambda { arg = { name = "_"; ty = mk_term (Var "Unit") None None; role = Runtime; b_loc = None }; body = rest }) None None])) None None)
   | RETURN ->
       advance state;
       let e = parse_expr state in
@@ -244,7 +332,7 @@ and parse_stmt state =
       let cond = parse_expr state in
       expect state COLON "Expected ':' after if condition";
       expect state NEWLINE "Expected newline after ':'";
-      let then_stmts = parse_block state in
+      let then_stmts = parse_block state ret_ty in
       let then_body = fold_stmts then_stmts in
       let else_body =
         match peek state with
@@ -252,7 +340,7 @@ and parse_stmt state =
             advance state;
             expect state COLON "Expected ':' after else";
             expect state NEWLINE "Expected newline after ':'";
-            let else_stmts = parse_block state in
+            let else_stmts = parse_block state ret_ty in
             fold_stmts else_stmts
         | _ -> mk_term (Var "tt") None None
       in
@@ -355,14 +443,8 @@ and parse_stmt state =
                      expr_rest;
                      mk_term (Lambda { arg = { name = "_"; ty = mk_term (Var "Unit") None None; role = Runtime; b_loc = None }; body = rest }) None None])) None None)
       )
-  | NEWLINE -> advance state; parse_stmt state (* Skip empty lines *)
+  | NEWLINE -> advance state; parse_stmt state ret_ty (* Skip empty lines *)
   | _ -> raise (ParseError ("Unexpected token in statement: " ^ (show_token (peek state))))
-
-and fold_stmts stmts =
-  match stmts with
-  | [] -> mk_term (Var "tt") None None
-  | [f] -> f (mk_term (Var "tt") None None)
-  | f :: rest -> f (fold_stmts rest)
 
 let parse_arg state =
   match peek state with
@@ -382,6 +464,53 @@ let rec parse_arg_list state =
       | COMMA -> advance state; arg :: parse_arg_list state
       | _ -> [arg]
 
+let rec parse_constructors state =
+  match peek state with
+  | DEDENT -> []
+  | IDENT name ->
+      advance state;
+      let args =
+        match peek state with
+        | LPAREN ->
+            advance state;
+            let a = parse_arg_list state in
+            expect state RPAREN "Expected ')' in constructor";
+            a
+        | _ -> []
+      in
+      expect state NEWLINE "Expected newline after constructor";
+      { ctor_name = name; ctor_args = args; ctor_loc = None } :: parse_constructors state
+  | NEWLINE -> advance state; parse_constructors state
+  | _ -> raise (ParseError ("Unexpected token in class body: " ^ (show_token (peek state))))
+
+let parse_inductive state =
+  expect state CLASS "Expected 'class'";
+  match peek state with
+  | IDENT name ->
+      advance state;
+      let params =
+        match peek state with
+        | LPAREN ->
+            advance state;
+            let p = parse_arg_list state in
+            expect state RPAREN "Expected ')' in class params";
+            p
+        | _ -> []
+      in
+      expect state COLON "Expected ':' after class definition";
+      expect state NEWLINE "Expected newline after class definition";
+      expect state INDENT "Expected indented block for constructors";
+      let ctors = parse_constructors state in
+      expect state DEDENT "Expected dedent after class body";
+      {
+        ind_name = name;
+        params = params;
+        ind_universe = Type; (* Default to Type universe *)
+        constructors = ctors;
+        ind_loc = None;
+      }
+  | _ -> raise (ParseError "Expected class name")
+
 let parse_def state =
   expect state DEF "Expected 'def'";
   match peek state with
@@ -394,7 +523,7 @@ let parse_def state =
       let ret_ty = parse_type state in
       expect state COLON "Expected ':'";
       expect state NEWLINE "Expected newline after def";
-      let stmts = parse_block state in
+      let stmts = parse_block state (Some ret_ty) in
       let body = fold_stmts stmts in
       
       let full_type = List.fold_right (fun b acc -> mk_term (Pi { arg = b; result = acc }) None None) args ret_ty in
@@ -433,6 +562,9 @@ let rec parse_top_level_items state =
       let name = parse_dotted_name "" in
       expect state NEWLINE "Expected newline after import";
       Import name :: parse_top_level_items state
+  | CLASS ->
+      let ind = parse_inductive state in
+      Decl (Inductive ind) :: parse_top_level_items state
   | DEF ->
       let def = parse_def state in
       Decl def :: parse_top_level_items state
