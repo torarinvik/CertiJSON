@@ -146,6 +146,14 @@ let rec eval (ctx : context) (env : env) (t : term) : value =
       | VLiteral (LitBool false) -> eval ctx env else_
       | VNeutral n -> VNeutral (NIf (n, then_, else_))
       | _ -> failwith "Runtime error: If condition must be a boolean")
+  | While { cond = _; body = _ } ->
+      (* While loops are effectful, so in pure evaluation we might just return Unit or loop?
+         Since this is a proof language, we probably shouldn't be evaluating infinite loops during type checking/normalization unless we have fuel.
+         For now, treat as neutral or unit. *)
+      VConstructor ("tt", [])
+  | Assign { name = _; value = _ } ->
+      (* Assignment is effectful. *)
+      VConstructor ("tt", [])
   | Global name -> (
       match name with
       | "add" | "sub" | "mul" | "div" | "mod" | "neg"

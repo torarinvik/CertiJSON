@@ -246,6 +246,7 @@ and parse_primary_expr state =
     | INT64 i -> advance state; mk_term (Literal (LitInt64 i)) None None
     | STRING s -> advance state; mk_term (Literal (LitString s)) None None
     | BOOL b -> advance state; mk_term (Literal (LitBool b)) None None
+    | LBRACE -> parse_type state
     | LPAREN ->
         advance state;
         let e = parse_expr state in
@@ -356,10 +357,23 @@ and parse_stmt state ret_ty =
          | _ ->
              let b_ty = guess_io_type rest in
              mk_term (App (mk_term (Var "bind") None None, 
-               [mk_term (Universe Type) None None;
+               [mk_term (Var "Unit") None None;
                 b_ty;
                 mk_term (If { cond; then_ = then_body; else_ = else_body }) None None;
-                mk_term (Lambda { arg = { name = "_"; ty = mk_term (Universe Type) None None; role = Runtime; b_loc = None }; body = rest }) None None])) None None)
+                mk_term (Lambda { arg = { name = "_"; ty = mk_term (Var "Unit") None None; role = Runtime; b_loc = None }; body = rest }) None None])) None None)
+  | WHILE ->
+      advance state;
+      let cond = parse_expr state in
+      expect state COLON "Expected ':' after while condition";
+      expect state NEWLINE "Expected newline after ':'";
+      let body_stmts = parse_block state ret_ty in
+      let body = fold_stmts body_stmts in
+      (fun rest ->
+         let while_term = mk_term (While { cond; body }) None None in
+         match rest.desc with
+         | Var "tt" -> while_term
+         | _ ->
+             mk_term (App (mk_term (Lambda { arg = { name = "_"; ty = mk_term (Var "Unit") None None; role = Runtime; b_loc = None }; body = rest }) None None, [while_term])) None None)
   | IDENT name ->
       (* Assignment or expression statement *)
       advance state;
@@ -375,6 +389,16 @@ and parse_stmt state ret_ty =
       in
       
       (match peek state with
+      | ASSIGN ->
+          advance state;
+          let value = parse_expr state in
+          expect state NEWLINE "Expected newline after assignment";
+          (fun rest ->
+             let assign_term = mk_term (Assign { name; value }) None None in
+             match rest.desc with
+             | Var "tt" -> assign_term
+             | _ ->
+                 mk_term (App (mk_term (Lambda { arg = { name = "_"; ty = mk_term (Var "Unit") None None; role = Runtime; b_loc = None }; body = rest }) None None, [assign_term])) None None)
       | DOT ->
           let full_name = parse_dotted name in
            let expr_rest = 
@@ -419,8 +443,6 @@ and parse_stmt state ret_ty =
                       e;
                       mk_term (Lambda { arg = { name = name; ty = ty; role = Runtime; b_loc = None }; body = rest }) None None])) None None)
             | _ -> raise (ParseError "Expected '=' or '<-' after type annotation"))
-       | ASSIGN ->
-           raise (ParseError "Type annotation required for assignment (x: T = e)")
        | _ ->
            (* Backtrack or handle expression stmt *)
            (* For simplicity, let's assume expression statement if not assignment *)

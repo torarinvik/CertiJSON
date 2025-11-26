@@ -123,6 +123,15 @@
       }
     },
     {
+      "repr": {
+        "name": "Void",
+        "kind": "primitive",
+        "c_type": "void",
+        "size_bits": 0,
+        "signed": false
+      }
+    },
+    {
       "extern_io": {
         "name": "malloc",
         "c_name": "malloc",
@@ -847,33 +856,7 @@
         "axioms": []
       }
     },
-    {
-      "extern_c": {
-        "name": "ptr_offset",
-        "c_name": "cj_ptr_offset",
-        "header": "<certijson_memory.h>",
-        "signature": {
-          "return": { "repr": "VoidPtr" },
-          "args": [
-            { "name": "p", "repr": "VoidPtr" },
-            { "name": "bytes", "repr": "SizeT" }
-          ]
-        },
-        "type": {
-          "pi": {
-            "arg": { "name": "p", "type": { "var": "VoidPtr" } },
-            "result": {
-              "pi": {
-                "arg": { "name": "bytes", "type": { "prim": "Int32" } },
-                "result": { "var": "VoidPtr" }
-              }
-            }
-          }
-        },
-        "safety": "pure",
-        "axioms": []
-      }
-    },
+
     {
       "extern_c": {
         "name": "strtol",
@@ -1429,6 +1412,136 @@
             }
           }
         }
+      }
+    },
+    {
+      "extern_c": {
+        "name": "int32_to_int64",
+        "c_name": "cj_int32_to_int64",
+        "header": "<certijson_memory.h>",
+        "signature": {
+          "return": { "repr": "Long" },
+          "args": [{ "name": "x", "repr": "Int" }]
+        },
+        "type": {
+          "pi": {
+            "arg": { "name": "x", "type": { "prim": "Int32" } },
+            "result": { "prim": "Int64" }
+          }
+        },
+        "safety": "pure",
+        "axioms": []
+      }
+    },
+    {
+      "extern_c": {
+        "name": "int64_to_ptr",
+        "c_name": "cj_int64_to_ptr",
+        "header": "<certijson_memory.h>",
+        "signature": {
+          "return": { "repr": "VoidPtr" },
+          "args": [{ "name": "x", "repr": "Long" }]
+        },
+        "type": {
+          "pi": {
+            "arg": { "name": "x", "type": { "prim": "Int64" } },
+            "result": { "var": "VoidPtr" }
+          }
+        },
+        "safety": "pure",
+        "axioms": []
+      }
+    },
+    {
+      "extern_c": {
+        "name": "unsafe_load_int32",
+        "c_name": "cj_load_int32",
+        "header": "<certijson_memory.h>",
+        "signature": {
+          "return": { "repr": "Int" },
+          "args": [{ "name": "p", "repr": "VoidPtr" }]
+        },
+        "type": {
+          "pi": {
+            "arg": { "name": "p", "type": { "var": "VoidPtr" } },
+            "result": { "prim": "Int32" }
+          }
+        },
+        "safety": "pure",
+        "axioms": []
+      }
+    },
+    {
+      "extern_c": {
+        "name": "unsafe_store_int32",
+        "c_name": "cj_store_int32",
+        "header": "<certijson_memory.h>",
+        "signature": {
+          "return": { "repr": "Int" },
+          "args": [
+            { "name": "p", "repr": "VoidPtr" },
+            { "name": "v", "repr": "Int" }
+          ]
+        },
+        "type": {
+          "pi": {
+            "arg": { "name": "p", "type": { "var": "VoidPtr" } },
+            "result": {
+              "pi": {
+                "arg": { "name": "v", "type": { "prim": "Int32" } },
+                "result": { "prim": "Int32" }
+              }
+            }
+          }
+        },
+        "safety": "pure",
+        "axioms": []
+      }
+    },
+    {
+      "extern_c": {
+        "name": "ptr_offset",
+        "c_name": "cj_ptr_offset",
+        "header": "<certijson_memory.h>",
+        "signature": {
+          "return": { "repr": "VoidPtr" },
+          "args": [
+            { "name": "p", "repr": "VoidPtr" },
+            { "name": "bytes", "repr": "Long" }
+          ]
+        },
+        "type": {
+          "pi": {
+            "arg": { "name": "p", "type": { "var": "VoidPtr" } },
+            "result": {
+              "pi": {
+                "arg": { "name": "bytes", "type": { "prim": "Int64" } },
+                "result": { "var": "VoidPtr" }
+              }
+            }
+          }
+        },
+        "safety": "pure",
+        "axioms": []
+      }
+    },
+    {
+      "extern_c": {
+        "name": "ptr_to_int64",
+        "c_name": "cj_ptr_to_int64",
+        "header": "<certijson_memory.h>",
+        "signature": {
+          "return": { "repr": "Long" },
+          "args": [{ "name": "p", "repr": "VoidPtr" }]
+        },
+        "type": {
+          "pi": {
+            "arg": { "name": "p", "type": { "var": "VoidPtr" } },
+            "result": { "prim": "Int64" }
+          }
+        },
+        "safety": "pure",
+        "axioms": []
       }
     }
   ]

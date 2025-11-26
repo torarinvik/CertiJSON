@@ -51,6 +51,10 @@ let rec pp_term fmt (t : term) =
       Format.fprintf fmt "(rewrite %a in %a)" pp_term proof pp_term body
   | If { cond; then_; else_ } ->
       Format.fprintf fmt "(if %a then %a else %a)" pp_term cond pp_term then_ pp_term else_
+  | While { cond; body } ->
+      Format.fprintf fmt "(while %a do %a)" pp_term cond pp_term body
+  | Assign { name; value } ->
+      Format.fprintf fmt "(%s = %a)" name pp_term value
   | Match { scrutinee; motive; cases; _ } ->
       Format.fprintf fmt "@[<v 2>(match %a return %a with@,%a)@]"
         pp_term scrutinee

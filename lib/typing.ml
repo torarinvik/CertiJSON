@@ -315,6 +315,10 @@ let rec subst_term (old_t : term) (new_t : term) (t : term) : term =
         mk ?loc:t.loc (Rewrite { proof = subst_term old_t new_t proof; body = subst_term old_t new_t body })
     | If { cond; then_; else_ } ->
         mk ?loc:t.loc (If { cond = subst_term old_t new_t cond; then_ = subst_term old_t new_t then_; else_ = subst_term old_t new_t else_ })
+    | While { cond; body } ->
+        mk ?loc:t.loc (While { cond = subst_term old_t new_t cond; body = subst_term old_t new_t body })
+    | Assign { name; value } ->
+        mk ?loc:t.loc (Assign { name; value = subst_term old_t new_t value })
     | Match { scrutinee; motive; as_name; cases; coverage_hint } ->
         let scrutinee = subst_term old_t new_t scrutinee in
         let motive =
@@ -441,6 +445,10 @@ let rec positive_occurrences (target : name) (positive : bool) (t : term) : bool
       && List.for_all (fun c -> go positive c.body) cases
   | If { cond; then_; else_ } ->
       go positive cond && go positive then_ && go positive else_
+  | While { cond; body } ->
+      go positive cond && go positive body
+  | Assign { name = _; value } ->
+      go positive value
   | Subset { arg; pred } ->
       go positive arg.ty && go positive pred
   | SubsetIntro { value; proof } ->
@@ -451,6 +459,115 @@ let rec positive_occurrences (target : name) (positive : bool) (t : term) : bool
       go positive elem_ty && go positive size
   | ArrayHandle { elem_ty; size } ->
       go positive elem_ty && go positive size
+
+(** {1 Subtyping and Implication Solver} *)
+
+let get_bool_literal (t : term) : bool option =
+  match t.desc with
+  | Literal (LitBool b) -> Some b
+  | _ -> None
+
+let get_int_literal (t : term) : int32 option =
+  match t.desc with
+  | Literal (LitInt32 i) -> Some i
+  | _ -> None
+
+let gather_hypotheses (ctx : context) : term list =
+  List.fold_left (fun acc entry ->
+    match entry.var_type.desc with
+    | Subset { arg; pred } ->
+        let pred_inst = subst arg.name (mk (Var entry.var_name)) pred in
+        pred_inst :: acc
+    | _ -> acc
+  ) [] ctx.local
+
+type arith_rel = 
+  | Ge of term * term
+  | Gt of term * term
+  | Le of term * term
+  | Lt of term * term
+  | EqRel of term * term
+
+let parse_arith (t : term) : arith_rel option =
+  match t.desc with
+  | App (f, [a; b]) -> (
+      match f.desc with
+      | Var ">=" | Global ">=" -> Some (Ge (a, b))
+      | Var ">" | Global ">" -> Some (Gt (a, b))
+      | Var "<=" | Global "<=" -> Some (Le (a, b))
+      | Var "<" | Global "<" -> Some (Lt (a, b))
+      | Var "==" | Global "==" -> Some (EqRel (a, b))
+      | _ -> None
+    )
+  | _ -> None
+
+let get_int_val (t : term) : int option =
+  match t.desc with
+  | Literal (LitInt32 i) -> Some (Int32.to_int i)
+  | _ -> None
+
+let rec solve_implication (ctx : context) (hyps : term list) (goal : term) : bool =
+  let goal = whnf ctx goal in
+  match get_bool_literal goal with
+  | Some true -> true
+  | _ ->
+      if List.exists (fun h -> conv ctx h goal) hyps then true
+      else
+        match goal.desc with
+        | App (f, [a; b]) -> (
+            match f.desc with
+            | Var "and" | Global "and" ->
+                solve_implication ctx hyps a && solve_implication ctx hyps b
+            | _ -> 
+                match parse_arith goal with
+                | Some (Lt (a, b)) -> (
+                    match (get_int_val a, get_int_val b) with
+                    | (Some va, Some vb) -> va < vb
+                    | _ -> false
+                  )
+                | Some (Le (a, b)) -> (
+                    match (get_int_val a, get_int_val b) with
+                    | (Some va, Some vb) -> va <= vb
+                    | _ -> false
+                  )
+                | Some (Gt (a, b)) -> (
+                    match (get_int_val a, get_int_val b) with
+                    | (Some va, Some vb) -> va > vb
+                    | _ -> false
+                  )
+                | Some (Ge (a, b)) -> (
+                    match (get_int_val a, get_int_val b) with
+                    | (Some va, Some vb) -> va >= vb
+                    | _ -> false
+                  )
+                | Some (EqRel (a, b)) -> (
+                    match (get_int_val a, get_int_val b) with
+                    | (Some va, Some vb) -> va = vb
+                    | _ -> false
+                  )
+                | None -> false
+          )
+        | _ -> false
+
+let rec is_subtype (ctx : context) (t1 : term) (t2 : term) : bool =
+  if conv ctx t1 t2 then true
+  else
+    let t1 = whnf ctx t1 in
+    let t2 = whnf ctx t2 in
+    match (t1.desc, t2.desc) with
+    | Subset { arg=a1; pred=p1 }, Subset { arg=a2; pred=p2 } ->
+        is_subtype ctx a1.ty a2.ty &&
+        let ctx' = extend ctx a1.name ~role:a1.role a1.ty in
+        (* Assume p1 is true *)
+        let p1_term = p1 in
+        (* Check p2[a2.name / a1.name] *)
+        let p2_subst = subst a2.name (mk (Var a1.name)) p2 in
+        solve_implication ctx' [p1_term] p2_subst
+    | Subset { arg; pred }, _ ->
+        ignore pred; is_subtype ctx arg.ty t2
+    | _, Subset { arg; pred } ->
+        ignore arg; ignore pred; false
+    | _ -> false
 
 (** {1 Type Inference} *)
 
@@ -672,6 +789,16 @@ let rec infer (ctx : context) (t : term) : term =
       if not (conv ctx then_ty else_ty) then
         raise (TypeError (TypeMismatch { expected = then_ty; actual = else_ty; context = "if branches"; loc = t.loc }));
       then_ty
+  | While { cond; body } ->
+      let _ = check ctx cond (mk ?loc:cond.loc (PrimType Bool)) in
+      let _ = check ctx body (mk ?loc:body.loc (Var "Unit")) in
+      mk ?loc:t.loc (Var "Unit")
+  | Assign { name; value } ->
+      (match lookup ctx name with
+      | Some (`Local (ty, _)) ->
+          let _ = check ctx value ty in
+          mk ?loc:t.loc (Var "Unit")
+      | _ -> raise (TypeError (UnboundVariable name)))
   | Global name -> (
       match lookup ctx name with
       | Some (`Global entry) -> (
@@ -697,6 +824,7 @@ let rec infer (ctx : context) (t : term) : term =
       let pred_ty = infer ctx_pred pred in
       (match pred_ty.desc with
       | Universe Prop -> ()
+      | PrimType Bool -> ()
       | _ -> raise (TypeError (NotAProp (pred, pred.loc))));
       mk ?loc:t.loc (Universe Type)
   | SubsetIntro { value = _; proof = _ } ->
@@ -734,6 +862,14 @@ let rec infer (ctx : context) (t : term) : term =
 
 (** Check that a term has a given type. *)
 and check (ctx : context) (t : term) (expected : term) : unit =
+  let expected' = whnf ctx expected in
+  match expected'.desc with
+  | Subset { arg; pred } ->
+      check ctx t arg.ty;
+      let pred_inst = subst arg.name t pred in
+      if not (solve_implication ctx [] pred_inst) then
+         raise (TypeError (TypeMismatch { expected; actual = infer ctx t; context = "subset check"; loc = t.loc }))
+  | _ ->
   match t.desc with
   | SubsetIntro { value; proof } ->
       let expected' = whnf ctx expected in
@@ -779,7 +915,7 @@ and check (ctx : context) (t : term) (expected : term) : unit =
             raise (TypeError (TypeMismatch { expected; actual; context = "check"; loc = t.loc })))
   | _ ->
       let actual = infer ctx t in
-      if not (conv ctx actual expected) then
+      if not (is_subtype ctx actual expected) then
         raise (TypeError (TypeMismatch { expected; actual; context = "check"; loc = t.loc }))
 
 (** {1 Termination Checking} *)
@@ -804,6 +940,10 @@ let rec has_self_reference (self : name) (t : term) : bool =
       || List.exists (fun c -> has_self_reference self c.body) cases
   | If { cond; then_; else_ } ->
       has_self_reference self cond || has_self_reference self then_ || has_self_reference self else_
+  | While { cond; body } ->
+      has_self_reference self cond || has_self_reference self body
+  | Assign { name = _; value } ->
+      has_self_reference self value
   | Subset { arg; pred } -> has_self_reference self arg.ty || has_self_reference self pred
   | SubsetIntro { value; proof } -> has_self_reference self value || has_self_reference self proof
   | SubsetElim tm -> has_self_reference self tm
@@ -972,6 +1112,11 @@ let check_termination (def : def_decl) : unit =
             check_term allowed cond;
             check_term allowed then_;
             check_term allowed else_
+        | While { cond; body } ->
+            check_term allowed cond;
+            check_term allowed body
+        | Assign { name = _; value } ->
+            check_term allowed value
         | Subset { arg; pred } ->
             check_term allowed arg.ty;
             check_term allowed pred
@@ -994,8 +1139,8 @@ let check_termination (def : def_decl) : unit =
 let check_repr (ctx : context) (repr : repr_decl) : unit =
   match repr.kind with
   | Primitive { size_bits; _ } ->
-      if size_bits <= 0 then
-        raise (TypeError (InvalidRepr (repr.repr_name, "size must be positive")))
+      if size_bits < 0 then
+        raise (TypeError (InvalidRepr (repr.repr_name, "size must be non-negative")))
   | Struct { fields; size_bytes; _ } ->
       (* Check fields *)
       let _ = List.fold_left (fun offset field ->
@@ -1127,3 +1272,5 @@ let check_module (mod_ : module_decl) (initial_sig : signature) : (signature, ty
     List.iter (check_declaration ctx) mod_.declarations;
     Ok full_sig
   with TypeError e -> Error e
+
+

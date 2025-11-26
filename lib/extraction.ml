@@ -34,6 +34,7 @@ type c_stmt =
   | CDecl of c_type * string * c_expr option
   | CBlock of c_stmt list
   | CIf of c_expr * c_stmt * c_stmt option
+  | CWhile of c_expr * c_stmt
 
 type c_func = {
   name : string;
@@ -90,6 +91,8 @@ let rec pp_c_stmt fmt = function
       (match else_ with
       | Some e -> Format.fprintf fmt " else %a" pp_c_stmt e
       | None -> ())
+  | CWhile (cond, body) ->
+      Format.fprintf fmt "while (%a) %a" pp_c_expr cond pp_c_stmt body
 
 let pp_c_func_sig fmt f =
   Format.fprintf fmt "%a %s(%a);"
@@ -118,6 +121,14 @@ let pp_c_program fmt p =
   List.iter (fun f -> Format.fprintf fmt "%a@\n@\n" pp_c_func f) p.funcs
 
 (* Extraction Logic *)
+
+let mangle_name s =
+  String.map (function '.' -> '_' | c -> c) s
+
+let rec flatten_app t args =
+  match t.desc with
+  | App (f, args') -> flatten_app f (args' @ args)
+  | _ -> (t, args)
 
 let list_take_last n l =
   let len = List.length l in
@@ -237,9 +248,10 @@ let rec translate_term (ctx : Context.context) (env : (string * string) list) (t
       else
       match List.assoc_opt x env with
       | Some fresh -> CVar fresh
-      | None -> CVar x
+      | None -> CVar (mangle_name x)
     )
-  | App (f, args) -> (
+  | App _ -> (
+      let (f, args) = flatten_app t [] in
       let name_opt =
         match f.desc with
         | Global n -> Some n
@@ -250,6 +262,10 @@ let rec translate_term (ctx : Context.context) (env : (string * string) list) (t
       | Some "add" -> (match args with [a; b] -> CBinOp ("+", translate_term ctx env a, translate_term ctx env b) | _ -> CVar "<invalid_add>")
       | Some "sub" -> (match args with [a; b] -> CBinOp ("-", translate_term ctx env a, translate_term ctx env b) | _ -> CVar "<invalid_sub>")
       | Some "mul" -> (match args with [a; b] -> CBinOp ("*", translate_term ctx env a, translate_term ctx env b) | _ -> CVar "<invalid_mul>")
+      | Some "Std.Int.mul64" | Some "mul64" | Some "mul64_builtin" -> (match args with [a; b] -> CBinOp ("*", translate_term ctx env a, translate_term ctx env b) | _ -> CVar "<invalid_mul64>")
+      | Some "Std.Int.add64" | Some "add64" | Some "add64_builtin" -> (match args with [a; b] -> CBinOp ("+", translate_term ctx env a, translate_term ctx env b) | _ -> CVar "<invalid_add64>")
+      | Some "Std.Int.sub64" | Some "sub64" | Some "sub64_builtin" -> (match args with [a; b] -> CBinOp ("-", translate_term ctx env a, translate_term ctx env b) | _ -> CVar "<invalid_sub64>")
+      | Some "Std.Int.div64" | Some "div64" | Some "div64_builtin" -> (match args with [a; b] -> CBinOp ("/", translate_term ctx env a, translate_term ctx env b) | _ -> CVar "<invalid_div64>")
       | Some "div" -> (match args with [a; b] -> CBinOp ("/", translate_term ctx env a, translate_term ctx env b) | _ -> CVar "<invalid_div>")
       | Some "lt" -> (match args with [a; b] -> CBinOp ("<", translate_term ctx env a, translate_term ctx env b) | _ -> CVar "<invalid_lt>")
       | Some "gt" -> (match args with [a; b] -> CBinOp (">", translate_term ctx env a, translate_term ctx env b) | _ -> CVar "<invalid_gt>")
@@ -284,7 +300,7 @@ let rec translate_term (ctx : Context.context) (env : (string * string) list) (t
               let args_len = List.length ext.args in
               let args_to_pass = list_take_last args_len args' in
               CCall (ext.c_name, args_to_pass)
-          | _ -> CCall (name, args')
+          | _ -> CCall (mangle_name name, args')
         )
       | None -> CCall ("<indirect>", List.map (translate_term ctx env) args)
     )
@@ -506,8 +522,20 @@ let extract_def (ctx : Context.context) (def : Syntax.def_decl) : c_func option 
           let then_block = CBlock then_stmts in
           let else_block = match else_stmts with [] -> None | _ -> Some (CBlock else_stmts) in
           [CIf (cond_expr, then_block, else_block)]
+      | While { cond; body } ->
+          let cond_expr = translate_term ctx env cond in
+          let body_stmts = translate_io ctx env body None CVoid in
+          [CWhile (cond_expr, CBlock body_stmts)]
+      | Assign { name; value } ->
+          let val_expr = translate_term ctx env value in
+          let var_name = 
+            match List.assoc_opt name env with
+            | Some v -> v
+            | None -> name
+          in
+          [CExpr (CAssign (var_name, val_expr))]
       | Var name | Global name ->
-          let call = CCall (name, []) in
+          let call = CCall (mangle_name name, []) in
           (match res_var with
            | Some v -> [CExpr (CAssign (v, call))]
            | None -> 
@@ -536,14 +564,14 @@ let extract_def (ctx : Context.context) (def : Syntax.def_decl) : c_func option 
         }
       else
         Some {
-          name = def.def_name;
+          name = mangle_name def.def_name;
           ret_type = ret_ty;
           args = c_args;
           body = CBlock body_stmts;
         }
     else
       (* Pure function - need to handle let-bindings *)
-      let rec translate_pure (env : (string * string) list) (t : Syntax.term) : c_stmt list =
+      let rec translate_pure (env : (string * string) list) (t : Syntax.term) (res_var : string option) (ret_ty : c_type) : c_stmt list =
         match t.desc with
         | Match { scrutinee; cases; _ } ->
             let scrut_expr = translate_term ctx env scrutinee in
@@ -562,7 +590,7 @@ let extract_def (ctx : Context.context) (def : Syntax.def_decl) : c_func option 
                       if c.pattern.ctor = "True" then scrut_expr
                       else CUnOp ("!", scrut_expr)
                     in
-                    let body_stmts = translate_pure env c.body in
+                    let body_stmts = translate_pure env c.body res_var ret_ty in
                     let then_block = CBlock body_stmts in
                     let else_block = 
                       match rest with
@@ -580,7 +608,7 @@ let extract_def (ctx : Context.context) (def : Syntax.def_decl) : c_func option 
                     if c.pattern.ctor = "_" then None
                     else Some (CLitInt32 (Int32.of_string c.pattern.ctor))
                   in
-                  (val_expr, translate_pure env c.body)
+                  (val_expr, translate_pure env c.body res_var ret_ty)
                 ) cases
               in
               
@@ -606,24 +634,48 @@ let extract_def (ctx : Context.context) (def : Syntax.def_decl) : c_func option 
                  let var_name = fresh_name binder.name in
                  let env' = (binder.name, var_name) :: env in
                  let ty = translate_type ctx binder.ty in
-                 let arg_expr = translate_term ctx env arg in
+                 
+                 (* Check if arg is complex *)
+                 let arg_stmts, arg_init = 
+                   match arg.desc with
+                   | Match _ | If _ | App _ ->
+                       (* Complex: generate statements to compute arg into var_name *)
+                       (* But if ty is void, don't try to assign - just execute *)
+                       if ty = CVoid then
+                         (translate_pure env arg None CVoid, None)
+                       else
+                         (translate_pure env arg (Some var_name) ty, None)
+                   | _ ->
+                       (* Simple: use initializer *)
+                       ([], Some (translate_term ctx env arg))
+                 in
+                 
                  let decl = 
                    if ty = CVoid then []
-                   else [CDecl (ty, var_name, Some arg_expr)]
+                   else [CDecl (ty, var_name, arg_init)]
                  in
-                 decl @ translate_pure env' body
+                 decl @ arg_stmts @ translate_pure env' body res_var ret_ty
              | _ -> 
                  let body_expr = translate_term ctx env t in
-                 if ret_type = CVoid then [CExpr body_expr]
-                 else [CReturn body_expr])
+                 match res_var with
+                 | Some v -> [CExpr (CAssign (v, body_expr))]
+                 | None -> if ret_ty = CVoid then [CExpr body_expr] else [CReturn body_expr])
+        | If { cond; then_; else_ } ->
+            let cond_expr = translate_term ctx env cond in
+            let then_stmts = translate_pure env then_ res_var ret_ty in
+            let else_stmts = translate_pure env else_ res_var ret_ty in
+            let then_block = CBlock then_stmts in
+            let else_block = match else_stmts with [] -> None | _ -> Some (CBlock else_stmts) in
+            [CIf (cond_expr, then_block, else_block)]
         | _ ->
             let body_expr = translate_term ctx env t in
-            if ret_type = CVoid then [CExpr body_expr]
-            else [CReturn body_expr]
+            match res_var with
+            | Some v -> [CExpr (CAssign (v, body_expr))]
+            | None -> if ret_ty = CVoid then [CExpr body_expr] else [CReturn body_expr]
       in
-      let body_stmts = translate_pure [] body in
+      let body_stmts = translate_pure [] body None ret_type in
       Some {
-        name = def.def_name;
+        name = mangle_name def.def_name;
         ret_type;
         args = c_args;
         body = CBlock body_stmts;
