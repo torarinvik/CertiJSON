@@ -52,7 +52,15 @@ let rec eval (ctx : context) (env : env) (t : term) : value =
       | Some v -> v
       | None -> (
           match x with
-          | "add" | "sub" | "mul" | "div" | "lt" | "gt" | "eq" -> VBuiltin (x, [])
+          | "add" | "sub" | "mul" | "div" | "mod" | "neg"
+          | "lt" | "gt" | "eq" | "le" | "ge" | "ne"
+          | "add64_builtin" | "sub64_builtin" | "mul64_builtin" | "div64_builtin"
+          | "strlen" | "strcmp" | "strncmp" | "strcasecmp"
+          | "atoi" | "atol" | "atof"
+          | "isalnum" | "isalpha" | "isblank" | "iscntrl" | "isdigit"
+          | "isgraph" | "islower" | "isprint" | "ispunct" | "isspace"
+          | "isupper" | "isxdigit" | "tolower" | "toupper"
+          -> VBuiltin (x, [])
           | _ -> (
               match lookup ctx x with
               | Some (`Global (GDefinition def)) when def.def_role <> ProofOnly ->
@@ -92,7 +100,15 @@ let rec eval (ctx : context) (env : env) (t : term) : value =
       | _ -> failwith "Runtime error: If condition must be a boolean")
   | Global name -> (
       match name with
-      | "add" | "sub" | "mul" | "div" | "lt" | "gt" | "eq" -> VBuiltin (name, [])
+      | "add" | "sub" | "mul" | "div" | "mod" | "neg"
+      | "lt" | "gt" | "eq" | "le" | "ge" | "ne"
+      | "add64_builtin" | "sub64_builtin" | "mul64_builtin" | "div64_builtin"
+      | "strlen" | "strcmp" | "strncmp" | "strcasecmp"
+      | "atoi" | "atol" | "atof"
+      | "isalnum" | "isalpha" | "isblank" | "iscntrl" | "isdigit"
+      | "isgraph" | "islower" | "isprint" | "ispunct" | "isspace"
+      | "isupper" | "isxdigit" | "tolower" | "toupper"
+      -> VBuiltin (name, [])
       | _ -> (
           match lookup ctx name with
           | Some (`Global (GDefinition def)) when def.def_role <> ProofOnly ->
@@ -228,18 +244,85 @@ and apply (ctx : context) (f : value) (arg : value) : value =
         | _ -> VNeutral (NApp (NVar "_stuck_io_", [f; arg])))
   | VBuiltin (op, args) ->
       let args' = args @ [arg] in
-      if List.length args' = 2 then
-        match op, args' with
-        | "add", [VLiteral (LitInt32 a); VLiteral (LitInt32 b)] -> VLiteral (LitInt32 (Int32.add a b))
-        | "sub", [VLiteral (LitInt32 a); VLiteral (LitInt32 b)] -> VLiteral (LitInt32 (Int32.sub a b))
-        | "mul", [VLiteral (LitInt32 a); VLiteral (LitInt32 b)] -> VLiteral (LitInt32 (Int32.mul a b))
-        | "div", [VLiteral (LitInt32 a); VLiteral (LitInt32 b)] -> VLiteral (LitInt32 (Int32.div a b))
-        | "lt", [VLiteral (LitInt32 a); VLiteral (LitInt32 b)] -> VLiteral (LitBool (a < b))
-        | "gt", [VLiteral (LitInt32 a); VLiteral (LitInt32 b)] -> VLiteral (LitBool (a > b))
-        | "eq", [VLiteral (LitInt32 a); VLiteral (LitInt32 b)] -> VLiteral (LitBool (a = b))
-        | _ -> VNeutral (NApp (NVar ("_stuck_builtin_" ^ op), args'))
-      else
-        VBuiltin (op, args')
+      (match op, args' with
+      (* Unary operations *)
+      | "neg", [VLiteral (LitInt32 a)] -> VLiteral (LitInt32 (Int32.neg a))
+      | "atoi", [VLiteral (LitString s)] -> (try VLiteral (LitInt32 (Int32.of_string s)) with _ -> VLiteral (LitInt32 0l))
+      | "atol", [VLiteral (LitString s)] -> (try VLiteral (LitInt64 (Int64.of_string s)) with _ -> VLiteral (LitInt64 0L))
+      | "atof", [VLiteral (LitString s)] -> (try VLiteral (LitFloat64 (Float.of_string s)) with _ -> VLiteral (LitFloat64 0.0))
+      | "strlen", [VLiteral (LitString s)] -> VLiteral (LitInt32 (Int32.of_int (String.length s)))
+      (* Character classification - convert Int32 to char and test *)
+      | "isalnum", [VLiteral (LitInt32 c)] ->
+          let ch = Char.chr (Int32.to_int c land 0xFF) in
+          VLiteral (LitInt32 (if (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') || (ch >= '0' && ch <= '9') then 1l else 0l))
+      | "isalpha", [VLiteral (LitInt32 c)] ->
+          let ch = Char.chr (Int32.to_int c land 0xFF) in
+          VLiteral (LitInt32 (if (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') then 1l else 0l))
+      | "isblank", [VLiteral (LitInt32 c)] ->
+          let ch = Char.chr (Int32.to_int c land 0xFF) in
+          VLiteral (LitInt32 (if ch = ' ' || ch = '\t' then 1l else 0l))
+      | "iscntrl", [VLiteral (LitInt32 c)] ->
+          let ci = Int32.to_int c land 0xFF in
+          VLiteral (LitInt32 (if ci < 32 || ci = 127 then 1l else 0l))
+      | "isdigit", [VLiteral (LitInt32 c)] ->
+          let ch = Char.chr (Int32.to_int c land 0xFF) in
+          VLiteral (LitInt32 (if ch >= '0' && ch <= '9' then 1l else 0l))
+      | "isgraph", [VLiteral (LitInt32 c)] ->
+          let ci = Int32.to_int c land 0xFF in
+          VLiteral (LitInt32 (if ci > 32 && ci < 127 then 1l else 0l))
+      | "islower", [VLiteral (LitInt32 c)] ->
+          let ch = Char.chr (Int32.to_int c land 0xFF) in
+          VLiteral (LitInt32 (if ch >= 'a' && ch <= 'z' then 1l else 0l))
+      | "isprint", [VLiteral (LitInt32 c)] ->
+          let ci = Int32.to_int c land 0xFF in
+          VLiteral (LitInt32 (if ci >= 32 && ci < 127 then 1l else 0l))
+      | "ispunct", [VLiteral (LitInt32 c)] ->
+          let ci = Int32.to_int c land 0xFF in
+          let ch = Char.chr ci in
+          VLiteral (LitInt32 (if ci >= 33 && ci < 127 && not ((ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') || (ch >= '0' && ch <= '9')) then 1l else 0l))
+      | "isspace", [VLiteral (LitInt32 c)] ->
+          let ch = Char.chr (Int32.to_int c land 0xFF) in
+          VLiteral (LitInt32 (if ch = ' ' || ch = '\t' || ch = '\n' || ch = '\r' || ch = '\x0b' || ch = '\x0c' then 1l else 0l))
+      | "isupper", [VLiteral (LitInt32 c)] ->
+          let ch = Char.chr (Int32.to_int c land 0xFF) in
+          VLiteral (LitInt32 (if ch >= 'A' && ch <= 'Z' then 1l else 0l))
+      | "isxdigit", [VLiteral (LitInt32 c)] ->
+          let ch = Char.chr (Int32.to_int c land 0xFF) in
+          VLiteral (LitInt32 (if (ch >= '0' && ch <= '9') || (ch >= 'a' && ch <= 'f') || (ch >= 'A' && ch <= 'F') then 1l else 0l))
+      | "tolower", [VLiteral (LitInt32 c)] ->
+          let ch = Char.chr (Int32.to_int c land 0xFF) in
+          VLiteral (LitInt32 (Int32.of_int (Char.code (Char.lowercase_ascii ch))))
+      | "toupper", [VLiteral (LitInt32 c)] ->
+          let ch = Char.chr (Int32.to_int c land 0xFF) in
+          VLiteral (LitInt32 (Int32.of_int (Char.code (Char.uppercase_ascii ch))))
+      (* Binary Int32 operations *)
+      | "add", [VLiteral (LitInt32 a); VLiteral (LitInt32 b)] -> VLiteral (LitInt32 (Int32.add a b))
+      | "sub", [VLiteral (LitInt32 a); VLiteral (LitInt32 b)] -> VLiteral (LitInt32 (Int32.sub a b))
+      | "mul", [VLiteral (LitInt32 a); VLiteral (LitInt32 b)] -> VLiteral (LitInt32 (Int32.mul a b))
+      | "div", [VLiteral (LitInt32 a); VLiteral (LitInt32 b)] -> VLiteral (LitInt32 (Int32.div a b))
+      | "mod", [VLiteral (LitInt32 a); VLiteral (LitInt32 b)] -> VLiteral (LitInt32 (Int32.rem a b))
+      | "lt", [VLiteral (LitInt32 a); VLiteral (LitInt32 b)] -> VLiteral (LitBool (a < b))
+      | "gt", [VLiteral (LitInt32 a); VLiteral (LitInt32 b)] -> VLiteral (LitBool (a > b))
+      | "eq", [VLiteral (LitInt32 a); VLiteral (LitInt32 b)] -> VLiteral (LitBool (a = b))
+      | "le", [VLiteral (LitInt32 a); VLiteral (LitInt32 b)] -> VLiteral (LitBool (a <= b))
+      | "ge", [VLiteral (LitInt32 a); VLiteral (LitInt32 b)] -> VLiteral (LitBool (a >= b))
+      | "ne", [VLiteral (LitInt32 a); VLiteral (LitInt32 b)] -> VLiteral (LitBool (a <> b))
+      (* Binary Int64 operations *)
+      | "add64_builtin", [VLiteral (LitInt64 a); VLiteral (LitInt64 b)] -> VLiteral (LitInt64 (Int64.add a b))
+      | "sub64_builtin", [VLiteral (LitInt64 a); VLiteral (LitInt64 b)] -> VLiteral (LitInt64 (Int64.sub a b))
+      | "mul64_builtin", [VLiteral (LitInt64 a); VLiteral (LitInt64 b)] -> VLiteral (LitInt64 (Int64.mul a b))
+      | "div64_builtin", [VLiteral (LitInt64 a); VLiteral (LitInt64 b)] -> VLiteral (LitInt64 (Int64.div a b))
+      (* String comparisons *)
+      | "strcmp", [VLiteral (LitString s1); VLiteral (LitString s2)] -> VLiteral (LitInt32 (Int32.of_int (String.compare s1 s2)))
+      | "strcasecmp", [VLiteral (LitString s1); VLiteral (LitString s2)] -> VLiteral (LitInt32 (Int32.of_int (String.compare (String.lowercase_ascii s1) (String.lowercase_ascii s2))))
+      (* String comparisons with length *)
+      | "strncmp", [VLiteral (LitString s1); VLiteral (LitString s2); VLiteral (LitInt32 n)] ->
+          let n = Int32.to_int n in
+          let s1' = if String.length s1 <= n then s1 else String.sub s1 0 n in
+          let s2' = if String.length s2 <= n then s2 else String.sub s2 0 n in
+          VLiteral (LitInt32 (Int32.of_int (String.compare s1' s2')))
+      (* Still collecting args *)
+      | _ -> VBuiltin (op, args'))
   | VNeutral n ->
       VNeutral (NApp (n, [arg]))
   | _ -> VNeutral (NApp (NVar "_stuck_", [f; arg]))
@@ -250,9 +333,21 @@ and eval_match (ctx : context) (env : env) (scrut : value) (cases : case list) :
   | VConstructor (ctor_name, args) -> (
       match List.find_opt (fun c -> String.equal c.pattern.ctor ctor_name) cases with
       | Some case ->
-          let bindings =
-            List.combine (List.map (fun a -> a.arg_name) case.pattern.args) args
+          let pat_args = List.map (fun a -> a.arg_name) case.pattern.args in
+          let num_pat_args = List.length pat_args in
+          let num_ctor_args = List.length args in
+          (* Skip type parameters: constructor args include params, pattern args don't *)
+          let field_args =
+            let skip = num_ctor_args - num_pat_args in
+            let rec drop n xs =
+              match n, xs with
+              | 0, _ -> xs
+              | k, _ :: ys -> drop (k - 1) ys
+              | _, [] -> []
+            in
+            drop skip args
           in
+          let bindings = List.combine pat_args field_args in
           let env' = List.fold_left (fun e (x, v) -> extend_env e x v) env bindings in
           eval ctx env' case.body
       | None -> VNeutral (NMatch (NVar "_no_case_", mk (Universe Type), cases)))

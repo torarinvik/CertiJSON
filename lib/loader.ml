@@ -39,6 +39,16 @@ let resolve_import (name : name) : string option =
     | "Std.CMath" -> "std_cmath.json"
     | "Std.CErrno" -> "std_errno.json"
     | "Std.CAssert" -> "std_assert.json"
+    | "Std.Option" -> "std_option.json"
+    | "Std.Result" -> "std_result.json"
+    | "Std.Bool" -> "std_bool.json"
+    | "Std.Pair" -> "std_pair.json"
+    | "Std.Int" -> "std_int.json"
+    | "Std.String" -> "std_string.json"
+    | "Std.Char" -> "std_char.json"
+    | "Std.List" -> "std_list.json"
+    | "Std.Nat" -> "std_nat.json"
+    | "Raylib" -> "raylib.json"
     | _ -> name ^ ".json" 
   in
   let paths = ["."; "stdlib"] in

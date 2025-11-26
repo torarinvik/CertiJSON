@@ -1,0 +1,232 @@
+{
+  "module": "Std.Char",
+  "imports": ["Std.IO", "Std.Memory", "Std.CCtype", "Std.Math"],
+  "declarations": [
+    {
+      "def": {
+        "name": "is_alpha",
+        "role": "runtime",
+        "type": {
+          "pi": {
+            "arg": { "name": "c", "type": { "prim": "Int32" } },
+            "result": { "prim": "Bool" }
+          }
+        },
+        "body": {
+          "lambda": {
+            "arg": { "name": "c", "type": { "prim": "Int32" } },
+            "body": { "app": [{ "var": "ne" }, { "app": [{ "var": "isalpha" }, { "var": "c" }] }, { "int32": 0 }] }
+          }
+        }
+      }
+    },
+    {
+      "def": {
+        "name": "is_digit",
+        "role": "runtime",
+        "type": {
+          "pi": {
+            "arg": { "name": "c", "type": { "prim": "Int32" } },
+            "result": { "prim": "Bool" }
+          }
+        },
+        "body": {
+          "lambda": {
+            "arg": { "name": "c", "type": { "prim": "Int32" } },
+            "body": { "app": [{ "var": "ne" }, { "app": [{ "var": "isdigit" }, { "var": "c" }] }, { "int32": 0 }] }
+          }
+        }
+      }
+    },
+    {
+      "def": {
+        "name": "is_alnum",
+        "role": "runtime",
+        "type": {
+          "pi": {
+            "arg": { "name": "c", "type": { "prim": "Int32" } },
+            "result": { "prim": "Bool" }
+          }
+        },
+        "body": {
+          "lambda": {
+            "arg": { "name": "c", "type": { "prim": "Int32" } },
+            "body": { "app": [{ "var": "ne" }, { "app": [{ "var": "isalnum" }, { "var": "c" }] }, { "int32": 0 }] }
+          }
+        }
+      }
+    },
+    {
+      "def": {
+        "name": "is_space",
+        "role": "runtime",
+        "type": {
+          "pi": {
+            "arg": { "name": "c", "type": { "prim": "Int32" } },
+            "result": { "prim": "Bool" }
+          }
+        },
+        "body": {
+          "lambda": {
+            "arg": { "name": "c", "type": { "prim": "Int32" } },
+            "body": { "app": [{ "var": "ne" }, { "app": [{ "var": "isspace" }, { "var": "c" }] }, { "int32": 0 }] }
+          }
+        }
+      }
+    },
+    {
+      "def": {
+        "name": "is_upper",
+        "role": "runtime",
+        "type": {
+          "pi": {
+            "arg": { "name": "c", "type": { "prim": "Int32" } },
+            "result": { "prim": "Bool" }
+          }
+        },
+        "body": {
+          "lambda": {
+            "arg": { "name": "c", "type": { "prim": "Int32" } },
+            "body": { "app": [{ "var": "ne" }, { "app": [{ "var": "isupper" }, { "var": "c" }] }, { "int32": 0 }] }
+          }
+        }
+      }
+    },
+    {
+      "def": {
+        "name": "is_lower",
+        "role": "runtime",
+        "type": {
+          "pi": {
+            "arg": { "name": "c", "type": { "prim": "Int32" } },
+            "result": { "prim": "Bool" }
+          }
+        },
+        "body": {
+          "lambda": {
+            "arg": { "name": "c", "type": { "prim": "Int32" } },
+            "body": { "app": [{ "var": "ne" }, { "app": [{ "var": "islower" }, { "var": "c" }] }, { "int32": 0 }] }
+          }
+        }
+      }
+    },
+    {
+      "def": {
+        "name": "is_print",
+        "role": "runtime",
+        "type": {
+          "pi": {
+            "arg": { "name": "c", "type": { "prim": "Int32" } },
+            "result": { "prim": "Bool" }
+          }
+        },
+        "body": {
+          "lambda": {
+            "arg": { "name": "c", "type": { "prim": "Int32" } },
+            "body": { "app": [{ "var": "ne" }, { "app": [{ "var": "isprint" }, { "var": "c" }] }, { "int32": 0 }] }
+          }
+        }
+      }
+    },
+    {
+      "def": {
+        "name": "is_punct",
+        "role": "runtime",
+        "type": {
+          "pi": {
+            "arg": { "name": "c", "type": { "prim": "Int32" } },
+            "result": { "prim": "Bool" }
+          }
+        },
+        "body": {
+          "lambda": {
+            "arg": { "name": "c", "type": { "prim": "Int32" } },
+            "body": { "app": [{ "var": "ne" }, { "app": [{ "var": "ispunct" }, { "var": "c" }] }, { "int32": 0 }] }
+          }
+        }
+      }
+    },
+    {
+      "def": {
+        "name": "is_xdigit",
+        "role": "runtime",
+        "type": {
+          "pi": {
+            "arg": { "name": "c", "type": { "prim": "Int32" } },
+            "result": { "prim": "Bool" }
+          }
+        },
+        "body": {
+          "lambda": {
+            "arg": { "name": "c", "type": { "prim": "Int32" } },
+            "body": { "app": [{ "var": "ne" }, { "app": [{ "var": "isxdigit" }, { "var": "c" }] }, { "int32": 0 }] }
+          }
+        }
+      }
+    },
+    {
+      "def": {
+        "name": "to_upper",
+        "role": "runtime",
+        "type": {
+          "pi": {
+            "arg": { "name": "c", "type": { "prim": "Int32" } },
+            "result": { "prim": "Int32" }
+          }
+        },
+        "body": {
+          "lambda": {
+            "arg": { "name": "c", "type": { "prim": "Int32" } },
+            "body": { "app": [{ "var": "toupper" }, { "var": "c" }] }
+          }
+        }
+      }
+    },
+    {
+      "def": {
+        "name": "to_lower",
+        "role": "runtime",
+        "type": {
+          "pi": {
+            "arg": { "name": "c", "type": { "prim": "Int32" } },
+            "result": { "prim": "Int32" }
+          }
+        },
+        "body": {
+          "lambda": {
+            "arg": { "name": "c", "type": { "prim": "Int32" } },
+            "body": { "app": [{ "var": "tolower" }, { "var": "c" }] }
+          }
+        }
+      }
+    },
+    {
+      "def": {
+        "name": "char_eq",
+        "role": "runtime",
+        "type": {
+          "pi": {
+            "arg": { "name": "a", "type": { "prim": "Int32" } },
+            "result": {
+              "pi": {
+                "arg": { "name": "b", "type": { "prim": "Int32" } },
+                "result": { "prim": "Bool" }
+              }
+            }
+          }
+        },
+        "body": {
+          "lambda": {
+            "arg": { "name": "a", "type": { "prim": "Int32" } },
+            "body": {
+              "lambda": {
+                "arg": { "name": "b", "type": { "prim": "Int32" } },
+                "body": { "app": [{ "var": "eq" }, { "var": "a" }, { "var": "b" }] }
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

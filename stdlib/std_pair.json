@@ -1,0 +1,122 @@
+{
+  "module": "Std.Pair",
+  "imports": [],
+  "declarations": [
+    {
+      "inductive": {
+        "name": "Pair",
+        "params": [
+          { "name": "A", "type": { "universe": "Type" } },
+          { "name": "B", "type": { "universe": "Type" } }
+        ],
+        "universe": "Type",
+        "constructors": [
+          { "name": "pair", "args": [
+            { "name": "fst", "type": { "var": "A" } },
+            { "name": "snd", "type": { "var": "B" } }
+          ]}
+        ]
+      }
+    },
+    {
+      "def": {
+        "name": "fst",
+        "role": "runtime",
+        "type": {
+          "pi": {
+            "arg": { "name": "A", "type": { "universe": "Type" } },
+            "result": {
+              "pi": {
+                "arg": { "name": "B", "type": { "universe": "Type" } },
+                "result": {
+                  "pi": {
+                    "arg": { "name": "p", "type": { "app": [{ "var": "Pair" }, { "var": "A" }, { "var": "B" }] } },
+                    "result": { "var": "A" }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "body": {
+          "lambda": {
+            "arg": { "name": "A", "type": { "universe": "Type" } },
+            "body": {
+              "lambda": {
+                "arg": { "name": "B", "type": { "universe": "Type" } },
+                "body": {
+                  "lambda": {
+                    "arg": { "name": "p", "type": { "app": [{ "var": "Pair" }, { "var": "A" }, { "var": "B" }] } },
+                    "body": {
+                      "match": {
+                        "scrutinee": { "var": "p" },
+                        "motive": { "var": "A" },
+                        "cases": [
+                          {
+                            "pattern": { "ctor": "pair", "args": [{ "name": "x" }, { "name": "y" }] },
+                            "body": { "var": "x" }
+                          }
+                        ],
+                        "coverage_hint": "complete"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "def": {
+        "name": "snd",
+        "role": "runtime",
+        "type": {
+          "pi": {
+            "arg": { "name": "A", "type": { "universe": "Type" } },
+            "result": {
+              "pi": {
+                "arg": { "name": "B", "type": { "universe": "Type" } },
+                "result": {
+                  "pi": {
+                    "arg": { "name": "p", "type": { "app": [{ "var": "Pair" }, { "var": "A" }, { "var": "B" }] } },
+                    "result": { "var": "B" }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "body": {
+          "lambda": {
+            "arg": { "name": "A", "type": { "universe": "Type" } },
+            "body": {
+              "lambda": {
+                "arg": { "name": "B", "type": { "universe": "Type" } },
+                "body": {
+                  "lambda": {
+                    "arg": { "name": "p", "type": { "app": [{ "var": "Pair" }, { "var": "A" }, { "var": "B" }] } },
+                    "body": {
+                      "match": {
+                        "scrutinee": { "var": "p" },
+                        "motive": { "var": "B" },
+                        "cases": [
+                          {
+                            "pattern": { "ctor": "pair", "args": [{ "name": "x" }, { "name": "y" }] },
+                            "body": { "var": "y" }
+                          }
+                        ],
+                        "coverage_hint": "complete"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

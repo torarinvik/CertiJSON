@@ -1,0 +1,174 @@
+{
+  "module": "Std.String",
+  "imports": ["Std.Memory", "Std.Math"],
+  "declarations": [
+    {
+      "def": {
+        "name": "str_eq",
+        "role": "runtime",
+        "type": {
+          "pi": {
+            "arg": { "name": "s1", "type": { "prim": "String" } },
+            "result": {
+              "pi": {
+                "arg": { "name": "s2", "type": { "prim": "String" } },
+                "result": { "prim": "Bool" }
+              }
+            }
+          }
+        },
+        "body": {
+          "lambda": {
+            "arg": { "name": "s1", "type": { "prim": "String" } },
+            "body": {
+              "lambda": {
+                "arg": { "name": "s2", "type": { "prim": "String" } },
+                "body": { "app": [{ "var": "eq" }, { "app": [{ "var": "strcmp" }, { "var": "s1" }, { "var": "s2" }] }, { "int32": 0 }] }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "def": {
+        "name": "str_ne",
+        "role": "runtime",
+        "type": {
+          "pi": {
+            "arg": { "name": "s1", "type": { "prim": "String" } },
+            "result": {
+              "pi": {
+                "arg": { "name": "s2", "type": { "prim": "String" } },
+                "result": { "prim": "Bool" }
+              }
+            }
+          }
+        },
+        "body": {
+          "lambda": {
+            "arg": { "name": "s1", "type": { "prim": "String" } },
+            "body": {
+              "lambda": {
+                "arg": { "name": "s2", "type": { "prim": "String" } },
+                "body": { "app": [{ "var": "ne" }, { "app": [{ "var": "strcmp" }, { "var": "s1" }, { "var": "s2" }] }, { "int32": 0 }] }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "def": {
+        "name": "str_lt",
+        "role": "runtime",
+        "type": {
+          "pi": {
+            "arg": { "name": "s1", "type": { "prim": "String" } },
+            "result": {
+              "pi": {
+                "arg": { "name": "s2", "type": { "prim": "String" } },
+                "result": { "prim": "Bool" }
+              }
+            }
+          }
+        },
+        "body": {
+          "lambda": {
+            "arg": { "name": "s1", "type": { "prim": "String" } },
+            "body": {
+              "lambda": {
+                "arg": { "name": "s2", "type": { "prim": "String" } },
+                "body": { "app": [{ "var": "lt" }, { "app": [{ "var": "strcmp" }, { "var": "s1" }, { "var": "s2" }] }, { "int32": 0 }] }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "def": {
+        "name": "str_gt",
+        "role": "runtime",
+        "type": {
+          "pi": {
+            "arg": { "name": "s1", "type": { "prim": "String" } },
+            "result": {
+              "pi": {
+                "arg": { "name": "s2", "type": { "prim": "String" } },
+                "result": { "prim": "Bool" }
+              }
+            }
+          }
+        },
+        "body": {
+          "lambda": {
+            "arg": { "name": "s1", "type": { "prim": "String" } },
+            "body": {
+              "lambda": {
+                "arg": { "name": "s2", "type": { "prim": "String" } },
+                "body": { "app": [{ "var": "gt" }, { "app": [{ "var": "strcmp" }, { "var": "s1" }, { "var": "s2" }] }, { "int32": 0 }] }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "def": {
+        "name": "str_le",
+        "role": "runtime",
+        "type": {
+          "pi": {
+            "arg": { "name": "s1", "type": { "prim": "String" } },
+            "result": {
+              "pi": {
+                "arg": { "name": "s2", "type": { "prim": "String" } },
+                "result": { "prim": "Bool" }
+              }
+            }
+          }
+        },
+        "body": {
+          "lambda": {
+            "arg": { "name": "s1", "type": { "prim": "String" } },
+            "body": {
+              "lambda": {
+                "arg": { "name": "s2", "type": { "prim": "String" } },
+                "body": { "app": [{ "var": "le" }, { "app": [{ "var": "strcmp" }, { "var": "s1" }, { "var": "s2" }] }, { "int32": 0 }] }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "def": {
+        "name": "str_ge",
+        "role": "runtime",
+        "type": {
+          "pi": {
+            "arg": { "name": "s1", "type": { "prim": "String" } },
+            "result": {
+              "pi": {
+                "arg": { "name": "s2", "type": { "prim": "String" } },
+                "result": { "prim": "Bool" }
+              }
+            }
+          }
+        },
+        "body": {
+          "lambda": {
+            "arg": { "name": "s1", "type": { "prim": "String" } },
+            "body": {
+              "lambda": {
+                "arg": { "name": "s2", "type": { "prim": "String" } },
+                "body": { "app": [{ "var": "ge" }, { "app": [{ "var": "strcmp" }, { "var": "s1" }, { "var": "s2" }] }, { "int32": 0 }] }
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

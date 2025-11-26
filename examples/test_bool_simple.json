@@ -1,0 +1,30 @@
+{
+  "module": "Test.BoolSimple",
+  "imports": ["Std.IO", "Std.Bool"],
+  "declarations": [
+    {
+      "def": {
+        "name": "main",
+        "role": "runtime",
+        "type": { "app": [{ "var": "IO" }, { "var": "Unit" }] },
+        "body": {
+          "app": [
+            {
+              "lambda": {
+                "arg": { "name": "x", "type": { "prim": "Bool" } },
+                "body": {
+                  "if": {
+                    "cond": { "var": "x" },
+                    "then": { "app": [{ "var": "print_line" }, { "string": "not true is true (wrong)" }] },
+                    "else": { "app": [{ "var": "print_line" }, { "string": "not true is false (correct)" }] }
+                  }
+                }
+              }
+            },
+            { "app": [{ "var": "not" }, { "bool": true }] }
+          ]
+        }
+      }
+    }
+  ]
+}

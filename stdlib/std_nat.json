@@ -1,0 +1,376 @@
+{
+  "module": "Std.Nat",
+  "imports": ["Std.Bool", "Std.Option", "Std.Math"],
+  "declarations": [
+    {
+      "inductive": {
+        "name": "Nat",
+        "params": [],
+        "universe": "Type",
+        "constructors": [
+          { "name": "zero", "args": [] },
+          { "name": "succ", "args": [{ "name": "n", "type": { "var": "Nat" } }] }
+        ]
+      }
+    },
+    {
+      "def": {
+        "name": "is_zero",
+        "role": "runtime",
+        "type": {
+          "pi": {
+            "arg": { "name": "n", "type": { "var": "Nat" } },
+            "result": { "prim": "Bool" }
+          }
+        },
+        "body": {
+          "lambda": {
+            "arg": { "name": "n", "type": { "var": "Nat" } },
+            "body": {
+              "match": {
+                "scrutinee": { "var": "n" },
+                "motive": { "prim": "Bool" },
+                "cases": [
+                  {
+                    "pattern": { "ctor": "zero", "args": [] },
+                    "body": { "bool": true }
+                  },
+                  {
+                    "pattern": { "ctor": "succ", "args": [{ "name": "m" }] },
+                    "body": { "bool": false }
+                  }
+                ],
+                "coverage_hint": "complete"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "def": {
+        "name": "pred",
+        "role": "runtime",
+        "type": {
+          "pi": {
+            "arg": { "name": "n", "type": { "var": "Nat" } },
+            "result": { "var": "Nat" }
+          }
+        },
+        "body": {
+          "lambda": {
+            "arg": { "name": "n", "type": { "var": "Nat" } },
+            "body": {
+              "match": {
+                "scrutinee": { "var": "n" },
+                "motive": { "var": "Nat" },
+                "cases": [
+                  {
+                    "pattern": { "ctor": "zero", "args": [] },
+                    "body": { "var": "zero" }
+                  },
+                  {
+                    "pattern": { "ctor": "succ", "args": [{ "name": "m" }] },
+                    "body": { "var": "m" }
+                  }
+                ],
+                "coverage_hint": "complete"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "def": {
+        "name": "add_nat",
+        "role": "runtime",
+        "rec_args": [0],
+        "type": {
+          "pi": {
+            "arg": { "name": "a", "type": { "var": "Nat" } },
+            "result": {
+              "pi": {
+                "arg": { "name": "b", "type": { "var": "Nat" } },
+                "result": { "var": "Nat" }
+              }
+            }
+          }
+        },
+        "body": {
+          "lambda": {
+            "arg": { "name": "a", "type": { "var": "Nat" } },
+            "body": {
+              "lambda": {
+                "arg": { "name": "b", "type": { "var": "Nat" } },
+                "body": {
+                  "match": {
+                    "scrutinee": { "var": "a" },
+                    "motive": { "var": "Nat" },
+                    "cases": [
+                      {
+                        "pattern": { "ctor": "zero", "args": [] },
+                        "body": { "var": "b" }
+                      },
+                      {
+                        "pattern": { "ctor": "succ", "args": [{ "name": "m" }] },
+                        "body": { "app": [{ "var": "succ" }, { "app": [{ "var": "add_nat" }, { "var": "m" }, { "var": "b" }] }] }
+                      }
+                    ],
+                    "coverage_hint": "complete"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "def": {
+        "name": "mul_nat",
+        "role": "runtime",
+        "rec_args": [0],
+        "type": {
+          "pi": {
+            "arg": { "name": "a", "type": { "var": "Nat" } },
+            "result": {
+              "pi": {
+                "arg": { "name": "b", "type": { "var": "Nat" } },
+                "result": { "var": "Nat" }
+              }
+            }
+          }
+        },
+        "body": {
+          "lambda": {
+            "arg": { "name": "a", "type": { "var": "Nat" } },
+            "body": {
+              "lambda": {
+                "arg": { "name": "b", "type": { "var": "Nat" } },
+                "body": {
+                  "match": {
+                    "scrutinee": { "var": "a" },
+                    "motive": { "var": "Nat" },
+                    "cases": [
+                      {
+                        "pattern": { "ctor": "zero", "args": [] },
+                        "body": { "var": "zero" }
+                      },
+                      {
+                        "pattern": { "ctor": "succ", "args": [{ "name": "m" }] },
+                        "body": { "app": [{ "var": "add_nat" }, { "var": "b" }, { "app": [{ "var": "mul_nat" }, { "var": "m" }, { "var": "b" }] }] }
+                      }
+                    ],
+                    "coverage_hint": "complete"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "def": {
+        "name": "eq_nat",
+        "role": "runtime",
+        "rec_args": [0],
+        "type": {
+          "pi": {
+            "arg": { "name": "a", "type": { "var": "Nat" } },
+            "result": {
+              "pi": {
+                "arg": { "name": "b", "type": { "var": "Nat" } },
+                "result": { "prim": "Bool" }
+              }
+            }
+          }
+        },
+        "body": {
+          "lambda": {
+            "arg": { "name": "a", "type": { "var": "Nat" } },
+            "body": {
+              "lambda": {
+                "arg": { "name": "b", "type": { "var": "Nat" } },
+                "body": {
+                  "match": {
+                    "scrutinee": { "var": "a" },
+                    "motive": { "prim": "Bool" },
+                    "cases": [
+                      {
+                        "pattern": { "ctor": "zero", "args": [] },
+                        "body": {
+                          "match": {
+                            "scrutinee": { "var": "b" },
+                            "motive": { "prim": "Bool" },
+                            "cases": [
+                              {
+                                "pattern": { "ctor": "zero", "args": [] },
+                                "body": { "bool": true }
+                              },
+                              {
+                                "pattern": { "ctor": "succ", "args": [{ "name": "n" }] },
+                                "body": { "bool": false }
+                              }
+                            ],
+                            "coverage_hint": "complete"
+                          }
+                        }
+                      },
+                      {
+                        "pattern": { "ctor": "succ", "args": [{ "name": "m" }] },
+                        "body": {
+                          "match": {
+                            "scrutinee": { "var": "b" },
+                            "motive": { "prim": "Bool" },
+                            "cases": [
+                              {
+                                "pattern": { "ctor": "zero", "args": [] },
+                                "body": { "bool": false }
+                              },
+                              {
+                                "pattern": { "ctor": "succ", "args": [{ "name": "n" }] },
+                                "body": { "app": [{ "var": "eq_nat" }, { "var": "m" }, { "var": "n" }] }
+                              }
+                            ],
+                            "coverage_hint": "complete"
+                          }
+                        }
+                      }
+                    ],
+                    "coverage_hint": "complete"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "def": {
+        "name": "le_nat",
+        "role": "runtime",
+        "rec_args": [0],
+        "type": {
+          "pi": {
+            "arg": { "name": "a", "type": { "var": "Nat" } },
+            "result": {
+              "pi": {
+                "arg": { "name": "b", "type": { "var": "Nat" } },
+                "result": { "prim": "Bool" }
+              }
+            }
+          }
+        },
+        "body": {
+          "lambda": {
+            "arg": { "name": "a", "type": { "var": "Nat" } },
+            "body": {
+              "lambda": {
+                "arg": { "name": "b", "type": { "var": "Nat" } },
+                "body": {
+                  "match": {
+                    "scrutinee": { "var": "a" },
+                    "motive": { "prim": "Bool" },
+                    "cases": [
+                      {
+                        "pattern": { "ctor": "zero", "args": [] },
+                        "body": { "bool": true }
+                      },
+                      {
+                        "pattern": { "ctor": "succ", "args": [{ "name": "m" }] },
+                        "body": {
+                          "match": {
+                            "scrutinee": { "var": "b" },
+                            "motive": { "prim": "Bool" },
+                            "cases": [
+                              {
+                                "pattern": { "ctor": "zero", "args": [] },
+                                "body": { "bool": false }
+                              },
+                              {
+                                "pattern": { "ctor": "succ", "args": [{ "name": "n" }] },
+                                "body": { "app": [{ "var": "le_nat" }, { "var": "m" }, { "var": "n" }] }
+                              }
+                            ],
+                            "coverage_hint": "complete"
+                          }
+                        }
+                      }
+                    ],
+                    "coverage_hint": "complete"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "def": {
+        "name": "lt_nat",
+        "role": "runtime",
+        "type": {
+          "pi": {
+            "arg": { "name": "a", "type": { "var": "Nat" } },
+            "result": {
+              "pi": {
+                "arg": { "name": "b", "type": { "var": "Nat" } },
+                "result": { "prim": "Bool" }
+              }
+            }
+          }
+        },
+        "body": {
+          "lambda": {
+            "arg": { "name": "a", "type": { "var": "Nat" } },
+            "body": {
+              "lambda": {
+                "arg": { "name": "b", "type": { "var": "Nat" } },
+                "body": { "app": [{ "var": "and" }, { "app": [{ "var": "le_nat" }, { "var": "a" }, { "var": "b" }] }, { "app": [{ "var": "not" }, { "app": [{ "var": "eq_nat" }, { "var": "a" }, { "var": "b" }] }] }] }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "def": {
+        "name": "nat_to_int",
+        "role": "runtime",
+        "rec_args": [0],
+        "type": {
+          "pi": {
+            "arg": { "name": "n", "type": { "var": "Nat" } },
+            "result": { "prim": "Int32" }
+          }
+        },
+        "body": {
+          "lambda": {
+            "arg": { "name": "n", "type": { "var": "Nat" } },
+            "body": {
+              "match": {
+                "scrutinee": { "var": "n" },
+                "motive": { "prim": "Int32" },
+                "cases": [
+                  {
+                    "pattern": { "ctor": "zero", "args": [] },
+                    "body": { "int32": 0 }
+                  },
+                  {
+                    "pattern": { "ctor": "succ", "args": [{ "name": "m" }] },
+                    "body": { "app": [{ "var": "add" }, { "int32": 1 }, { "app": [{ "var": "nat_to_int" }, { "var": "m" }] }] }
+                  }
+                ],
+                "coverage_hint": "complete"
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,123 @@
+{
+  "module": "Test.ListModule",
+  "imports": ["Std.IO", "Std.Math", "Std.List"],
+  "declarations": [
+    {
+      "def": {
+        "name": "test_list1",
+        "role": "runtime",
+        "type": { "prim": "Int32" },
+        "body": { "app": [{ "var": "length" }, { "prim": "Int32" }, { "app": [{ "var": "nil" }, { "prim": "Int32" }] }] }
+      }
+    },
+    {
+      "def": {
+        "name": "test_list2",
+        "role": "runtime",
+        "type": { "prim": "Int32" },
+        "body": { 
+          "app": [
+            { "var": "length" }, 
+            { "prim": "Int32" }, 
+            { "app": [
+              { "var": "cons" }, 
+              { "prim": "Int32" }, 
+              { "int32": 1 },
+              { "app": [
+                { "var": "cons" },
+                { "prim": "Int32" },
+                { "int32": 2 },
+                { "app": [
+                  { "var": "cons" },
+                  { "prim": "Int32" },
+                  { "int32": 3 },
+                  { "app": [{ "var": "nil" }, { "prim": "Int32" }] }
+                ]}
+              ]}
+            ]}
+          ]
+        }
+      }
+    },
+    {
+      "def": {
+        "name": "main",
+        "role": "runtime",
+        "type": { "app": [{ "var": "IO" }, { "var": "Unit" }] },
+        "body": {
+          "app": [
+            { "var": "bind" },
+            { "var": "Unit" },
+            { "var": "Unit" },
+            { "app": [{ "var": "print_line" }, { "string": "Testing List module..." }] },
+            {
+              "lambda": {
+                "arg": { "name": "_", "type": { "var": "Unit" } },
+                "body": {
+                  "app": [
+                    { "var": "bind" },
+                    { "var": "Unit" },
+                    { "var": "Unit" },
+                    {
+                      "if": {
+                        "cond": { "app": [{ "var": "eq" }, { "var": "test_list1" }, { "int32": 0 }] },
+                        "then": { "app": [{ "var": "print_line" }, { "string": "  length [] = 0: OK" }] },
+                        "else": { "app": [{ "var": "print_line" }, { "string": "  length []: FAILED" }] }
+                      }
+                    },
+                    {
+                      "lambda": {
+                        "arg": { "name": "_", "type": { "var": "Unit" } },
+                        "body": {
+                          "app": [
+                            { "var": "bind" },
+                            { "var": "Unit" },
+                            { "var": "Unit" },
+                            {
+                              "if": {
+                                "cond": { "app": [{ "var": "eq" }, { "var": "test_list2" }, { "int32": 3 }] },
+                                "then": { "app": [{ "var": "print_line" }, { "string": "  length [1,2,3] = 3: OK" }] },
+                                "else": { "app": [{ "var": "print_line" }, { "string": "  length [1,2,3]: FAILED" }] }
+                              }
+                            },
+                            {
+                              "lambda": {
+                                "arg": { "name": "_", "type": { "var": "Unit" } },
+                                "body": {
+                                  "app": [
+                                    { "var": "bind" },
+                                    { "var": "Unit" },
+                                    { "var": "Unit" },
+                                    {
+                                      "if": {
+                                        "cond": { "app": [{ "var": "is_empty" }, { "prim": "Int32" }, { "app": [{ "var": "nil" }, { "prim": "Int32" }] }] },
+                                        "then": { "app": [{ "var": "print_line" }, { "string": "  is_empty [] = true: OK" }] },
+                                        "else": { "app": [{ "var": "print_line" }, { "string": "  is_empty []: FAILED" }] }
+                                      }
+                                    },
+                                    {
+                                      "lambda": {
+                                        "arg": { "name": "_", "type": { "var": "Unit" } },
+                                        "body": {
+                                          "app": [{ "var": "print_line" }, { "string": "=== List tests completed ===" }]
+                                        }
+                                      }
+                                    }
+                                  ]
+                                }
+                              }
+                            }
+                          ]
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

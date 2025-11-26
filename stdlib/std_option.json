@@ -1,0 +1,481 @@
+{
+  "module": "Std.Option",
+  "imports": ["Std.Pair"],
+  "declarations": [
+    {
+      "inductive": {
+        "name": "Option",
+        "params": [{ "name": "A", "type": { "universe": "Type" } }],
+        "universe": "Type",
+        "constructors": [
+          { "name": "none", "args": [] },
+          { "name": "some", "args": [{ "name": "value", "type": { "var": "A" } }] }
+        ]
+      }
+    },
+    {
+      "def": {
+        "name": "is_some",
+        "role": "runtime",
+        "type": {
+          "pi": {
+            "arg": { "name": "A", "type": { "universe": "Type" } },
+            "result": {
+              "pi": {
+                "arg": { "name": "opt", "type": { "app": [{ "var": "Option" }, { "var": "A" }] } },
+                "result": { "prim": "Bool" }
+              }
+            }
+          }
+        },
+        "body": {
+          "lambda": {
+            "arg": { "name": "A", "type": { "universe": "Type" } },
+            "body": {
+              "lambda": {
+                "arg": { "name": "opt", "type": { "app": [{ "var": "Option" }, { "var": "A" }] } },
+                "body": {
+                  "match": {
+                    "scrutinee": { "var": "opt" },
+                    "motive": { "prim": "Bool" },
+                    "cases": [
+                      {
+                        "pattern": { "ctor": "none", "args": [] },
+                        "body": { "bool": false }
+                      },
+                      {
+                        "pattern": { "ctor": "some", "args": [{ "name": "x" }] },
+                        "body": { "bool": true }
+                      }
+                    ],
+                    "coverage_hint": "complete"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "def": {
+        "name": "is_none",
+        "role": "runtime",
+        "type": {
+          "pi": {
+            "arg": { "name": "A", "type": { "universe": "Type" } },
+            "result": {
+              "pi": {
+                "arg": { "name": "opt", "type": { "app": [{ "var": "Option" }, { "var": "A" }] } },
+                "result": { "prim": "Bool" }
+              }
+            }
+          }
+        },
+        "body": {
+          "lambda": {
+            "arg": { "name": "A", "type": { "universe": "Type" } },
+            "body": {
+              "lambda": {
+                "arg": { "name": "opt", "type": { "app": [{ "var": "Option" }, { "var": "A" }] } },
+                "body": {
+                  "match": {
+                    "scrutinee": { "var": "opt" },
+                    "motive": { "prim": "Bool" },
+                    "cases": [
+                      {
+                        "pattern": { "ctor": "none", "args": [] },
+                        "body": { "bool": true }
+                      },
+                      {
+                        "pattern": { "ctor": "some", "args": [{ "name": "x" }] },
+                        "body": { "bool": false }
+                      }
+                    ],
+                    "coverage_hint": "complete"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "def": {
+        "name": "unwrap_or",
+        "role": "runtime",
+        "type": {
+          "pi": {
+            "arg": { "name": "A", "type": { "universe": "Type" } },
+            "result": {
+              "pi": {
+                "arg": { "name": "opt", "type": { "app": [{ "var": "Option" }, { "var": "A" }] } },
+                "result": {
+                  "pi": {
+                    "arg": { "name": "default", "type": { "var": "A" } },
+                    "result": { "var": "A" }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "body": {
+          "lambda": {
+            "arg": { "name": "A", "type": { "universe": "Type" } },
+            "body": {
+              "lambda": {
+                "arg": { "name": "opt", "type": { "app": [{ "var": "Option" }, { "var": "A" }] } },
+                "body": {
+                  "lambda": {
+                    "arg": { "name": "default", "type": { "var": "A" } },
+                    "body": {
+                      "match": {
+                        "scrutinee": { "var": "opt" },
+                        "motive": { "var": "A" },
+                        "cases": [
+                          {
+                            "pattern": { "ctor": "none", "args": [] },
+                            "body": { "var": "default" }
+                          },
+                          {
+                            "pattern": { "ctor": "some", "args": [{ "name": "x" }] },
+                            "body": { "var": "x" }
+                          }
+                        ],
+                        "coverage_hint": "complete"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "def": {
+        "name": "map_option",
+        "role": "runtime",
+        "type": {
+          "pi": {
+            "arg": { "name": "A", "type": { "universe": "Type" } },
+            "result": {
+              "pi": {
+                "arg": { "name": "B", "type": { "universe": "Type" } },
+                "result": {
+                  "pi": {
+                    "arg": { "name": "f", "type": { "pi": { "arg": { "name": "_", "type": { "var": "A" } }, "result": { "var": "B" } } } },
+                    "result": {
+                      "pi": {
+                        "arg": { "name": "opt", "type": { "app": [{ "var": "Option" }, { "var": "A" }] } },
+                        "result": { "app": [{ "var": "Option" }, { "var": "B" }] }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "body": {
+          "lambda": {
+            "arg": { "name": "A", "type": { "universe": "Type" } },
+            "body": {
+              "lambda": {
+                "arg": { "name": "B", "type": { "universe": "Type" } },
+                "body": {
+                  "lambda": {
+                    "arg": { "name": "f", "type": { "pi": { "arg": { "name": "_", "type": { "var": "A" } }, "result": { "var": "B" } } } },
+                    "body": {
+                      "lambda": {
+                        "arg": { "name": "opt", "type": { "app": [{ "var": "Option" }, { "var": "A" }] } },
+                        "body": {
+                          "match": {
+                            "scrutinee": { "var": "opt" },
+                            "motive": { "app": [{ "var": "Option" }, { "var": "B" }] },
+                            "cases": [
+                              {
+                                "pattern": { "ctor": "none", "args": [] },
+                                "body": { "app": [{ "var": "none" }, { "var": "B" }] }
+                              },
+                              {
+                                "pattern": { "ctor": "some", "args": [{ "name": "x" }] },
+                                "body": { "app": [{ "var": "some" }, { "var": "B" }, { "app": [{ "var": "f" }, { "var": "x" }] }] }
+                              }
+                            ],
+                            "coverage_hint": "complete"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "def": {
+        "name": "flat_map_option",
+        "role": "runtime",
+        "type": {
+          "pi": {
+            "arg": { "name": "A", "type": { "universe": "Type" } },
+            "result": {
+              "pi": {
+                "arg": { "name": "B", "type": { "universe": "Type" } },
+                "result": {
+                  "pi": {
+                    "arg": { "name": "f", "type": { "pi": { "arg": { "name": "_", "type": { "var": "A" } }, "result": { "app": [{ "var": "Option" }, { "var": "B" }] } } } },
+                    "result": {
+                      "pi": {
+                        "arg": { "name": "opt", "type": { "app": [{ "var": "Option" }, { "var": "A" }] } },
+                        "result": { "app": [{ "var": "Option" }, { "var": "B" }] }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "body": {
+          "lambda": {
+            "arg": { "name": "A", "type": { "universe": "Type" } },
+            "body": {
+              "lambda": {
+                "arg": { "name": "B", "type": { "universe": "Type" } },
+                "body": {
+                  "lambda": {
+                    "arg": { "name": "f", "type": { "pi": { "arg": { "name": "_", "type": { "var": "A" } }, "result": { "app": [{ "var": "Option" }, { "var": "B" }] } } } },
+                    "body": {
+                      "lambda": {
+                        "arg": { "name": "opt", "type": { "app": [{ "var": "Option" }, { "var": "A" }] } },
+                        "body": {
+                          "match": {
+                            "scrutinee": { "var": "opt" },
+                            "motive": { "app": [{ "var": "Option" }, { "var": "B" }] },
+                            "cases": [
+                              {
+                                "pattern": { "ctor": "none", "args": [] },
+                                "body": { "app": [{ "var": "none" }, { "var": "B" }] }
+                              },
+                              {
+                                "pattern": { "ctor": "some", "args": [{ "name": "x" }] },
+                                "body": { "app": [{ "var": "f" }, { "var": "x" }] }
+                              }
+                            ],
+                            "coverage_hint": "complete"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "def": {
+        "name": "or_else",
+        "role": "runtime",
+        "type": {
+          "pi": {
+            "arg": { "name": "A", "type": { "universe": "Type" } },
+            "result": {
+              "pi": {
+                "arg": { "name": "opt", "type": { "app": [{ "var": "Option" }, { "var": "A" }] } },
+                "result": {
+                  "pi": {
+                    "arg": { "name": "fallback", "type": { "app": [{ "var": "Option" }, { "var": "A" }] } },
+                    "result": { "app": [{ "var": "Option" }, { "var": "A" }] }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "body": {
+          "lambda": {
+            "arg": { "name": "A", "type": { "universe": "Type" } },
+            "body": {
+              "lambda": {
+                "arg": { "name": "opt", "type": { "app": [{ "var": "Option" }, { "var": "A" }] } },
+                "body": {
+                  "lambda": {
+                    "arg": { "name": "fallback", "type": { "app": [{ "var": "Option" }, { "var": "A" }] } },
+                    "body": {
+                      "match": {
+                        "scrutinee": { "var": "opt" },
+                        "motive": { "app": [{ "var": "Option" }, { "var": "A" }] },
+                        "cases": [
+                          {
+                            "pattern": { "ctor": "none", "args": [] },
+                            "body": { "var": "fallback" }
+                          },
+                          {
+                            "pattern": { "ctor": "some", "args": [{ "name": "x" }] },
+                            "body": { "app": [{ "var": "some" }, { "var": "A" }, { "var": "x" }] }
+                          }
+                        ],
+                        "coverage_hint": "complete"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "def": {
+        "name": "filter_option",
+        "role": "runtime",
+        "type": {
+          "pi": {
+            "arg": { "name": "A", "type": { "universe": "Type" } },
+            "result": {
+              "pi": {
+                "arg": { "name": "p", "type": { "pi": { "arg": { "name": "_", "type": { "var": "A" } }, "result": { "prim": "Bool" } } } },
+                "result": {
+                  "pi": {
+                    "arg": { "name": "opt", "type": { "app": [{ "var": "Option" }, { "var": "A" }] } },
+                    "result": { "app": [{ "var": "Option" }, { "var": "A" }] }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "body": {
+          "lambda": {
+            "arg": { "name": "A", "type": { "universe": "Type" } },
+            "body": {
+              "lambda": {
+                "arg": { "name": "p", "type": { "pi": { "arg": { "name": "_", "type": { "var": "A" } }, "result": { "prim": "Bool" } } } },
+                "body": {
+                  "lambda": {
+                    "arg": { "name": "opt", "type": { "app": [{ "var": "Option" }, { "var": "A" }] } },
+                    "body": {
+                      "match": {
+                        "scrutinee": { "var": "opt" },
+                        "motive": { "app": [{ "var": "Option" }, { "var": "A" }] },
+                        "cases": [
+                          {
+                            "pattern": { "ctor": "none", "args": [] },
+                            "body": { "app": [{ "var": "none" }, { "var": "A" }] }
+                          },
+                          {
+                            "pattern": { "ctor": "some", "args": [{ "name": "x" }] },
+                            "body": {
+                              "if": {
+                                "cond": { "app": [{ "var": "p" }, { "var": "x" }] },
+                                "then": { "app": [{ "var": "some" }, { "var": "A" }, { "var": "x" }] },
+                                "else": { "app": [{ "var": "none" }, { "var": "A" }] }
+                              }
+                            }
+                          }
+                        ],
+                        "coverage_hint": "complete"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "def": {
+        "name": "zip_option",
+        "role": "runtime",
+        "type": {
+          "pi": {
+            "arg": { "name": "A", "type": { "universe": "Type" } },
+            "result": {
+              "pi": {
+                "arg": { "name": "B", "type": { "universe": "Type" } },
+                "result": {
+                  "pi": {
+                    "arg": { "name": "a", "type": { "app": [{ "var": "Option" }, { "var": "A" }] } },
+                    "result": {
+                      "pi": {
+                        "arg": { "name": "b", "type": { "app": [{ "var": "Option" }, { "var": "B" }] } },
+                        "result": { "app": [{ "var": "Option" }, { "app": [{ "var": "Pair" }, { "var": "A" }, { "var": "B" }] }] }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "body": {
+          "lambda": {
+            "arg": { "name": "A", "type": { "universe": "Type" } },
+            "body": {
+              "lambda": {
+                "arg": { "name": "B", "type": { "universe": "Type" } },
+                "body": {
+                  "lambda": {
+                    "arg": { "name": "a", "type": { "app": [{ "var": "Option" }, { "var": "A" }] } },
+                    "body": {
+                      "lambda": {
+                        "arg": { "name": "b", "type": { "app": [{ "var": "Option" }, { "var": "B" }] } },
+                        "body": {
+                          "match": {
+                            "scrutinee": { "var": "a" },
+                            "motive": { "app": [{ "var": "Option" }, { "app": [{ "var": "Pair" }, { "var": "A" }, { "var": "B" }] }] },
+                            "cases": [
+                              {
+                                "pattern": { "ctor": "none", "args": [] },
+                                "body": { "app": [{ "var": "none" }, { "app": [{ "var": "Pair" }, { "var": "A" }, { "var": "B" }] }] }
+                              },
+                              {
+                                "pattern": { "ctor": "some", "args": [{ "name": "x" }] },
+                                "body": {
+                                  "match": {
+                                    "scrutinee": { "var": "b" },
+                                    "motive": { "app": [{ "var": "Option" }, { "app": [{ "var": "Pair" }, { "var": "A" }, { "var": "B" }] }] },
+                                    "cases": [
+                                      {
+                                        "pattern": { "ctor": "none", "args": [] },
+                                        "body": { "app": [{ "var": "none" }, { "app": [{ "var": "Pair" }, { "var": "A" }, { "var": "B" }] }] }
+                                      },
+                                      {
+                                        "pattern": { "ctor": "some", "args": [{ "name": "y" }] },
+                                        "body": { "app": [{ "var": "some" }, { "app": [{ "var": "Pair" }, { "var": "A" }, { "var": "B" }] }, { "app": [{ "var": "pair" }, { "var": "A" }, { "var": "B" }, { "var": "x" }, { "var": "y" }] }] }
+                                      }
+                                    ],
+                                    "coverage_hint": "complete"
+                                  }
+                                }
+                              }
+                            ],
+                            "coverage_hint": "complete"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

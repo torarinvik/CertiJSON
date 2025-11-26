@@ -1,0 +1,236 @@
+{
+  "module": "Std.Bool",
+  "imports": [],
+  "declarations": [
+    {
+      "def": {
+        "name": "not",
+        "role": "runtime",
+        "type": {
+          "pi": {
+            "arg": { "name": "b", "type": { "prim": "Bool" } },
+            "result": { "prim": "Bool" }
+          }
+        },
+        "body": {
+          "lambda": {
+            "arg": { "name": "b", "type": { "prim": "Bool" } },
+            "body": {
+              "if": {
+                "cond": { "var": "b" },
+                "then": { "bool": false },
+                "else": { "bool": true }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "def": {
+        "name": "and",
+        "role": "runtime",
+        "type": {
+          "pi": {
+            "arg": { "name": "a", "type": { "prim": "Bool" } },
+            "result": {
+              "pi": {
+                "arg": { "name": "b", "type": { "prim": "Bool" } },
+                "result": { "prim": "Bool" }
+              }
+            }
+          }
+        },
+        "body": {
+          "lambda": {
+            "arg": { "name": "a", "type": { "prim": "Bool" } },
+            "body": {
+              "lambda": {
+                "arg": { "name": "b", "type": { "prim": "Bool" } },
+                "body": {
+                  "if": {
+                    "cond": { "var": "a" },
+                    "then": { "var": "b" },
+                    "else": { "bool": false }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "def": {
+        "name": "or",
+        "role": "runtime",
+        "type": {
+          "pi": {
+            "arg": { "name": "a", "type": { "prim": "Bool" } },
+            "result": {
+              "pi": {
+                "arg": { "name": "b", "type": { "prim": "Bool" } },
+                "result": { "prim": "Bool" }
+              }
+            }
+          }
+        },
+        "body": {
+          "lambda": {
+            "arg": { "name": "a", "type": { "prim": "Bool" } },
+            "body": {
+              "lambda": {
+                "arg": { "name": "b", "type": { "prim": "Bool" } },
+                "body": {
+                  "if": {
+                    "cond": { "var": "a" },
+                    "then": { "bool": true },
+                    "else": { "var": "b" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "def": {
+        "name": "xor",
+        "role": "runtime",
+        "type": {
+          "pi": {
+            "arg": { "name": "a", "type": { "prim": "Bool" } },
+            "result": {
+              "pi": {
+                "arg": { "name": "b", "type": { "prim": "Bool" } },
+                "result": { "prim": "Bool" }
+              }
+            }
+          }
+        },
+        "body": {
+          "lambda": {
+            "arg": { "name": "a", "type": { "prim": "Bool" } },
+            "body": {
+              "lambda": {
+                "arg": { "name": "b", "type": { "prim": "Bool" } },
+                "body": {
+                  "if": {
+                    "cond": { "var": "a" },
+                    "then": {
+                      "if": {
+                        "cond": { "var": "b" },
+                        "then": { "bool": false },
+                        "else": { "bool": true }
+                      }
+                    },
+                    "else": { "var": "b" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "def": {
+        "name": "implies",
+        "role": "runtime",
+        "type": {
+          "pi": {
+            "arg": { "name": "a", "type": { "prim": "Bool" } },
+            "result": {
+              "pi": {
+                "arg": { "name": "b", "type": { "prim": "Bool" } },
+                "result": { "prim": "Bool" }
+              }
+            }
+          }
+        },
+        "body": {
+          "lambda": {
+            "arg": { "name": "a", "type": { "prim": "Bool" } },
+            "body": {
+              "lambda": {
+                "arg": { "name": "b", "type": { "prim": "Bool" } },
+                "body": {
+                  "if": {
+                    "cond": { "var": "a" },
+                    "then": { "var": "b" },
+                    "else": { "bool": true }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "def": {
+        "name": "bool_eq",
+        "role": "runtime",
+        "type": {
+          "pi": {
+            "arg": { "name": "a", "type": { "prim": "Bool" } },
+            "result": {
+              "pi": {
+                "arg": { "name": "b", "type": { "prim": "Bool" } },
+                "result": { "prim": "Bool" }
+              }
+            }
+          }
+        },
+        "body": {
+          "lambda": {
+            "arg": { "name": "a", "type": { "prim": "Bool" } },
+            "body": {
+              "lambda": {
+                "arg": { "name": "b", "type": { "prim": "Bool" } },
+                "body": {
+                  "if": {
+                    "cond": { "var": "a" },
+                    "then": { "var": "b" },
+                    "else": {
+                      "if": {
+                        "cond": { "var": "b" },
+                        "then": { "bool": false },
+                        "else": { "bool": true }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "def": {
+        "name": "bool_to_int",
+        "role": "runtime",
+        "type": {
+          "pi": {
+            "arg": { "name": "b", "type": { "prim": "Bool" } },
+            "result": { "prim": "Int32" }
+          }
+        },
+        "body": {
+          "lambda": {
+            "arg": { "name": "b", "type": { "prim": "Bool" } },
+            "body": {
+              "if": {
+                "cond": { "var": "b" },
+                "then": { "int32": 1 },
+                "else": { "int32": 0 }
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

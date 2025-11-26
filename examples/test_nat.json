@@ -1,0 +1,129 @@
+{
+  "module": "Test.Nat",
+  "imports": ["Std.IO", "Std.Nat", "Std.Math", "Std.Bool"],
+  "declarations": [
+    {
+      "def": {
+        "name": "one",
+        "role": "runtime",
+        "type": { "var": "Nat" },
+        "body": { "app": [{ "var": "succ" }, { "var": "zero" }] }
+      }
+    },
+    {
+      "def": {
+        "name": "two",
+        "role": "runtime",
+        "type": { "var": "Nat" },
+        "body": { "app": [{ "var": "succ" }, { "var": "one" }] }
+      }
+    },
+    {
+      "def": {
+        "name": "three",
+        "role": "runtime",
+        "type": { "var": "Nat" },
+        "body": { "app": [{ "var": "succ" }, { "var": "two" }] }
+      }
+    },
+    {
+      "def": {
+        "name": "main",
+        "role": "runtime",
+        "type": { "app": [{ "var": "IO" }, { "var": "Unit" }] },
+        "body": {
+          "app": [
+            { "var": "bind" },
+            { "var": "Unit" },
+            { "var": "Unit" },
+            { "app": [{ "var": "print_line" }, { "string": "Testing Nat module..." }] },
+            {
+              "lambda": {
+                "arg": { "name": "_", "type": { "var": "Unit" } },
+                "body": {
+                  "app": [
+                    { "var": "bind" },
+                    { "var": "Unit" },
+                    { "var": "Unit" },
+                    {
+                      "if": {
+                        "cond": { "app": [{ "var": "is_zero" }, { "var": "zero" }] },
+                        "then": { "app": [{ "var": "print_line" }, { "string": "  is_zero zero = true: OK" }] },
+                        "else": { "app": [{ "var": "print_line" }, { "string": "  is_zero zero: FAILED" }] }
+                      }
+                    },
+                    {
+                      "lambda": {
+                        "arg": { "name": "_", "type": { "var": "Unit" } },
+                        "body": {
+                          "app": [
+                            { "var": "bind" },
+                            { "var": "Unit" },
+                            { "var": "Unit" },
+                            {
+                              "if": {
+                                "cond": { "app": [{ "var": "eq" }, { "app": [{ "var": "nat_to_int" }, { "var": "three" }] }, { "int32": 3 }] },
+                                "then": { "app": [{ "var": "print_line" }, { "string": "  nat_to_int three = 3: OK" }] },
+                                "else": { "app": [{ "var": "print_line" }, { "string": "  nat_to_int three: FAILED" }] }
+                              }
+                            },
+                            {
+                              "lambda": {
+                                "arg": { "name": "_", "type": { "var": "Unit" } },
+                                "body": {
+                                  "app": [
+                                    { "var": "bind" },
+                                    { "var": "Unit" },
+                                    { "var": "Unit" },
+                                    {
+                                      "if": {
+                                        "cond": { "app": [{ "var": "eq_nat" }, { "app": [{ "var": "add_nat" }, { "var": "one" }, { "var": "two" }] }, { "var": "three" }] },
+                                        "then": { "app": [{ "var": "print_line" }, { "string": "  add_nat 1 2 = 3: OK" }] },
+                                        "else": { "app": [{ "var": "print_line" }, { "string": "  add_nat 1 2: FAILED" }] }
+                                      }
+                                    },
+                                    {
+                                      "lambda": {
+                                        "arg": { "name": "_", "type": { "var": "Unit" } },
+                                        "body": {
+                                          "app": [
+                                            { "var": "bind" },
+                                            { "var": "Unit" },
+                                            { "var": "Unit" },
+                                            {
+                                              "if": {
+                                                "cond": { "app": [{ "var": "eq" }, { "app": [{ "var": "nat_to_int" }, { "app": [{ "var": "mul_nat" }, { "var": "two" }, { "var": "three" }] }] }, { "int32": 6 }] },
+                                                "then": { "app": [{ "var": "print_line" }, { "string": "  mul_nat 2 3 = 6: OK" }] },
+                                                "else": { "app": [{ "var": "print_line" }, { "string": "  mul_nat 2 3: FAILED" }] }
+                                              }
+                                            },
+                                            {
+                                              "lambda": {
+                                                "arg": { "name": "_", "type": { "var": "Unit" } },
+                                                "body": {
+                                                  "app": [{ "var": "print_line" }, { "string": "=== Nat tests completed ===" }]
+                                                }
+                                              }
+                                            }
+                                          ]
+                                        }
+                                      }
+                                    }
+                                  ]
+                                }
+                              }
+                            }
+                          ]
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

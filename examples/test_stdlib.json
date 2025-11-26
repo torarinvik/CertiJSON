@@ -1,0 +1,391 @@
+{
+  "module": "Test.StdlibModules",
+  "imports": [
+    "Std.IO",
+    "Std.Memory",
+    "Std.Math",
+    "Std.Option",
+    "Std.Bool",
+    "Std.Pair",
+    "Std.Int",
+    "Std.String",
+    "Std.List"
+  ],
+  "declarations": [
+    {
+      "def": {
+        "name": "test_bool",
+        "role": "runtime",
+        "type": { "app": [{ "var": "IO" }, { "var": "Unit" }] },
+        "body": {
+          "app": [
+            { "var": "bind" },
+            { "var": "Unit" },
+            { "var": "Unit" },
+            { "app": [{ "var": "print_line" }, { "string": "Testing Bool module..." }] },
+            {
+              "lambda": {
+                "arg": { "name": "_", "type": { "var": "Unit" } },
+                "body": {
+                  "app": [
+                    { "var": "bind" },
+                    { "var": "Unit" },
+                    { "var": "Unit" },
+                    {
+                      "if": {
+                        "cond": { "app": [{ "var": "not" }, { "bool": true }] },
+                        "then": { "app": [{ "var": "print_line" }, { "string": "  not true: FAILED" }] },
+                        "else": { "app": [{ "var": "print_line" }, { "string": "  not true = false: OK" }] }
+                      }
+                    },
+                    {
+                      "lambda": {
+                        "arg": { "name": "_", "type": { "var": "Unit" } },
+                        "body": {
+                          "app": [
+                            { "var": "bind" },
+                            { "var": "Unit" },
+                            { "var": "Unit" },
+                            {
+                              "if": {
+                                "cond": { "app": [{ "var": "and" }, { "bool": true }, { "bool": false }] },
+                                "then": { "app": [{ "var": "print_line" }, { "string": "  true and false: FAILED" }] },
+                                "else": { "app": [{ "var": "print_line" }, { "string": "  true and false = false: OK" }] }
+                              }
+                            },
+                            {
+                              "lambda": {
+                                "arg": { "name": "_", "type": { "var": "Unit" } },
+                                "body": {
+                                  "if": {
+                                    "cond": { "app": [{ "var": "or" }, { "bool": true }, { "bool": false }] },
+                                    "then": { "app": [{ "var": "print_line" }, { "string": "  true or false = true: OK" }] },
+                                    "else": { "app": [{ "var": "print_line" }, { "string": "  true or false: FAILED" }] }
+                                  }
+                                }
+                              }
+                            }
+                          ]
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "def": {
+        "name": "test_int",
+        "role": "runtime",
+        "type": { "app": [{ "var": "IO" }, { "var": "Unit" }] },
+        "body": {
+          "app": [
+            { "var": "bind" },
+            { "var": "Unit" },
+            { "var": "Unit" },
+            { "app": [{ "var": "print_line" }, { "string": "Testing Int module..." }] },
+            {
+              "lambda": {
+                "arg": { "name": "_", "type": { "var": "Unit" } },
+                "body": {
+                  "app": [
+                    { "var": "bind" },
+                    { "var": "Unit" },
+                    { "var": "Unit" },
+                    {
+                      "if": {
+                        "cond": { "app": [{ "var": "eq" }, { "app": [{ "var": "add32" }, { "int32": 10 }, { "int32": 20 }] }, { "int32": 30 }] },
+                        "then": { "app": [{ "var": "print_line" }, { "string": "  10 + 20 = 30: OK" }] },
+                        "else": { "app": [{ "var": "print_line" }, { "string": "  10 + 20: FAILED" }] }
+                      }
+                    },
+                    {
+                      "lambda": {
+                        "arg": { "name": "_", "type": { "var": "Unit" } },
+                        "body": {
+                          "app": [
+                            { "var": "bind" },
+                            { "var": "Unit" },
+                            { "var": "Unit" },
+                            {
+                              "if": {
+                                "cond": { "app": [{ "var": "eq" }, { "app": [{ "var": "abs32" }, { "int32": -42 }] }, { "int32": 42 }] },
+                                "then": { "app": [{ "var": "print_line" }, { "string": "  abs(-42) = 42: OK" }] },
+                                "else": { "app": [{ "var": "print_line" }, { "string": "  abs(-42): FAILED" }] }
+                              }
+                            },
+                            {
+                              "lambda": {
+                                "arg": { "name": "_", "type": { "var": "Unit" } },
+                                "body": {
+                                  "if": {
+                                    "cond": { "app": [{ "var": "eq" }, { "app": [{ "var": "min32" }, { "int32": 5 }, { "int32": 10 }] }, { "int32": 5 }] },
+                                    "then": { "app": [{ "var": "print_line" }, { "string": "  min(5, 10) = 5: OK" }] },
+                                    "else": { "app": [{ "var": "print_line" }, { "string": "  min(5, 10): FAILED" }] }
+                                  }
+                                }
+                              }
+                            }
+                          ]
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "def": {
+        "name": "test_option",
+        "role": "runtime",
+        "type": { "app": [{ "var": "IO" }, { "var": "Unit" }] },
+        "body": {
+          "app": [
+            { "var": "bind" },
+            { "var": "Unit" },
+            { "var": "Unit" },
+            { "app": [{ "var": "print_line" }, { "string": "Testing Option module..." }] },
+            {
+              "lambda": {
+                "arg": { "name": "_", "type": { "var": "Unit" } },
+                "body": {
+                  "app": [
+                    { "var": "bind" },
+                    { "var": "Unit" },
+                    { "var": "Unit" },
+                    {
+                      "if": {
+                        "cond": { "app": [{ "var": "is_some" }, { "prim": "Int32" }, { "app": [{ "var": "some" }, { "prim": "Int32" }, { "int32": 42 }] }] },
+                        "then": { "app": [{ "var": "print_line" }, { "string": "  is_some (some 42) = true: OK" }] },
+                        "else": { "app": [{ "var": "print_line" }, { "string": "  is_some (some 42): FAILED" }] }
+                      }
+                    },
+                    {
+                      "lambda": {
+                        "arg": { "name": "_", "type": { "var": "Unit" } },
+                        "body": {
+                          "if": {
+                            "cond": { "app": [{ "var": "is_none" }, { "prim": "Int32" }, { "app": [{ "var": "none" }, { "prim": "Int32" }] }] },
+                            "then": { "app": [{ "var": "print_line" }, { "string": "  is_none none = true: OK" }] },
+                            "else": { "app": [{ "var": "print_line" }, { "string": "  is_none none: FAILED" }] }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "def": {
+        "name": "test_pair",
+        "role": "runtime",
+        "type": { "app": [{ "var": "IO" }, { "var": "Unit" }] },
+        "body": {
+          "app": [
+            { "var": "bind" },
+            { "var": "Unit" },
+            { "var": "Unit" },
+            { "app": [{ "var": "print_line" }, { "string": "Testing Pair module..." }] },
+            {
+              "lambda": {
+                "arg": { "name": "_", "type": { "var": "Unit" } },
+                "body": {
+                  "app": [
+                    { "var": "bind" },
+                    { "var": "Unit" },
+                    { "var": "Unit" },
+                    {
+                      "if": {
+                        "cond": { "app": [{ "var": "eq" }, { "app": [{ "var": "fst" }, { "prim": "Int32" }, { "prim": "Bool" }, { "app": [{ "var": "pair" }, { "prim": "Int32" }, { "prim": "Bool" }, { "int32": 42 }, { "bool": true }] }] }, { "int32": 42 }] },
+                        "then": { "app": [{ "var": "print_line" }, { "string": "  fst (42, true) = 42: OK" }] },
+                        "else": { "app": [{ "var": "print_line" }, { "string": "  fst (42, true): FAILED" }] }
+                      }
+                    },
+                    {
+                      "lambda": {
+                        "arg": { "name": "_", "type": { "var": "Unit" } },
+                        "body": {
+                          "if": {
+                            "cond": { "app": [{ "var": "snd" }, { "prim": "Int32" }, { "prim": "Bool" }, { "app": [{ "var": "pair" }, { "prim": "Int32" }, { "prim": "Bool" }, { "int32": 42 }, { "bool": true }] }] },
+                            "then": { "app": [{ "var": "print_line" }, { "string": "  snd (42, true) = true: OK" }] },
+                            "else": { "app": [{ "var": "print_line" }, { "string": "  snd (42, true): FAILED" }] }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "def": {
+        "name": "test_string",
+        "role": "runtime",
+        "type": { "app": [{ "var": "IO" }, { "var": "Unit" }] },
+        "body": {
+          "app": [
+            { "var": "bind" },
+            { "var": "Unit" },
+            { "var": "Unit" },
+            { "app": [{ "var": "print_line" }, { "string": "Testing String module..." }] },
+            {
+              "lambda": {
+                "arg": { "name": "_", "type": { "var": "Unit" } },
+                "body": {
+                  "app": [
+                    { "var": "bind" },
+                    { "var": "Unit" },
+                    { "var": "Unit" },
+                    {
+                      "if": {
+                        "cond": { "app": [{ "var": "str_eq" }, { "string": "hello" }, { "string": "hello" }] },
+                        "then": { "app": [{ "var": "print_line" }, { "string": "  str_eq \"hello\" \"hello\" = true: OK" }] },
+                        "else": { "app": [{ "var": "print_line" }, { "string": "  str_eq \"hello\" \"hello\": FAILED" }] }
+                      }
+                    },
+                    {
+                      "lambda": {
+                        "arg": { "name": "_", "type": { "var": "Unit" } },
+                        "body": {
+                          "app": [
+                            { "var": "bind" },
+                            { "var": "Unit" },
+                            { "var": "Unit" },
+                            {
+                              "if": {
+                                "cond": { "app": [{ "var": "str_ne" }, { "string": "abc" }, { "string": "xyz" }] },
+                                "then": { "app": [{ "var": "print_line" }, { "string": "  str_ne \"abc\" \"xyz\" = true: OK" }] },
+                                "else": { "app": [{ "var": "print_line" }, { "string": "  str_ne \"abc\" \"xyz\": FAILED" }] }
+                              }
+                            },
+                            {
+                              "lambda": {
+                                "arg": { "name": "_", "type": { "var": "Unit" } },
+                                "body": {
+                                  "if": {
+                                    "cond": { "app": [{ "var": "str_lt" }, { "string": "abc" }, { "string": "xyz" }] },
+                                    "then": { "app": [{ "var": "print_line" }, { "string": "  str_lt \"abc\" \"xyz\" = true: OK" }] },
+                                    "else": { "app": [{ "var": "print_line" }, { "string": "  str_lt \"abc\" \"xyz\": FAILED" }] }
+                                  }
+                                }
+                              }
+                            }
+                          ]
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "def": {
+        "name": "main",
+        "role": "runtime",
+        "type": { "app": [{ "var": "IO" }, { "var": "Unit" }] },
+        "body": {
+          "app": [
+            { "var": "bind" },
+            { "var": "Unit" },
+            { "var": "Unit" },
+            { "app": [{ "var": "print_line" }, { "string": "=== CertiJSON Standard Library Test Suite ===" }] },
+            {
+              "lambda": {
+                "arg": { "name": "_", "type": { "var": "Unit" } },
+                "body": {
+                  "app": [
+                    { "var": "bind" },
+                    { "var": "Unit" },
+                    { "var": "Unit" },
+                    { "var": "test_bool" },
+                    {
+                      "lambda": {
+                        "arg": { "name": "_", "type": { "var": "Unit" } },
+                        "body": {
+                          "app": [
+                            { "var": "bind" },
+                            { "var": "Unit" },
+                            { "var": "Unit" },
+                            { "var": "test_int" },
+                            {
+                              "lambda": {
+                                "arg": { "name": "_", "type": { "var": "Unit" } },
+                                "body": {
+                                  "app": [
+                                    { "var": "bind" },
+                                    { "var": "Unit" },
+                                    { "var": "Unit" },
+                                    { "var": "test_option" },
+                                    {
+                                      "lambda": {
+                                        "arg": { "name": "_", "type": { "var": "Unit" } },
+                                        "body": {
+                                          "app": [
+                                            { "var": "bind" },
+                                            { "var": "Unit" },
+                                            { "var": "Unit" },
+                                            { "var": "test_pair" },
+                                            {
+                                              "lambda": {
+                                                "arg": { "name": "_", "type": { "var": "Unit" } },
+                                                "body": {
+                                                  "app": [
+                                                    { "var": "bind" },
+                                                    { "var": "Unit" },
+                                                    { "var": "Unit" },
+                                                    { "var": "test_string" },
+                                                    {
+                                                      "lambda": {
+                                                        "arg": { "name": "_", "type": { "var": "Unit" } },
+                                                        "body": {
+                                                          "app": [{ "var": "print_line" }, { "string": "=== All tests completed ===" }]
+                                                        }
+                                                      }
+                                                    }
+                                                  ]
+                                                }
+                                              }
+                                            }
+                                          ]
+                                        }
+                                      }
+                                    }
+                                  ]
+                                }
+                              }
+                            }
+                          ]
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      }
+    }
+  ]
+}
