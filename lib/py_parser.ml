@@ -31,6 +31,59 @@ let expect state expected msg =
   if consume state expected then ()
   else raise (ParseError (msg ^ ", got " ^ (show_token (peek state))))
 
+(* Moved helpers *)
+
+let rec guess_io_type (t : term) : term =
+  match t.desc with
+  | App ({ desc = Var "bind"; _ }, [_; b; _; _]) -> b
+  | App ({ desc = Var "return"; _ }, [b; _]) -> b
+  | App ({ desc = Var "Std.IO.return"; _ }, [b; _]) -> b
+  | If { then_; _ } -> guess_io_type then_
+  | Match { cases; _ } -> (match cases with [] -> mk_term (Var "Unit") None None | c :: _ -> guess_io_type c.body)
+  | _ -> mk_term (Var "Unit") None None
+
+let is_capitalized s =
+  String.length s > 0 && let c = s.[0] in c >= 'A' && c <= 'Z'
+
+let parse_pattern_arg state =
+  match peek state with
+  | IDENT name ->
+      advance state;
+      { arg_name = name; arg_loc = None }
+  | _ -> raise (ParseError "Expected pattern argument")
+
+let rec parse_pattern_args state =
+  match peek state with
+  | RPAREN -> []
+  | _ ->
+      let arg = parse_pattern_arg state in
+      match peek state with
+      | COMMA -> advance state; arg :: parse_pattern_args state
+      | _ -> [arg]
+
+let parse_pattern state =
+  match peek state with
+  | IDENT name ->
+      advance state;
+      (match peek state with
+       | LPAREN ->
+           advance state;
+           let args = parse_pattern_args state in
+           expect state RPAREN "Expected ')' in pattern";
+           { ctor = name; args; pat_loc = None }
+       | _ -> 
+           { ctor = name; args = []; pat_loc = None }
+      )
+  | _ -> raise (ParseError "Expected pattern")
+
+let rec fold_stmts stmts =
+  match stmts with
+  | [] -> mk_term (Var "tt") None None
+  | [f] -> f (mk_term (Var "tt") None None)
+  | f :: rest -> f (fold_stmts rest)
+
+(* Main parser functions *)
+
 let rec parse_type state =
   match peek state with
   | LBRACE ->
@@ -45,35 +98,8 @@ let rec parse_type state =
            expect state RBRACE "Expected '}'";
            mk_term (Subset { arg = { name; ty; role = Runtime; b_loc = None }; pred }) None None
        | _ -> raise (ParseError "Expected identifier in refinement type"))
-  | IDENT name ->
-      advance state;
-      let rec parse_dotted acc =
-        match peek state with
-        | DOT ->
-            advance state;
-            (match peek state with
-             | IDENT n -> advance state; parse_dotted (acc ^ "." ^ n)
-             | _ -> raise (ParseError ("Expected identifier after dot, got " ^ (show_token (peek state)))))
-        | _ -> acc
-      in
-      let full_name = parse_dotted name in
-      (match full_name with
-       | "Int32" -> mk_term (PrimType Int32) None None
-       | "Int64" -> mk_term (PrimType Int64) None None
-       | "Float64" -> mk_term (PrimType Float64) None None
-       | "Bool" -> mk_term (PrimType Bool) None None
-       | "String" -> mk_term (PrimType String) None None
-       | "Type" -> mk_term (Universe Type) None None
-       | "Prop" -> mk_term (Universe Prop) None None
-       | _ ->
-           (match peek state with
-            | LPAREN ->
-                advance state;
-                let args = parse_type_args state in
-                expect state RPAREN "Expected ')'";
-                mk_term (App (mk_term (Var full_name) None None, args)) None None
-            | _ -> mk_term (Var full_name) None None))
   | LPAREN ->
+      let start_pos = state.pos in
       advance state;
       (match peek state with
        | IDENT name ->
@@ -85,10 +111,13 @@ let rec parse_type state =
              let result = parse_type state in
              mk_term (Pi { arg = { name; ty; role = Runtime; b_loc = None }; result }) None None
            ) else (
-              raise (ParseError "Only dependent function types (x: A) -> B supported in parens")
+              state.pos <- start_pos;
+              parse_expr state
            )
-       | _ -> raise (ParseError "Expected identifier in dependent type"))
-  | _ -> raise (ParseError "Expected type")
+       | _ -> 
+           state.pos <- start_pos;
+           parse_expr state)
+  | _ -> parse_expr state
 
 and parse_type_args state =
   match peek state with
@@ -100,15 +129,35 @@ and parse_type_args state =
       | _ -> [first]
 
 and parse_expr state =
-  let left = parse_or_expr state in
   match peek state with
-  | IF ->
+  | BACKSLASH ->
       advance state;
-      let cond = parse_or_expr state in
-      expect state ELSE "Expected 'else' in if expression";
-      let right = parse_expr state in
-      mk_term (If { cond; then_ = left; else_ = right }) None None
-  | _ -> left
+      (match peek state with
+       | IDENT name ->
+           advance state;
+           expect state ARROW "Expected '->' in lambda";
+           let body =
+             match peek state with
+             | NEWLINE ->
+                 advance state;
+                 expect state INDENT "Expected indented block for lambda";
+                 let stmts = parse_stmts state None in
+                 expect state DEDENT "Expected dedent after lambda block";
+                 fold_stmts stmts
+             | _ -> parse_expr state
+           in
+           mk_term (Lambda { arg = { name; ty = mk_term (Var "_") None None; role = Runtime; b_loc = None }; body }) None None
+       | _ -> raise (ParseError "Expected identifier in lambda"))
+  | _ ->
+      let left = parse_or_expr state in
+      match peek state with
+      | IF ->
+          advance state;
+          let cond = parse_or_expr state in
+          expect state ELSE "Expected 'else' in if expression";
+          let right = parse_expr state in
+          mk_term (If { cond; then_ = left; else_ = right }) None None
+      | _ -> left
 
 and parse_or_expr state =
   let left = parse_and_expr state in
@@ -224,56 +273,7 @@ and parse_args state =
       | COMMA -> advance state; first :: parse_args state
       | _ -> [first]
 
-let rec guess_io_type (t : term) : term =
-  match t.desc with
-  | App ({ desc = Var "bind"; _ }, [_; b; _; _]) -> b
-  | App ({ desc = Var "return"; _ }, [b; _]) -> b
-  | App ({ desc = Var "Std.IO.return"; _ }, [b; _]) -> b
-  | If { then_; _ } -> guess_io_type then_
-  | Match { cases; _ } -> (match cases with [] -> mk_term (Var "Unit") None None | c :: _ -> guess_io_type c.body)
-  | _ -> mk_term (Var "Unit") None None
-
-let is_capitalized s =
-  String.length s > 0 && let c = s.[0] in c >= 'A' && c <= 'Z'
-
-let parse_pattern_arg state =
-  match peek state with
-  | IDENT name ->
-      advance state;
-      { arg_name = name; arg_loc = None }
-  | _ -> raise (ParseError "Expected pattern argument")
-
-let rec parse_pattern_args state =
-  match peek state with
-  | RPAREN -> []
-  | _ ->
-      let arg = parse_pattern_arg state in
-      match peek state with
-      | COMMA -> advance state; arg :: parse_pattern_args state
-      | _ -> [arg]
-
-let parse_pattern state =
-  match peek state with
-  | IDENT name ->
-      advance state;
-      (match peek state with
-       | LPAREN ->
-           advance state;
-           let args = parse_pattern_args state in
-           expect state RPAREN "Expected ')' in pattern";
-           { ctor = name; args; pat_loc = None }
-       | _ -> 
-           { ctor = name; args = []; pat_loc = None }
-      )
-  | _ -> raise (ParseError "Expected pattern")
-
-let rec fold_stmts stmts =
-  match stmts with
-  | [] -> mk_term (Var "tt") None None
-  | [f] -> f (mk_term (Var "tt") None None)
-  | f :: rest -> f (fold_stmts rest)
-
-let rec parse_block state ret_ty =
+and parse_block state ret_ty =
   expect state INDENT "Expected indented block";
   let stmts = parse_stmts state ret_ty in
   expect state DEDENT "Expected dedent";

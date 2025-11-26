@@ -727,11 +727,17 @@ and check (ctx : context) (t : term) (expected : term) : unit =
       let expected' = whnf ctx expected in
       (match expected'.desc with
       | Pi { arg = expected_arg; result = expected_result } ->
-          if not (conv ctx arg.ty expected_arg.ty) then
-             raise (TypeError (TypeMismatch { expected = expected_arg.ty; actual = arg.ty; context = "lambda argument type"; loc = arg.ty.loc }));
+          let arg_ty =
+            match arg.ty.desc with
+            | Var "_" -> expected_arg.ty
+            | _ ->
+                if not (conv ctx arg.ty expected_arg.ty) then
+                   raise (TypeError (TypeMismatch { expected = expected_arg.ty; actual = arg.ty; context = "lambda argument type"; loc = arg.ty.loc }));
+                arg.ty
+          in
           if arg.role <> expected_arg.role then
              raise (TypeError (RoleMismatch (arg.name, expected_arg.role, arg.role)));
-          let ctx' = extend ctx arg.name ~role:arg.role arg.ty in
+          let ctx' = extend ctx arg.name ~role:arg.role arg_ty in
           let expected_body_ty = subst expected_arg.name (mk (Var arg.name)) expected_result in
           check ctx' body expected_body_ty
       | _ ->

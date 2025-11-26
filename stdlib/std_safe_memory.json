@@ -1,7 +1,25 @@
 {
   "module": "Std.SafeMemory",
-  "imports": ["Std.Nat", "Std.IO"],
+  "imports": ["Std.Nat", "Std.IO", "Std.Int"],
   "declarations": [
+    {
+      "repr": {
+        "name": "VoidPtr",
+        "kind": "primitive",
+        "c_type": "void*",
+        "size_bits": 64,
+        "signed": false
+      }
+    },
+    {
+      "repr": {
+        "name": "SizeT",
+        "kind": "primitive",
+        "c_type": "size_t",
+        "size_bits": 64,
+        "signed": false
+      }
+    },
     {
       "inductive": {
         "name": "ArrayHandle",
@@ -29,11 +47,13 @@
         "name": "stack_alloc",
         "c_name": "cj_stack_alloc",
         "header": "<certijson_memory.h>",
-        "args": [
-          { "name": "n", "repr": "SizeT" },
-          { "name": "callback", "repr": "VoidPtr" }
-        ],
-        "result": { "repr": "VoidPtr" },
+        "signature": {
+          "args": [
+            { "name": "n", "repr": "SizeT" },
+            { "name": "callback", "repr": "VoidPtr" }
+          ],
+          "result": { "repr": "VoidPtr" }
+        },
         "type": {
           "forall": {
             "arg": { "name": "A", "type": { "universe": "Type" } },
@@ -70,11 +90,13 @@
         "name": "as_view",
         "c_name": "cj_as_view",
         "header": "<certijson_memory.h>",
-        "args": [
-          { "name": "handle", "repr": "VoidPtr" },
-          { "name": "callback", "repr": "VoidPtr" }
-        ],
-        "result": { "repr": "VoidPtr" },
+        "signature": {
+          "args": [
+            { "name": "handle", "repr": "VoidPtr" },
+            { "name": "callback", "repr": "VoidPtr" }
+          ],
+          "result": { "repr": "VoidPtr" }
+        },
         "type": {
           "forall": {
             "arg": { "name": "A", "type": { "universe": "Type" } },
@@ -112,6 +134,89 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    {
+      "extern_io": {
+        "name": "view_get_int32",
+        "c_name": "cj_view_get_int32",
+        "header": "<certijson_memory.h>",
+        "signature": {
+          "args": [
+            { "name": "view", "repr": "VoidPtr" },
+            { "name": "idx", "repr": "Int64" }
+          ],
+          "result": { "repr": "Int32" }
+        },
+        "type": {
+          "forall": {
+            "arg": { "name": "n", "type": { "prim": "Int64" } },
+            "result": {
+              "pi": {
+                "arg": { "name": "view", "type": { "app": [{ "var": "ArrayView" }, { "prim": "Int32" }, { "var": "n" }] } },
+                "result": {
+                  "pi": {
+                    "arg": { "name": "idx", "type": { "prim": "Int64" } },
+                    "result": { "app": [{ "var": "IO" }, { "prim": "Int32" }] }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "extern_io": {
+        "name": "view_set_int32",
+        "c_name": "cj_view_set_int32",
+        "header": "<certijson_memory.h>",
+        "signature": {
+          "args": [
+            { "name": "view", "repr": "VoidPtr" },
+            { "name": "idx", "repr": "Int64" },
+            { "name": "val", "repr": "Int32" }
+          ],
+          "result": null
+        },
+        "type": {
+          "forall": {
+            "arg": { "name": "n", "type": { "prim": "Int64" } },
+            "result": {
+              "pi": {
+                "arg": { "name": "view", "type": { "app": [{ "var": "ArrayView" }, { "prim": "Int32" }, { "var": "n" }] } },
+                "result": {
+                  "pi": {
+                    "arg": { "name": "idx", "type": { "prim": "Int64" } },
+                    "result": {
+                      "pi": {
+                        "arg": { "name": "val", "type": { "prim": "Int32" } },
+                        "result": { "app": [{ "var": "IO" }, { "var": "Unit" }] }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "extern_c": {
+        "name": "to_int64",
+        "c_name": "cj_int32_to_int64",
+        "header": "<certijson_memory.h>",
+        "signature": {
+          "args": [{ "name": "x", "repr": "Int32" }],
+          "return": { "repr": "Int64" }
+        },
+        "type": {
+          "pi": {
+            "arg": { "name": "x", "type": { "prim": "Int32" } },
+            "result": { "prim": "Int64" }
           }
         }
       }

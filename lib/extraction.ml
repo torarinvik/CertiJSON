@@ -26,6 +26,7 @@ type c_expr =
   | CTernary of c_expr * c_expr * c_expr
   | CBinOp of string * c_expr * c_expr
   | CUnOp of string * c_expr
+  | CFieldAccess of c_expr * string
 
 type c_stmt =
   | CReturn of c_expr
@@ -72,6 +73,7 @@ let rec pp_c_expr fmt = function
   | CTernary (c, t, e) -> Format.fprintf fmt "(%a ? %a : %a)" pp_c_expr c pp_c_expr t pp_c_expr e
   | CBinOp (op, l, r) -> Format.fprintf fmt "(%a %s %a)" pp_c_expr l op pp_c_expr r
   | CUnOp (op, e) -> Format.fprintf fmt "(%s%a)" op pp_c_expr e
+  | CFieldAccess (e, f) -> Format.fprintf fmt "%a.%s" pp_c_expr e f
 
 let rec pp_c_stmt fmt = function
   | CReturn e -> Format.fprintf fmt "return %a;" pp_c_expr e
@@ -117,6 +119,35 @@ let pp_c_program fmt p =
 
 (* Extraction Logic *)
 
+let list_take_last n l =
+  let len = List.length l in
+  if len <= n then l
+  else
+    let rec drop k l =
+      if k <= 0 then l
+      else match l with [] -> [] | _ :: t -> drop (k - 1) t
+    in
+    drop (len - n) l
+
+let rec string_of_c_type = function
+  | CVoid -> "void"
+  | CInt32 -> "Int32"
+  | CInt64 -> "Int64"
+  | CDouble -> "Double"
+  | CBool -> "Bool"
+  | CString -> "String"
+  | CStruct s -> s
+  | CPtr t -> "Ptr_" ^ string_of_c_type t
+  | CUserType s -> s
+
+let pair_registry : (string, (c_type * c_type)) Hashtbl.t = Hashtbl.create 10
+
+let get_pair_struct_name ta tb =
+  let name = "Pair_" ^ string_of_c_type ta ^ "_" ^ string_of_c_type tb in
+  if not (Hashtbl.mem pair_registry name) then
+    Hashtbl.add pair_registry name (ta, tb);
+  name
+
 let translate_prim_type = function
   | Syntax.Int32 -> CInt32
   | Syntax.Int64 -> CInt64
@@ -147,15 +178,52 @@ let rec translate_type (ctx : Context.context) (t : Syntax.term) : c_type =
   | Universe _ -> CVoid (* Erased *)
   | Array _ -> CVoid (* Functional arrays are erased *)
   | ArrayHandle _ -> CInt64 (* Handles are int64 *)
-  | App (f, [arg]) when is_global "IO" f ->
-      (* IO A -> A (or void if A is Unit) *)
-      translate_type ctx arg
+  | App (f, args) ->
+      if is_global "IO" f then
+        match args with [arg] -> translate_type ctx arg | _ -> CVoid
+      else if is_global "ArrayHandle" f then
+        CInt64
+      else if is_global "ArrayView" f then
+         match args with
+         | [a; _] -> CPtr (translate_type ctx a)
+         | _ -> CVoid
+      else if is_global "Pair" f then
+         match args with
+         | [a; b] -> 
+             let ca = translate_type ctx a in
+             let cb = translate_type ctx b in
+             CStruct (get_pair_struct_name ca cb)
+         | _ -> CVoid
+      else if is_global "Array" f then
+        CVoid
+      else
+        CVoid (* Fallback *)
   | Global "Unit" | Var "Unit" -> CVoid
   | Global name | Var name -> 
       (match Context.lookup ctx name with
        | Some (`Global (GRepr _)) -> translate_repr ctx name
        | _ -> CUserType name)
   | _ -> CVoid (* Fallback *)
+
+let is_type (t : Syntax.term) : bool =
+  match t.desc with
+  | Universe _ -> true
+  | PrimType _ -> true
+  | Array _ -> true
+  | ArrayHandle _ -> true
+  | Global "Unit" -> true
+  | Var "Unit" -> true
+  | App (f, _) -> 
+      (match f.desc with
+       | Global "Pair" | Var "Pair" -> true
+       | Global "List" | Var "List" -> true
+       | Global "Option" | Var "Option" -> true
+       | Global "Result" | Var "Result" -> true
+       | Global "Either" | Var "Either" -> true
+       | Global "Array" | Var "Array" -> true
+       | Global "ArrayHandle" | Var "ArrayHandle" -> true
+       | _ -> false)
+  | _ -> false
 
 let rec translate_term (ctx : Context.context) (env : (string * string) list) (t : Syntax.term) : c_expr =
   match t.desc with
@@ -165,6 +233,8 @@ let rec translate_term (ctx : Context.context) (env : (string * string) list) (t
   | Literal (LitBool b) -> CLitBool b
   | Literal (LitString s) -> CLitString s
   | Var x -> (
+      if String.equal x "tt" then CLitInt32 0l
+      else
       match List.assoc_opt x env with
       | Some fresh -> CVar fresh
       | None -> CVar x
@@ -192,16 +262,28 @@ let rec translate_term (ctx : Context.context) (env : (string * string) list) (t
       | Some "or" -> (match args with [a; b] -> CBinOp ("||", translate_term ctx env a, translate_term ctx env b) | _ -> CVar "<invalid_or>")
       | Some "not" -> (match args with [a] -> CUnOp ("!", translate_term ctx env a) | _ -> CVar "<invalid_not>")
       | Some "neg" -> (match args with [a] -> CUnOp ("-", translate_term ctx env a) | _ -> CVar "<invalid_neg>")
+      | Some "fst" -> (
+          let args' = args |> List.filter (fun a -> not (is_type a)) |> List.map (translate_term ctx env) |> List.filter (function CVar "tt" -> false | _ -> true) in
+          match args' with [p] -> CFieldAccess (p, "fst") | _ -> CVar "<invalid_fst>")
+      | Some "snd" -> (
+          let args' = args |> List.filter (fun a -> not (is_type a)) |> List.map (translate_term ctx env) |> List.filter (function CVar "tt" -> false | _ -> true) in
+          match args' with [p] -> CFieldAccess (p, "snd") | _ -> CVar "<invalid_snd>")
       | Some name -> (
           let args' = 
-            List.map (translate_term ctx env) args 
+            args
+            |> List.filter (fun a -> not (is_type a))
+            |> List.map (translate_term ctx env) 
             |> List.filter (function CVar "tt" -> false | _ -> true)
           in
           match Context.lookup ctx name with
           | Some (`Global (GExternIO ext)) ->
-              CCall (ext.c_name, args')
+              let args_len = List.length ext.args in
+              let args_to_pass = list_take_last args_len args' in
+              CCall (ext.c_name, args_to_pass)
           | Some (`Global (GExternC ext)) ->
-              CCall (ext.c_name, args')
+              let args_len = List.length ext.args in
+              let args_to_pass = list_take_last args_len args' in
+              CCall (ext.c_name, args_to_pass)
           | _ -> CCall (name, args')
         )
       | None -> CCall ("<indirect>", List.map (translate_term ctx env) args)
@@ -262,14 +344,100 @@ let extract_def (ctx : Context.context) (def : Syntax.def_decl) : c_func option 
         | _ -> false
       in
       match t.desc with
-      | App (f, [_; _; m; lam]) when is_global "bind" f ->
+      | App (f, args) when is_global "Std.SafeMemory.stack_alloc" f || is_global "stack_alloc" f ->
+          (match args with
+           | [_; n_term; _; callback] ->
+               (match callback.desc with
+                | Lambda { arg; body } ->
+                    let var_name = fresh_name arg.name in
+                    let env' = (arg.name, var_name) :: env in
+                    let n_expr = translate_term ctx env n_term in
+                    (* Use calloc(n, 4) for Int32. TODO: Handle other types *)
+                    let alloc_stmt = CDecl (CInt64, var_name, Some (CUnOp ("(int64_t)", CCall ("calloc", [n_expr; CLitInt32 4l])))) in
+                    let free_stmt = CExpr (CCall ("free", [CUnOp ("(void*)", CVar var_name)])) in
+                    let (res_var_for_body, ret_decl, ret_stmt) =
+                      match res_var with
+                      | None when ret_ty <> CVoid ->
+                          let tmp = fresh_name "res" in
+                          (Some tmp, [CDecl (ret_ty, tmp, None)], [CReturn (CVar tmp)])
+                      | _ -> (res_var, [], [])
+                    in
+                    let body_stmts = translate_io ctx env' body res_var_for_body ret_ty in
+                    alloc_stmt :: (ret_decl @ body_stmts @ [free_stmt] @ ret_stmt)
+                | _ -> [CExpr (CVar "/* stack_alloc callback must be a lambda */")]
+               )
+           | _ -> [CExpr (CVar "/* invalid stack_alloc args */")]
+          )
+      | App (f, args) when is_global "Std.SafeMemory.as_view" f || is_global "as_view" f ->
+          (match args with
+           | [ty_arg; _; _; handle; callback] ->
+               (match callback.desc with
+                | Lambda { arg; body } ->
+                    let var_name = fresh_name arg.name in
+                    let env' = (arg.name, var_name) :: env in
+                    let handle_expr = translate_term ctx env handle in
+                    let elem_ty = translate_type ctx ty_arg in
+                    let decl = CDecl (CPtr elem_ty, var_name, Some (CUnOp ("(void*)", handle_expr))) in
+
+                    (* Determine second component type of the Pair result, if any. *)
+                    let pair_name = string_of_c_type ret_ty in
+                    let (_, ty_snd) =
+                      match Hashtbl.find_opt pair_registry pair_name with
+                      | Some p -> p
+                      | None -> (CInt64, CVoid)
+                    in
+
+                    let body_stmts =
+                      match res_var with
+                      | Some v ->
+                          (* Caller manages the struct; we just fill its fields. *)
+                          let res_body_var = fresh_name "res_body" in
+                          let res_var_for_body = if ty_snd = CVoid then None else Some res_body_var in
+                          let body_stmts = translate_io ctx env' body res_var_for_body ty_snd in
+                          let decl_res =
+                            if ty_snd = CVoid then []
+                            else [CDecl (ty_snd, res_body_var, None)]
+                          in
+                          let assign_stmt =
+                            [
+                              CExpr (CAssign (v ^ ".fst", handle_expr));
+                              (if ty_snd <> CVoid then CExpr (CAssign (v ^ ".snd", CVar res_body_var)) else CExpr (CVar "/* unit snd */"));
+                            ]
+                          in
+                          decl_res @ body_stmts @ assign_stmt
+                      | None ->
+                          (* We own the struct: create, fill, and return it. *)
+                          let res_struct_var = fresh_name "res_struct" in
+                          let decl_struct = CDecl (ret_ty, res_struct_var, None) in
+                          let res_body_var = fresh_name "res_body" in
+                          let res_var_for_body = if ty_snd = CVoid then None else Some res_body_var in
+                          let body_stmts = translate_io ctx env' body res_var_for_body ty_snd in
+                          let decl_res =
+                            if ty_snd = CVoid then []
+                            else [CDecl (ty_snd, res_body_var, None)]
+                          in
+                          let assign_stmt =
+                            [
+                              CExpr (CAssign (res_struct_var ^ ".fst", handle_expr));
+                              (if ty_snd <> CVoid then CExpr (CAssign (res_struct_var ^ ".snd", CVar res_body_var)) else CExpr (CVar "/* unit snd */"));
+                              CReturn (CVar res_struct_var);
+                            ]
+                          in
+                          [decl_struct] @ decl_res @ body_stmts @ assign_stmt
+                    in
+                    [decl] @ body_stmts
+                | _ -> [CExpr (CVar "/* as_view callback must be a lambda */")]
+               )
+           | _ -> [CExpr (CVar "/* invalid as_view args */")]
+          )
+      | App (f, [ty_a; _; m; lam]) when is_global "bind" f || (match f.desc with Global n | Var n -> String.ends_with ~suffix:".bind" n | _ -> false) ->
           (match lam.desc with
            | Lambda { arg; body } ->
                let var_name = fresh_name arg.name in
                let env' = (arg.name, var_name) :: env in
-               let ty = translate_type ctx arg.ty in
+               let ty = translate_type ctx ty_a in
                let res_var_for_m = if ty = CVoid then None else Some var_name in
-               let m_stmts = translate_io ctx env m res_var_for_m CVoid in
+               let m_stmts = translate_io ctx env m res_var_for_m ty in
                let decl = 
                  if ty = CVoid then [] 
                  else [CDecl (ty, var_name, None)]
@@ -285,20 +453,19 @@ let extract_def (ctx : Context.context) (def : Syntax.def_decl) : c_func option 
                let t = translate_term ctx env x in
                (match t with
                 | CVar "tt" -> [] (* return tt is a no-op *)
+                | CLitInt32 0l -> if ret_ty = CVoid then [] else [CReturn t]
                 | _ -> [CReturn t])
           )
-      | App (f, args) when (match f.desc with Global n | Var n -> String.contains n '.' && String.sub n (String.length n - 7) 7 = ".return" | _ -> false) ->
+      | App (f, args) when (match f.desc with Global n | Var n -> String.contains n '.' && String.length n >= 7 && String.sub n (String.length n - 7) 7 = ".return" | _ -> false) ->
           (* Handle qualified return like Std.IO.return *)
-          let actual_args = List.filter (fun a -> match a.desc with | Universe _ -> false | Var "Unit" | Global "Unit" -> false | _ -> true) args in
+          let actual_args = List.filter (fun a -> not (is_type a)) args in
           (match actual_args with
            | [x] ->
                (match res_var with
                 | Some v -> [CExpr (CAssign (v, translate_term ctx env x))]
                 | None -> 
                     let t = translate_term ctx env x in
-                    (match t with
-                     | CVar "tt" -> [] (* return tt is a no-op *)
-                     | _ -> [CReturn t]))
+                    if ret_ty = CVoid then [] else [CReturn t])
            | _ -> [] (* return with no real args is a no-op *))
       | App (_, _) ->
           (* Check for let-binding pattern: (λx.body) arg *)
@@ -409,6 +576,7 @@ let extract_def (ctx : Context.context) (def : Syntax.def_decl) : c_func option 
       }
 
 let extract_module (mod_ : Syntax.module_decl) (sig_ : Context.signature) : c_program =
+  Hashtbl.clear pair_registry;
   let mod_sig = Context.build_signature mod_.declarations in
   let full_sig = Context.merge_signatures sig_ mod_sig in
   let ctx = Context.make_ctx full_sig in
@@ -418,7 +586,7 @@ let extract_module (mod_ : Syntax.module_decl) (sig_ : Context.signature) : c_pr
       | _ -> None
     ) mod_.declarations
   in
-  let base_includes = ["<stdio.h>"; "<stdint.h>"; "<stdbool.h>"; "<certijson_io.h>"] in
+  let base_includes = ["<stdio.h>"; "<stdlib.h>"; "<stdint.h>"; "<stdbool.h>"; "<certijson_io.h>"; "<certijson_memory.h>"] in
   let extra_includes =
     let collect_includes _ entry acc =
       match entry with
@@ -443,6 +611,17 @@ let extract_module (mod_ : Syntax.module_decl) (sig_ : Context.signature) : c_pr
       | _ -> None
     ) mod_.declarations
   in
+  let pair_structs = 
+    Hashtbl.fold (fun name (ta, tb) acc ->
+      let pp_field_type fmt ty =
+        match ty with
+        | CVoid -> Format.fprintf fmt "char" (* Dummy type for void fields *)
+        | _ -> pp_c_type fmt ty
+      in
+      let s = Format.asprintf "struct %s { %a fst; %a snd; };" name pp_field_type ta pp_field_type tb in
+      s :: acc
+    ) pair_registry []
+  in
+  let structs = structs @ pair_structs in
   let includes = base_includes @ (List.filter (fun i -> not (List.mem i base_includes)) extra_includes) in
   { includes; structs; funcs }
-

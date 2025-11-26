@@ -1,6 +1,6 @@
 {
   "module": "Std.IO",
-  "imports": [],
+  "imports": ["Std.Pair"],
   "declarations": [
     {
       "inductive": {
@@ -16,25 +16,6 @@
         "params": [],
         "universe": "Type",
         "constructors": [{ "name": "world_token", "args": [] }]
-      }
-    },
-    {
-      "inductive": {
-        "name": "Pair",
-        "params": [
-            { "name": "A", "type": { "universe": "Type" } },
-            { "name": "B", "type": { "universe": "Type" } }
-        ],
-        "universe": "Type",
-        "constructors": [
-            { 
-                "name": "pair", 
-                "args": [
-                    { "name": "fst", "type": { "var": "A" } },
-                    { "name": "snd", "type": { "var": "B" } }
-                ] 
-            }
-        ]
       }
     },
     {

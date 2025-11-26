@@ -16,6 +16,7 @@ type token =
   | AND | OR | NOT
   | PIPE
   | LARROW (* <- *)
+  | BACKSLASH (* \ *)
   | INDENT | DEDENT | NEWLINE
   | EOF
 [@@deriving show, eq]
@@ -156,6 +157,7 @@ let tokenize (source : string) : token list =
     | '/' -> ignore (advance ()); add SLASH
     | '%' -> ignore (advance ()); add PERCENT
     | '|' -> ignore (advance ()); add PIPE
+    | '\\' -> ignore (advance ()); add BACKSLASH
     | '=' -> 
         ignore (advance ());
         if peek () = '=' then (ignore (advance ()); add EQ)

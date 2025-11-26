@@ -539,24 +539,46 @@ let parse_extern_io ~(file : string option) (json : json) : extern_io_decl =
   let c_name = get_string (get_field json "c_name") in
   let header = get_string (get_field json "header") in
   let args =
-    match get_field_opt json "args" with
-    | Some args_json ->
-        List.map
-          (fun a ->
-            {
-              extern_arg_name = get_string (get_field a "name");
-              extern_arg_repr = get_string (get_field a "repr");
-            })
-          (get_list args_json)
-    | None -> []
+    if has_field json "signature" then
+      let sig_json = get_field json "signature" in
+      match get_field_opt sig_json "args" with
+      | Some args_json ->
+          List.map
+            (fun a ->
+              {
+                extern_arg_name = get_string (get_field a "name");
+                extern_arg_repr = get_string (get_field a "repr");
+              })
+            (get_list args_json)
+      | None -> []
+    else
+      match get_field_opt json "args" with
+      | Some args_json ->
+          List.map
+            (fun a ->
+              {
+                extern_arg_name = get_string (get_field a "name");
+                extern_arg_repr = get_string (get_field a "repr");
+              })
+            (get_list args_json)
+      | None -> []
   in
   let result_repr =
-    match get_field_opt json "result" with
-    | Some j -> (
-        match j.value with
-        | JNull -> None
-        | _ -> Some (get_string (get_field j "repr")))
-    | None -> None
+    if has_field json "signature" then
+      let sig_json = get_field json "signature" in
+      match get_field_opt sig_json "result" with
+      | Some j -> (
+          match j.value with
+          | JNull -> None
+          | _ -> Some (get_string (get_field j "repr")))
+      | None -> None
+    else
+      match get_field_opt json "result" with
+      | Some j -> (
+          match j.value with
+          | JNull -> None
+          | _ -> Some (get_string (get_field j "repr")))
+      | None -> None
   in
   let logical_type = parse_term ~file (get_field json "type") in
   let pre_cond, post_cond =

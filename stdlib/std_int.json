@@ -3,6 +3,24 @@
   "imports": ["Std.Math"],
   "declarations": [
     {
+      "repr": {
+        "name": "Int32",
+        "kind": "primitive",
+        "c_type": "int32_t",
+        "size_bits": 32,
+        "signed": true
+      }
+    },
+    {
+      "repr": {
+        "name": "Int64",
+        "kind": "primitive",
+        "c_type": "int64_t",
+        "size_bits": 64,
+        "signed": true
+      }
+    },
+    {
       "def": {
         "name": "add32",
         "role": "runtime",
