@@ -1,64 +1,7 @@
 {
   "module": "Hello",
-  "imports": [],
+  "imports": ["Std.IO"],
   "declarations": [
-    {
-      "inductive": {
-        "name": "Unit",
-        "params": [],
-        "universe": "Type",
-        "constructors": [{ "name": "tt", "args": [] }]
-      }
-    },
-    {
-      "inductive": {
-        "name": "String",
-        "params": [],
-        "universe": "Type",
-        "constructors": []
-      }
-    },
-    {
-      "repr": {
-        "name": "StringRepr",
-        "kind": "primitive",
-        "c_type": "char*",
-        "size_bits": 64,
-        "signed": false
-      }
-    },
-    {
-      "def": {
-        "name": "IO",
-        "type": {
-          "pi": {
-            "arg": { "name": "A", "type": { "universe": "Type" } },
-            "result": { "universe": "Type" }
-          }
-        },
-        "body": {
-          "lambda": {
-            "arg": { "name": "A", "type": { "universe": "Type" } },
-            "body": { "var": "A" } 
-          }
-        }
-      }
-    },
-    {
-      "extern_io": {
-        "name": "print_line",
-        "c_name": "cj_print_line",
-        "header": "<certijson_io.h>",
-        "args": [{ "name": "s", "repr": "StringRepr" }],
-        "result": null,
-        "type": {
-          "pi": {
-            "arg": { "name": "s", "type": { "prim": "String" } },
-            "result": { "app": [{ "var": "IO" }, { "var": "Unit" }] }
-          }
-        }
-      }
-    },
     {
       "def": {
         "name": "main",

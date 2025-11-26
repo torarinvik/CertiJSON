@@ -1,5 +1,5 @@
 {
-  "module": "Std.Nat",
+  "module": "MyNat",
   "imports": [],
   "declarations": [
     {

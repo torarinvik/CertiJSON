@@ -1,6 +1,6 @@
 {
   "module": "Tetris",
-  "imports": ["Raylib", "Std.IO", "Std.Math", "Std.Memory"],
+  "imports": ["Raylib", "Std.IO", "Std.Memory", "Std.Math"],
   "declarations": [
     {
       "def": {

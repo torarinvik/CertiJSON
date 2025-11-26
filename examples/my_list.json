@@ -1,6 +1,6 @@
 {
-  "module": "Std.List",
-  "imports": ["Std.Nat"],
+  "module": "MyList",
+  "imports": [],
   "declarations": [
     {
       "inductive": {

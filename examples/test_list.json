@@ -1,13 +1,18 @@
 {
   "module": "Test.ListModule",
-  "imports": ["Std.IO", "Std.Math", "Std.List"],
+  "imports": ["Std.IO", "Std.Math", "Std.List", "Std.Nat"],
   "declarations": [
     {
       "def": {
         "name": "test_list1",
         "role": "runtime",
         "type": { "prim": "Int32" },
-        "body": { "app": [{ "var": "length" }, { "prim": "Int32" }, { "app": [{ "var": "nil" }, { "prim": "Int32" }] }] }
+        "body": { 
+          "app": [
+            { "var": "nat_to_int" },
+            { "app": [{ "var": "length" }, { "prim": "Int32" }, { "app": [{ "var": "nil" }, { "prim": "Int32" }] }] }
+          ]
+        }
       }
     },
     {
@@ -17,24 +22,29 @@
         "type": { "prim": "Int32" },
         "body": { 
           "app": [
-            { "var": "length" }, 
-            { "prim": "Int32" }, 
-            { "app": [
-              { "var": "cons" }, 
-              { "prim": "Int32" }, 
-              { "int32": 1 },
-              { "app": [
-                { "var": "cons" },
-                { "prim": "Int32" },
-                { "int32": 2 },
+            { "var": "nat_to_int" },
+            {
+              "app": [
+                { "var": "length" }, 
+                { "prim": "Int32" }, 
                 { "app": [
-                  { "var": "cons" },
-                  { "prim": "Int32" },
-                  { "int32": 3 },
-                  { "app": [{ "var": "nil" }, { "prim": "Int32" }] }
+                  { "var": "cons" }, 
+                  { "prim": "Int32" }, 
+                  { "int32": 1 },
+                  { "app": [
+                    { "var": "cons" },
+                    { "prim": "Int32" },
+                    { "int32": 2 },
+                    { "app": [
+                      { "var": "cons" },
+                      { "prim": "Int32" },
+                      { "int32": 3 },
+                      { "app": [{ "var": "nil" }, { "prim": "Int32" }] }
+                    ]}
+                  ]}
                 ]}
-              ]}
-            ]}
+              ]
+            }
           ]
         }
       }
