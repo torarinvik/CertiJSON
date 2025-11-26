@@ -2001,6 +2001,34 @@ Types with no runtime representation (like `Unit` or `Proof`) are optimized away
 
 ---
 
+## 26. Linear Typestates (Files)
+
+Typestates allow tracking the state of a resource (like a file being open or closed) in the type system. Combined with linearity, this ensures that resources are properly managed and state transitions are valid.
+
+### 26.1 File Handle
+
+`FileHandle` is a linear resource representing an open file.
+
+```
+FileHandle : Type   -- Linear, opaque
+```
+
+### 26.2 Operations
+
+```
+file_open : String → Mode → IO (Result Error FileHandle)
+file_read : FileHandle → Nat → IO (Result Error (String × FileHandle))
+file_write : FileHandle → String → IO (Result Error FileHandle)
+file_close : FileHandle → IO (Result Error Unit)
+```
+
+**Linearity Enforcement:**
+- `file_read` and `file_write` consume the old handle and return a new one (threading).
+- `file_close` consumes the handle permanently.
+- The kernel's linearity checker ensures the handle is not dropped or duplicated.
+
+---
+
 ## Appendix A: JSON Examples
 
 ### A.1 Natural Numbers Module

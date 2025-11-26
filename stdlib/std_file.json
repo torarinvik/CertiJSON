@@ -1,0 +1,157 @@
+{
+  "module": "Std.File",
+  "imports": ["Std.IO", "Std.Result", "Std.String", "Std.Nat"],
+  "declarations": [
+    {
+      "inductive": {
+        "name": "FileHandle",
+        "params": [],
+        "universe": "Type",
+        "constructors": []
+      }
+    },
+    {
+      "inductive": {
+        "name": "FileError",
+        "params": [],
+        "universe": "Type",
+        "constructors": [
+          { "name": "FileNotFound", "args": [] },
+          { "name": "PermissionDenied", "args": [] },
+          { "name": "IOError", "args": [] }
+        ]
+      }
+    },
+    {
+      "inductive": {
+        "name": "FileMode",
+        "params": [],
+        "universe": "Type",
+        "constructors": [
+          { "name": "Read", "args": [] },
+          { "name": "Write", "args": [] },
+          { "name": "Append", "args": [] }
+        ]
+      }
+    },
+    {
+      "repr": {
+        "name": "FILEPtr",
+        "kind": "primitive",
+        "c_type": "FILE*",
+        "size_bits": 64,
+        "signed": false
+      }
+    },
+    {
+      "extern_io": {
+        "name": "fopen",
+        "c_name": "cj_fopen",
+        "header": "<certijson_io.h>",
+        "args": [
+          { "name": "path", "repr": "StringRepr" },
+          { "name": "mode", "repr": "StringRepr" }
+        ],
+        "result": { "repr": "FILEPtr" },
+        "type": {
+          "pi": {
+            "arg": { "name": "path", "type": { "prim": "String" } },
+            "result": {
+              "pi": {
+                "arg": { "name": "mode", "type": { "prim": "String" } },
+                "result": {
+                  "app": [
+                    { "var": "IO" },
+                    { "app": [{ "var": "Result" }, { "var": "FileError" }, { "var": "FileHandle" }] }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "extern_io": {
+        "name": "fclose",
+        "c_name": "cj_fclose",
+        "header": "<certijson_io.h>",
+        "args": [{ "name": "handle", "repr": "FILEPtr" }],
+        "result": { "repr": "Int" },
+        "type": {
+          "pi": {
+            "arg": { "name": "handle", "type": { "var": "FileHandle" } },
+            "result": {
+              "app": [
+                { "var": "IO" },
+                { "app": [{ "var": "Result" }, { "var": "FileError" }, { "var": "Unit" }] }
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "extern_io": {
+        "name": "fread",
+        "c_name": "cj_fread",
+        "header": "<certijson_io.h>",
+        "args": [
+          { "name": "handle", "repr": "FILEPtr" },
+          { "name": "size", "repr": "SizeT" }
+        ],
+        "result": { "repr": "VoidPtr" },
+        "type": {
+          "pi": {
+            "arg": { "name": "handle", "type": { "var": "FileHandle" } },
+            "result": {
+              "pi": {
+                "arg": { "name": "size", "type": { "var": "Nat" } },
+                "result": {
+                  "app": [
+                    { "var": "IO" },
+                    {
+                      "app": [
+                        { "var": "Result" },
+                        { "var": "FileError" },
+                        { "app": [{ "var": "Pair" }, { "prim": "String" }, { "var": "FileHandle" }] }
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "extern_io": {
+        "name": "fwrite",
+        "c_name": "cj_fwrite",
+        "header": "<certijson_io.h>",
+        "args": [
+          { "name": "handle", "repr": "FILEPtr" },
+          { "name": "data", "repr": "StringRepr" }
+        ],
+        "result": { "repr": "Int" },
+        "type": {
+          "pi": {
+            "arg": { "name": "handle", "type": { "var": "FileHandle" } },
+            "result": {
+              "pi": {
+                "arg": { "name": "data", "type": { "prim": "String" } },
+                "result": {
+                  "app": [
+                    { "var": "IO" },
+                    { "app": [{ "var": "Result" }, { "var": "FileError" }, { "var": "FileHandle" }] }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}
