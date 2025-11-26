@@ -184,6 +184,7 @@ and parse_primary_expr state =
            mk_term (App (mk_term (Var full_name) None None, args)) None None
        | _ -> mk_term (Var full_name) None None)
   | INT i -> advance state; mk_term (Literal (LitInt32 i)) None None
+  | INT64 i -> advance state; mk_term (Literal (LitInt64 i)) None None
   | STRING s -> advance state; mk_term (Literal (LitString s)) None None
   | BOOL b -> advance state; mk_term (Literal (LitBool b)) None None
   | LPAREN ->

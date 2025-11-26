@@ -4,6 +4,7 @@ type token =
   | DEF | RETURN | IF | ELSE | ELIF | MATCH | CASE | CLASS | IMPORT
   | IDENT of string
   | INT of int32
+  | INT64 of int64
   | STRING of string
   | BOOL of bool
   | LPAREN | RPAREN | LBRACK | RBRACK | LBRACE | RBRACE
@@ -200,6 +201,9 @@ let tokenize (source : string) : token list =
           if is_digit c then (
             Buffer.add_char buf (advance ());
             read_int ()
+          ) else if c = 'L' then (
+            ignore (advance ());
+            add (INT64 (Int64.of_string (Buffer.contents buf)))
           ) else (
             add (INT (Int32.of_string (Buffer.contents buf)))
           )

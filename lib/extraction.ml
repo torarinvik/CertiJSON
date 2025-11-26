@@ -375,16 +375,37 @@ let extract_def (ctx : Context.context) (def : Syntax.def_decl) : c_func option 
           body = CBlock body_stmts;
         }
     else
-      let body_expr = translate_term ctx [] body in
-      let stmt =
-        if ret_type = CVoid then CExpr body_expr
-        else CReturn body_expr
+      (* Pure function - need to handle let-bindings *)
+      let rec translate_pure (env : (string * string) list) (t : Syntax.term) : c_stmt list =
+        match t.desc with
+        | App (lam, [arg]) ->
+            (match lam.desc with
+             | Lambda { arg = binder; body } ->
+                 (* Let-binding pattern: (λx.body) arg *)
+                 let var_name = fresh_name binder.name in
+                 let env' = (binder.name, var_name) :: env in
+                 let ty = translate_type ctx binder.ty in
+                 let arg_expr = translate_term ctx env arg in
+                 let decl = 
+                   if ty = CVoid then []
+                   else [CDecl (ty, var_name, Some arg_expr)]
+                 in
+                 decl @ translate_pure env' body
+             | _ -> 
+                 let body_expr = translate_term ctx env t in
+                 if ret_type = CVoid then [CExpr body_expr]
+                 else [CReturn body_expr])
+        | _ ->
+            let body_expr = translate_term ctx env t in
+            if ret_type = CVoid then [CExpr body_expr]
+            else [CReturn body_expr]
       in
+      let body_stmts = translate_pure [] body in
       Some {
         name = def.def_name;
         ret_type;
         args = c_args;
-        body = CBlock [stmt];
+        body = CBlock body_stmts;
       }
 
 let extract_module (mod_ : Syntax.module_decl) (sig_ : Context.signature) : c_program =
