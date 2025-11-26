@@ -23,7 +23,7 @@ let check_cmd =
           Fmt.(list ~sep:comma string) mod_.imports;
         Fmt.pr "Declarations: %d@." (List.length mod_.declarations);
         let cache = CJ.Loader.create_cache () in
-        match CJ.Loader.load_imports cache [mod_.module_name] mod_ with
+        match CJ.Loader.load_imports CJ.Loader.default_config cache [mod_.module_name] mod_ with
         | Error e ->
             Fmt.epr "%a@." CJ.Loader.pp_error e;
             `Error (false, "type checking failed")
@@ -71,7 +71,7 @@ let eval_cmd =
         `Error (false, "parsing failed")
     | Ok mod_ ->
         let cache = CJ.Loader.create_cache () in
-        match CJ.Loader.load_imports cache [mod_.module_name] mod_ with
+        match CJ.Loader.load_imports CJ.Loader.default_config cache [mod_.module_name] mod_ with
         | Error e ->
             Fmt.epr "%a@." CJ.Loader.pp_error e;
             `Error (false, "type checking failed")
@@ -103,7 +103,7 @@ let run_cmd =
         `Error (false, "parsing failed")
     | Ok mod_ ->
         let cache = CJ.Loader.create_cache () in
-        match CJ.Loader.load_imports cache [mod_.module_name] mod_ with
+        match CJ.Loader.load_imports CJ.Loader.default_config cache [mod_.module_name] mod_ with
         | Error e ->
             Fmt.epr "%a@." CJ.Loader.pp_error e;
             `Error (false, "type checking failed")
@@ -134,7 +134,7 @@ let extract_cmd =
         `Error (false, "parsing failed")
     | Ok mod_ ->
         let cache = CJ.Loader.create_cache () in
-        match CJ.Loader.load_imports cache [mod_.module_name] mod_ with
+        match CJ.Loader.load_imports CJ.Loader.default_config cache [mod_.module_name] mod_ with
         | Error e ->
             Fmt.epr "%a@." CJ.Loader.pp_error e;
             `Error (false, "type checking failed")

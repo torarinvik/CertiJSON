@@ -15,60 +15,66 @@ let pp_error fmt = function
   | ImportError msg -> Format.fprintf fmt "Import error: %s" msg
   | CycleDetected cycle -> Format.fprintf fmt "Cycle detected: %s" (String.concat " -> " cycle)
 
+type config = {
+  include_paths : string list;
+}
+
+let default_config = {
+  include_paths = ["."; "stdlib"];
+}
+
 type cache = (name, signature) Hashtbl.t
 
 let create_cache () : cache = Hashtbl.create 16
 
-let resolve_import (name : name) : string option =
-  (* Convert dot notation to path separators if needed, but for now assume flat names or handle manually *)
-  (* Actually, Std.IO -> stdlib/std_io.json is a specific mapping we might want. *)
-  (* Or we can just map "Std.IO" -> "std_io.json" and look in stdlib. *)
-  
-  let filename = 
+let resolve_import (config : config) (name : name) : string option =
+  let candidates =
     match name with
-    | "Std.IO" -> "std_io.json"
-    | "Std.Math" -> "std_math.json"
-    | "Std.Memory" -> "std_memory.json"
-    | "Std.CStdIO" -> "std_stdio.json"
-    | "Std.CTime" -> "std_time.json"
-    | "Std.CCtype" -> "std_ctype.json"
-    | "Std.CEnv" -> "std_env.json"
-    | "Std.CLocale" -> "std_locale.json"
-    | "Std.POSIX" -> "std_posix.json"
-    | "Std.POSIXSockets" -> "std_posix_sockets.json"
-    | "Std.CMath" -> "std_cmath.json"
-    | "Std.CErrno" -> "std_errno.json"
-    | "Std.CAssert" -> "std_assert.json"
-    | "Std.Option" -> "std_option.json"
-    | "Std.Result" -> "std_result.json"
-    | "Std.Bool" -> "std_bool.json"
-    | "Std.Pair" -> "std_pair.json"
-    | "Std.Int" -> "std_int.json"
-    | "Std.String" -> "std_string.json"
-    | "Std.Char" -> "std_char.json"
-    | "Std.List" -> "std_list.json"
-    | "Std.Eq" -> "std_eq.json"
-    | "Std.Nat" -> "std_nat.json"
-    | "Std.Fin" -> "std_fin.json"
-    | "Std.Array" -> "std_array.json"
-    | "Std.Either" -> "std_either.json"
+    | "Std.IO" -> ["std_io.json"]
+    | "Std.Math" -> ["std_math.json"]
+    | "Std.Memory" -> ["std_memory.json"]
+    | "Std.CStdIO" -> ["std_stdio.json"]
+    | "Std.CTime" -> ["std_time.json"]
+    | "Std.CCtype" -> ["std_ctype.json"]
+    | "Std.CEnv" -> ["std_env.json"]
+    | "Std.CLocale" -> ["std_locale.json"]
+    | "Std.POSIX" -> ["std_posix.json"]
+    | "Std.POSIXSockets" -> ["std_posix_sockets.json"]
+    | "Std.CMath" -> ["std_cmath.json"]
+    | "Std.CErrno" -> ["std_errno.json"]
+    | "Std.CAssert" -> ["std_assert.json"]
+    | "Std.Option" -> ["std_option.json"]
+    | "Std.Result" -> ["std_result.json"]
+    | "Std.Bool" -> ["std_bool.json"]
+    | "Std.Pair" -> ["std_pair.json"]
+    | "Std.Int" -> ["std_int.json"]
+    | "Std.String" -> ["std_string.json"]
+    | "Std.Char" -> ["std_char.json"]
+    | "Std.List" -> ["std_list.json"]
+    | "Std.Eq" -> ["std_eq.json"]
+    | "Std.Nat" -> ["std_nat.json"]
+    | "Std.Fin" -> ["std_fin.json"]
+    | "Std.Array" -> ["std_array.json"]
+    | "Std.Either" -> ["std_either.json"]
     | _ ->
-        name ^ ".json" 
+        [ name ^ ".json";
+          String.lowercase_ascii name ^ ".json" ]
   in
-  let paths = ["."; "stdlib"] in
   List.find_map (fun dir ->
-    let path = Filename.concat dir filename in
-    if Sys.file_exists path then Some path else None
-  ) paths
+    List.find_map (fun filename ->
+      let path = Filename.concat dir filename in
+      if Sys.file_exists path then Some path else None
+    ) candidates
+  ) config.include_paths
 
-let rec load_module (cache : cache) (stack : name list) (name : name) : (signature, error) result =
+let rec load_module (config : config) (cache : cache) (stack : name list) (name : name) : (signature, error) result =
   if List.mem name stack then
     Error (CycleDetected (List.rev (name :: stack)))
   else
     match Hashtbl.find_opt cache name with
     | Some sig_ -> Ok sig_
     | None ->
-        match resolve_import name with
+        match resolve_import config name with
         | None -> Error (ImportError (Printf.sprintf "Module %s not found" name))
         | Some path ->
             match Json_parser.parse_file path with
@@ -77,14 +83,14 @@ let rec load_module (cache : cache) (stack : name list) (name : name) : (signatu
                 if mod_.module_name <> name then
                   Error (ImportError (Printf.sprintf "File %s declares module %s, expected %s" path mod_.module_name name))
                 else
-                  load_imports cache (name :: stack) mod_
+                  load_imports config cache (name :: stack) mod_
 
-and load_imports (cache : cache) (stack : name list) (mod_ : module_decl) : (signature, error) result =
+and load_imports (config : config) (cache : cache) (stack : name list) (mod_ : module_decl) : (signature, error) result =
   let rec loop acc imports =
     match imports with
     | [] -> Ok acc
     | imp :: rest ->
-        match load_module cache stack imp with
+        match load_module config cache stack imp with
         | Error e -> Error e
         | Ok imp_sig ->
             let acc' = Context.merge_signatures acc imp_sig in
