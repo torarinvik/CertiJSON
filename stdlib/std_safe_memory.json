@@ -1,0 +1,120 @@
+{
+  "module": "Std.SafeMemory",
+  "imports": ["Std.Nat", "Std.IO"],
+  "declarations": [
+    {
+      "inductive": {
+        "name": "ArrayHandle",
+        "params": [
+          { "name": "A", "type": { "universe": "Type" } },
+          { "name": "n", "type": { "prim": "Int64" } }
+        ],
+        "universe": "Type",
+        "constructors": []
+      }
+    },
+    {
+      "inductive": {
+        "name": "ArrayView",
+        "params": [
+          { "name": "A", "type": { "universe": "Type" } },
+          { "name": "n", "type": { "prim": "Int64" } }
+        ],
+        "universe": "Type",
+        "constructors": []
+      }
+    },
+    {
+      "extern_io": {
+        "name": "stack_alloc",
+        "c_name": "cj_stack_alloc",
+        "header": "<certijson_memory.h>",
+        "args": [
+          { "name": "n", "repr": "SizeT" },
+          { "name": "callback", "repr": "VoidPtr" }
+        ],
+        "result": { "repr": "VoidPtr" },
+        "type": {
+          "forall": {
+            "arg": { "name": "A", "type": { "universe": "Type" } },
+            "result": {
+              "forall": {
+                "arg": { "name": "n", "type": { "prim": "Int64" } },
+                "result": {
+                  "forall": {
+                    "arg": { "name": "B", "type": { "universe": "Type" } },
+                    "result": {
+                      "pi": {
+                        "arg": {
+                          "name": "callback",
+                          "type": {
+                            "pi": {
+                              "arg": { "name": "h", "type": { "app": [{ "var": "ArrayHandle" }, { "var": "A" }, { "var": "n" }] } },
+                              "result": { "app": [{ "var": "IO" }, { "var": "B" }] }
+                            }
+                          }
+                        },
+                        "result": { "app": [{ "var": "IO" }, { "var": "B" }] }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "extern_io": {
+        "name": "as_view",
+        "c_name": "cj_as_view",
+        "header": "<certijson_memory.h>",
+        "args": [
+          { "name": "handle", "repr": "VoidPtr" },
+          { "name": "callback", "repr": "VoidPtr" }
+        ],
+        "result": { "repr": "VoidPtr" },
+        "type": {
+          "forall": {
+            "arg": { "name": "A", "type": { "universe": "Type" } },
+            "result": {
+              "forall": {
+                "arg": { "name": "n", "type": { "prim": "Int64" } },
+                "result": {
+                  "forall": {
+                    "arg": { "name": "B", "type": { "universe": "Type" } },
+                    "result": {
+                      "pi": {
+                        "arg": { "name": "handle", "type": { "app": [{ "var": "ArrayHandle" }, { "var": "A" }, { "var": "n" }] } },
+                        "result": {
+                          "pi": {
+                            "arg": {
+                              "name": "callback",
+                              "type": {
+                                "pi": {
+                                  "arg": { "name": "view", "type": { "app": [{ "var": "ArrayView" }, { "var": "A" }, { "var": "n" }] } },
+                                  "result": { "app": [{ "var": "IO" }, { "var": "B" }] }
+                                }
+                              }
+                            },
+                            "result": {
+                              "app": [
+                                { "var": "IO" },
+                                { "app": [{ "var": "Pair" }, { "app": [{ "var": "ArrayHandle" }, { "var": "A" }, { "var": "n" }] }, { "var": "B" }] }
+                              ]
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

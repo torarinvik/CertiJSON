@@ -1,0 +1,70 @@
+{
+  "module": "SafeMemoryDemo",
+  "imports": ["Std.Nat", "Std.IO", "Std.SafeMemory"],
+  "declarations": [
+    {
+      "extern_io": {
+        "name": "print_array_view",
+        "c_name": "print_array_c",
+        "header": "my_c_lib.h",
+        "args": [
+          { "name": "ptr", "repr": "VoidPtr" },
+          { "name": "size", "repr": "SizeT" }
+        ],
+        "result": null,
+        "type": {
+          "forall": {
+            "arg": { "name": "n", "type": { "prim": "Int64" } },
+            "result": {
+              "pi": {
+                "arg": { "name": "view", "type": { "app": [{ "var": "ArrayView" }, { "prim": "Int32" }, { "var": "n" }] } },
+                "result": { "app": [{ "var": "IO" }, { "var": "Unit" }] }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "def": {
+        "name": "main",
+        "role": "runtime",
+        "type": { "app": [{ "var": "IO" }, { "var": "Unit" }] },
+        "body": {
+          "app": [
+            { "var": "stack_alloc" },
+            { "prim": "Int32" },
+            { "int64": 10 },
+            { "var": "Unit" },
+            {
+              "lambda": {
+                "arg": { "name": "handle", "type": { "app": [{ "var": "ArrayHandle" }, { "prim": "Int32" }, { "int64": 10 }] } },
+                "body": {
+                  "app": [
+                    { "var": "as_view" },
+                    { "prim": "Int32" },
+                    { "int64": 10 },
+                    { "var": "Unit" },
+                    { "var": "handle" },
+                    {
+                      "lambda": {
+                        "arg": { "name": "view", "type": { "app": [{ "var": "ArrayView" }, { "prim": "Int32" }, { "int64": 10 }] } },
+                        "body": {
+                          "app": [
+                            { "var": "print_array_view" },
+                            { "int64": 10 },
+                            { "var": "view" }
+                          ]
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

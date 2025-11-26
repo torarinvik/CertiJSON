@@ -1734,9 +1734,15 @@ Correctness levels are especially useful in an LLM-driven workflow:
 * An agent can:
 
   * Start at `C0` or `C1` for fast iteration.
-  * If extracted C misbehaves or fails external tests, recompile at `C2`–`C3` to obtain more precise diagnostics and stronger proof checking.
-  * For core library code, default to `C3`–`C4`.
-  * For critical kernels, enforce `C5`.
+  * If the kernel rejects the module:
+
+   * Fix the structural/type issues and recompile.
+  * If the kernel accepts but external tests fail or C crashes:
+
+   * Re-run at `C2` or `C3` to trigger deeper analysis and more detailed error messages.
+  * For components designated as "trusted library":
+
+   * Always compile at `C3` or higher.
 
 A typical strategy for an agent:
 
@@ -1913,6 +1919,85 @@ array_set : ∀(A : Type)(n : Nat),
     ...
 }}
 ```
+
+---
+
+## 25. Zero-Overhead Memory Safety
+
+To achieve C-level performance with type safety, CertiJSON introduces advanced memory management primitives that map directly to efficient C constructs.
+
+### 25.1 Stack Allocation
+
+Stack allocation avoids heap overhead for temporary data. It is enforced via a scoped callback (continuation-passing style) to ensure the memory is deallocated when the scope ends.
+
+#### Primitive
+
+```
+stack_alloc : ∀(A : Type)(n : Nat),
+              (ArrayHandle A n → IO B) →
+              IO B
+```
+
+**Semantics:**
+1. Allocates `n * sizeof(A)` bytes on the stack (using `alloca` or local array).
+2. Passes a handle to the callback.
+3. Automatically invalidates the handle when the callback returns.
+
+### 25.2 Borrowing and Views
+
+To interact with C functions that expect raw pointers without transferring ownership, CertiJSON uses **Borrowed Types**.
+
+#### Types
+
+```
+Borrow A : Type      -- A temporary, non-owning view of A
+```
+
+#### Primitives
+
+```
+borrow : ∀(A : Type), A → (Borrow A → IO B) → IO (A × B)
+```
+
+For arrays/buffers:
+
+```
+ArrayView A n : Type   -- Equivalent to C pointer T* with length n
+
+as_view : ∀(A : Type)(n : Nat),
+          ArrayHandle A n →
+          (ArrayView A n → IO B) →
+          IO (ArrayHandle A n × B)
+```
+
+**Extraction:**
+- `ArrayView A n` extracts to `A*`.
+- `as_view` is a no-op at runtime, just passing the pointer.
+
+### 25.3 Struct Layouts and Padding
+
+For perfect C interop, `repr` declarations can specify explicit padding and alignment.
+
+```json
+{
+  "repr": {
+    "name": "AlignedStruct",
+    "kind": "struct",
+    "align_bytes": 16,
+    "fields": [
+      { "name": "header", "repr": "Int64Repr", "offset_bytes": 0 },
+      { "name": "data", "repr": "Int64Repr", "offset_bytes": 16 } // Explicit gap
+    ]
+  }
+}
+```
+
+### 25.4 Zero-Sized Types (ZST)
+
+Types with no runtime representation (like `Unit` or `Proof`) are optimized away completely.
+
+- `Array Unit n` occupies 0 bytes.
+- `struct { x : Int32, p : Proof }` has same layout as `Int32`.
 
 ---
 
