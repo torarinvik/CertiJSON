@@ -12,10 +12,13 @@ let check_cmd =
     Arg.(required & pos 0 (some file) None & info [] ~docv:"FILE" ~doc)
   in
   let check file =
-    match CJ.Json_parser.parse_file file with
-    | Error e ->
+    match CJ.Loader.parse_file file with
+    | Error (CJ.Loader.ParseError e) ->
         let err = CJ.Error.error_of_parse ~file e in
         Fmt.epr "%a@." CJ.Error.pp_error err;
+        `Error (false, "parsing failed")
+    | Error e ->
+        Fmt.epr "%a@." CJ.Loader.pp_error e;
         `Error (false, "parsing failed")
     | Ok mod_ ->
         Fmt.pr "Parsed module: %s@." mod_.module_name;
@@ -41,10 +44,13 @@ let parse_cmd =
     Arg.(required & pos 0 (some file) None & info [] ~docv:"FILE" ~doc)
   in
   let parse file =
-    match CJ.Json_parser.parse_file file with
-    | Error e ->
+    match CJ.Loader.parse_file file with
+    | Error (CJ.Loader.ParseError e) ->
         let err = CJ.Error.error_of_parse ~file e in
         Fmt.epr "%a@." CJ.Error.pp_error err;
+        `Error (false, "parsing failed")
+    | Error e ->
+        Fmt.epr "%a@." CJ.Loader.pp_error e;
         `Error (false, "parsing failed")
     | Ok mod_ ->
         Fmt.pr "%s@." (CJ.Pretty.module_to_string mod_);
@@ -64,10 +70,13 @@ let eval_cmd =
     Arg.(required & pos 1 (some string) None & info [] ~docv:"NAME" ~doc)
   in
   let do_eval file def_name =
-    match CJ.Json_parser.parse_file file with
-    | Error e ->
+    match CJ.Loader.parse_file file with
+    | Error (CJ.Loader.ParseError e) ->
         let err = CJ.Error.error_of_parse ~file e in
         Fmt.epr "%a@." CJ.Error.pp_error err;
+        `Error (false, "parsing failed")
+    | Error e ->
+        Fmt.epr "%a@." CJ.Loader.pp_error e;
         `Error (false, "parsing failed")
     | Ok mod_ ->
         let cache = CJ.Loader.create_cache () in
@@ -96,10 +105,13 @@ let run_cmd =
     Arg.(value & opt string "main" & info ["entry"] ~docv:"NAME" ~doc)
   in
   let do_run file def_name =
-    match CJ.Json_parser.parse_file file with
-    | Error e ->
+    match CJ.Loader.parse_file file with
+    | Error (CJ.Loader.ParseError e) ->
         let err = CJ.Error.error_of_parse ~file e in
         Fmt.epr "%a@." CJ.Error.pp_error err;
+        `Error (false, "parsing failed")
+    | Error e ->
+        Fmt.epr "%a@." CJ.Loader.pp_error e;
         `Error (false, "parsing failed")
     | Ok mod_ ->
         let cache = CJ.Loader.create_cache () in
@@ -127,10 +139,13 @@ let extract_cmd =
     Arg.(required & pos 0 (some file) None & info [] ~docv:"FILE" ~doc)
   in
   let do_extract file =
-    match CJ.Json_parser.parse_file file with
-    | Error e ->
+    match CJ.Loader.parse_file file with
+    | Error (CJ.Loader.ParseError e) ->
         let err = CJ.Error.error_of_parse ~file e in
         Fmt.epr "%a@." CJ.Error.pp_error err;
+        `Error (false, "parsing failed")
+    | Error e ->
+        Fmt.epr "%a@." CJ.Loader.pp_error e;
         `Error (false, "parsing failed")
     | Ok mod_ ->
         let cache = CJ.Loader.create_cache () in

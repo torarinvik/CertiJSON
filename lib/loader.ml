@@ -58,7 +58,9 @@ let resolve_import (config : config) (name : name) : string option =
     | "Std.Either" -> ["std_either.json"]
     | _ ->
         [ name ^ ".json";
-          String.lowercase_ascii name ^ ".json" ]
+          String.lowercase_ascii name ^ ".json";
+          name ^ ".cj";
+          String.lowercase_ascii name ^ ".cj" ]
   in
   List.find_map (fun dir ->
     List.find_map (fun filename ->
@@ -66,6 +68,29 @@ let resolve_import (config : config) (name : name) : string option =
       if Sys.file_exists path then Some path else None
     ) candidates
   ) config.include_paths
+
+let parse_file (path : string) : (module_decl, error) result =
+  let parse_result =
+    if Filename.check_suffix path ".json" then
+      Json_parser.parse_file path
+    else if Filename.check_suffix path ".cj" then
+      try
+        let ch = open_in path in
+        let len = in_channel_length ch in
+        let source = really_input_string ch len in
+        close_in ch;
+        let tokens = Py_lexer.tokenize source in
+        Ok (Py_parser.parse_program tokens)
+      with
+      | Py_lexer.LexerError (e) -> Error (Json_parser.JsonError (Py_lexer.show_error e))
+      | Py_parser.ParseError msg -> Error (Json_parser.JsonError msg)
+      | Sys_error msg -> Error (Json_parser.JsonError msg)
+    else
+      Error (Json_parser.JsonError "Unknown file extension")
+  in
+  match parse_result with
+  | Error e -> Error (ParseError e)
+  | Ok mod_ -> Ok mod_
 
 let rec load_module (config : config) (cache : cache) (stack : name list) (name : name) : (signature, error) result =
   if List.mem name stack then
@@ -77,8 +102,8 @@ let rec load_module (config : config) (cache : cache) (stack : name list) (name 
         match resolve_import config name with
         | None -> Error (ImportError (Printf.sprintf "Module %s not found" name))
         | Some path ->
-            match Json_parser.parse_file path with
-            | Error e -> Error (ParseError e)
+            match parse_file path with
+            | Error e -> Error e
             | Ok mod_ ->
                 if mod_.module_name <> name then
                   Error (ImportError (Printf.sprintf "File %s declares module %s, expected %s" path mod_.module_name name))

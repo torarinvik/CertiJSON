@@ -25,6 +25,7 @@ type c_expr =
   | CAssign of string * c_expr
   | CTernary of c_expr * c_expr * c_expr
   | CBinOp of string * c_expr * c_expr
+  | CUnOp of string * c_expr
 
 type c_stmt =
   | CReturn of c_expr
@@ -70,6 +71,7 @@ let rec pp_c_expr fmt = function
   | CAssign (v, e) -> Format.fprintf fmt "%s = %a" v pp_c_expr e
   | CTernary (c, t, e) -> Format.fprintf fmt "(%a ? %a : %a)" pp_c_expr c pp_c_expr t pp_c_expr e
   | CBinOp (op, l, r) -> Format.fprintf fmt "(%a %s %a)" pp_c_expr l op pp_c_expr r
+  | CUnOp (op, e) -> Format.fprintf fmt "(%s%a)" op pp_c_expr e
 
 let rec pp_c_stmt fmt = function
   | CReturn e -> Format.fprintf fmt "return %a;" pp_c_expr e
@@ -182,6 +184,13 @@ let rec translate_term (ctx : Context.context) (env : (string * string) list) (t
       | Some "lt" -> (match args with [a; b] -> CBinOp ("<", translate_term ctx env a, translate_term ctx env b) | _ -> CVar "<invalid_lt>")
       | Some "gt" -> (match args with [a; b] -> CBinOp (">", translate_term ctx env a, translate_term ctx env b) | _ -> CVar "<invalid_gt>")
       | Some "eq" -> (match args with [a; b] -> CBinOp ("==", translate_term ctx env a, translate_term ctx env b) | _ -> CVar "<invalid_eq>")
+      | Some "le" -> (match args with [a; b] -> CBinOp ("<=", translate_term ctx env a, translate_term ctx env b) | _ -> CVar "<invalid_le>")
+      | Some "ge" -> (match args with [a; b] -> CBinOp (">=", translate_term ctx env a, translate_term ctx env b) | _ -> CVar "<invalid_ge>")
+      | Some "ne" -> (match args with [a; b] -> CBinOp ("!=", translate_term ctx env a, translate_term ctx env b) | _ -> CVar "<invalid_ne>")
+      | Some "mod" -> (match args with [a; b] -> CBinOp ("%", translate_term ctx env a, translate_term ctx env b) | _ -> CVar "<invalid_mod>")
+      | Some "and" -> (match args with [a; b] -> CBinOp ("&&", translate_term ctx env a, translate_term ctx env b) | _ -> CVar "<invalid_and>")
+      | Some "or" -> (match args with [a; b] -> CBinOp ("||", translate_term ctx env a, translate_term ctx env b) | _ -> CVar "<invalid_or>")
+      | Some "not" -> (match args with [a] -> CUnOp ("!", translate_term ctx env a) | _ -> CVar "<invalid_not>")
       | Some name -> (
           let args' = 
             List.map (translate_term ctx env) args 
@@ -245,7 +254,7 @@ let extract_def (ctx : Context.context) (def : Syntax.def_decl) : c_func option 
       Printf.sprintf "%s_%d" base !counter
     in
 
-    let rec translate_io (ctx : Context.context) (env : (string * string) list) (t : Syntax.term) (res_var : string option) : c_stmt list =
+    let rec translate_io (ctx : Context.context) (env : (string * string) list) (t : Syntax.term) (res_var : string option) (ret_ty : c_type) : c_stmt list =
       let is_global name t =
         match t.desc with
         | Global n | Var n -> String.equal n name
@@ -259,40 +268,59 @@ let extract_def (ctx : Context.context) (def : Syntax.def_decl) : c_func option 
                let env' = (arg.name, var_name) :: env in
                let ty = translate_type ctx arg.ty in
                let res_var_for_m = if ty = CVoid then None else Some var_name in
-               let m_stmts = translate_io ctx env m res_var_for_m in
+               let m_stmts = translate_io ctx env m res_var_for_m CVoid in
                let decl = 
                  if ty = CVoid then [] 
                  else [CDecl (ty, var_name, None)]
                in
-               let f_stmts = translate_io ctx env' body res_var in
+               let f_stmts = translate_io ctx env' body res_var ret_ty in
                decl @ m_stmts @ f_stmts
            | _ -> [CExpr (CVar "/* bind with non-lambda */")]
           )
       | App (f, [_; x]) when is_global "return" f ->
           (match res_var with
            | Some v -> [CExpr (CAssign (v, translate_term ctx env x))]
-           | None -> []
+           | None -> 
+               let t = translate_term ctx env x in
+               (match t with
+                | CVar "tt" -> [CExpr (CVar "return")]
+                | _ -> [CReturn t])
           )
       | App (_, _) ->
           let call = translate_term ctx env t in
           (match res_var with
            | Some v -> [CExpr (CAssign (v, call))] 
-           | None -> [CExpr call]
+           | None -> 
+               if ret_ty <> CVoid then [CReturn call] else [CExpr call]
           )
       | If { cond; then_; else_ } ->
           let cond_expr = translate_term ctx env cond in
-          let then_stmts = translate_io ctx env then_ res_var in
-          let else_stmts = translate_io ctx env else_ res_var in
+          let then_stmts = translate_io ctx env then_ res_var ret_ty in
+          let else_stmts = translate_io ctx env else_ res_var ret_ty in
           let then_block = CBlock then_stmts in
           let else_block = match else_stmts with [] -> None | _ -> Some (CBlock else_stmts) in
           [CIf (cond_expr, then_block, else_block)]
+      | Var name | Global name ->
+          let call = CCall (name, []) in
+          (match res_var with
+           | Some v -> [CExpr (CAssign (v, call))]
+           | None -> 
+               if ret_ty <> CVoid then [CReturn call] else [CExpr call])
       | _ -> 
           Format.eprintf "translate_io fallback: %a@." Syntax.pp_term t;
           [CExpr (translate_term ctx env t)]
     in
     
     if is_io then
-      let body_stmts = translate_io ctx [] body None in
+      let ret_ty = 
+        if String.equal def.def_name "main" then CInt32
+        else
+          match return_type.desc with
+          | App (_, [arg]) -> translate_type ctx arg
+          | _ -> CVoid
+      in
+      let body_ret_ty = if String.equal def.def_name "main" then CVoid else ret_ty in
+      let body_stmts = translate_io ctx [] body None body_ret_ty in
       if String.equal def.def_name "main" then
         Some {
           name = "main";
@@ -303,7 +331,7 @@ let extract_def (ctx : Context.context) (def : Syntax.def_decl) : c_func option 
       else
         Some {
           name = def.def_name;
-          ret_type = CVoid; (* IO Unit -> void *)
+          ret_type = ret_ty;
           args = c_args;
           body = CBlock body_stmts;
         }

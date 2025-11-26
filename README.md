@@ -15,19 +15,61 @@ CertiJSON is a pure, total, dependently typed programming language designed **ex
 
 CertiJSON shifts the burden of correctness from the code generator (the LLM) to the code verifier (the kernel). An LLM can propose any code it wants; if it's wrong, the kernel rejects it. If a CertiJSON module compiles, its theorems are mathematically valid and its runtime code is guaranteed to terminate without undefined behavior.
 
+## ProofPy Syntax
+
+CertiJSON features a Python-like frontend syntax ("ProofPy") designed to be familiar and easy for LLMs to write, while compiling down to the core JSON IR.
+
+### Features
+
+- **Indentation-based blocks**: Just like Python.
+- **Function Definitions**: `def name(arg: Type, ...) -> ReturnType:`
+- **Dependent Types**: `(x: Int32) -> Int32` (Pi types)
+- **Refinement Types**: `{v: Int32 | v != 0}` (Subset types)
+- **Control Flow**: `if cond: ... else: ...`, `return expr`
+- **Implicit Return**: The last expression in a block is returned if it's not a statement.
+
+### Examples
+
+#### Basic Function
+
+```python
+def add(x: Int32, y: Int32) -> Int32:
+    return x + y
+```
+
+#### Refinement Types
+
+```python
+def safe_div(x: Int32, y: {v: Int32 | v != 0}) -> Int32:
+    return x / y
+```
+
+#### Control Flow
+
+```python
+def max(x: Int32, y: Int32) -> Int32:
+    if x > y:
+        x
+    else:
+        y
+```
+
 ## Key Features
 
 | Feature | Description |
 |---------|-------------|
-| 🔧 **JSON Syntax** | All programs are valid JSON—trivial parsing, no ambiguity |
+| 🐍 **ProofPy Syntax** | Python-like syntax for easy agent interaction |
+| 🔧 **JSON IR** | Core language is JSON—trivial parsing, no ambiguity for tools |
 | 🔒 **Proof-Based** | Curry–Howard correspondence: types = propositions, terms = proofs |
 | ⚡ **C Interop** | Compiles to a safe C subset for real-world deployment |
 | ⏱️ **Total** | All programs terminate—no infinite loops, no crashes |
 | 🎯 **Deterministic** | Same inputs always produce same outputs |
 
-## Quick Example
+## JSON Intermediate Representation (IR)
 
-A simple natural number addition function in CertiJSON:
+While agents write in ProofPy, the compiler uses a JSON-based Intermediate Representation. This IR is unambiguous and easy for tools to process.
+
+### Example IR (Addition)
 
 ```json
 {
@@ -89,40 +131,26 @@ A simple natural number addition function in CertiJSON:
 }
 ```
 
-## Why JSON?
-
-Traditional programming languages have complex grammars with precedence rules, layout sensitivity, and ambiguous syntax. For LLMs:
-
-- **Parsing is error-prone** — minor syntax errors break everything
-- **Formatting varies** — style choices add noise to training
-- **Ambiguity exists** — same text can mean different things
-
-CertiJSON eliminates these issues:
-
-- ✅ JSON is unambiguous and universally parsed
-- ✅ Single canonical representation
-- ✅ No precedence or layout rules to memorize
-- ✅ Trivial for LLMs to generate and validate
-
 ## Architecture
 
 ```
-┌──────────┐    ┌──────────┐    ┌──────────┐    ┌──────────┐
-│   JSON   │───▶│   Core   │───▶│ Runtime  │───▶│    C     │
-│   File   │    │  Terms   │    │   Core   │    │  Source  │
-└──────────┘    └──────────┘    └──────────┘    └──────────┘
-            Parse &         Type Check &      Erase &        Extract &
-            Elaborate       Verify            Optimize       Lower
+┌──────────┐    ┌──────────┐    ┌──────────┐    ┌──────────┐    ┌──────────┐
+│ ProofPy  │───▶│   JSON   │───▶│   Core   │───▶│ Runtime  │───▶│    C     │
+│ (.cj)    │    │   IR     │    │  Terms   │    │   Core   │    │  Source  │
+└──────────┘    └──────────┘    └──────────┘    └──────────┘    └──────────┘
+            Parse           Parse &         Type Check &      Erase &        Extract &
+                            Elaborate       Verify            Optimize       Lower
 ```
 
 ### Compilation Pipeline
 
-1. **Parse** — JSON → Raw AST
-2. **Elaborate** — Raw AST → Core terms
-3. **Type Check** — Verify types, termination, proofs
-4. **Erase** — Remove proof-only terms
-5. **Extract** — Core → Cmini (safe C subset)
-6. **Lower** — Cmini → C source code
+1. **Frontend** — ProofPy (.cj) → JSON IR
+2. **Parse** — JSON → Raw AST
+3. **Elaborate** — Raw AST → Core terms
+4. **Type Check** — Verify types, termination, proofs
+5. **Erase** — Remove proof-only terms
+6. **Extract** — Core → Cmini (safe C subset)
+7. **Lower** — Cmini → C source code
 
 ## Type System
 
@@ -186,7 +214,7 @@ CertiJSON provides safe FFI through explicit representation descriptors:
 | **G2. Totality** | All programs terminate |
 | **G3. Separation** | Clear split between proofs (`Prop`) and code (`Type`) |
 | **G4. Safe C Interop** | Explicit memory layouts, no undefined behavior |
-| **G5. LLM-Optimized** | JSON syntax, no ambiguity |
+| **G5. LLM-Optimized** | Python-like syntax for ease of use, JSON IR for tool reliability |
 
 ## Status
 
@@ -195,7 +223,8 @@ CertiJSON is currently in **alpha** stage. The specification is stable, but the 
 ### Roadmap
 
 - [x] Core type theory specification
-- [x] JSON concrete syntax
+- [x] JSON concrete syntax (IR)
+- [x] ProofPy frontend syntax
 - [x] C interop design (repr, extern_c)
 - [x] Effects and IO model
 - [x] Concurrency primitives
@@ -208,7 +237,7 @@ CertiJSON is currently in **alpha** stage. The specification is stable, but the 
 
 Contributions are welcome! Areas of interest:
 
-- Reference compiler (F#)
+- Reference compiler (OCaml)
 - Standard library modules
 - Example programs and proofs
 - Documentation improvements
