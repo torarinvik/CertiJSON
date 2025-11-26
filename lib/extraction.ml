@@ -545,6 +545,60 @@ let extract_def (ctx : Context.context) (def : Syntax.def_decl) : c_func option 
       (* Pure function - need to handle let-bindings *)
       let rec translate_pure (env : (string * string) list) (t : Syntax.term) : c_stmt list =
         match t.desc with
+        | Match { scrutinee; cases; _ } ->
+            let scrut_expr = translate_term ctx env scrutinee in
+            let is_bool_case c = 
+              match c.pattern.ctor with 
+              | "True" | "False" -> true 
+              | _ -> false 
+            in
+            
+            if List.exists is_bool_case cases then
+              (* Convert to if/else chain *)
+              let rec cases_to_if = function
+                | [] -> []
+                | c :: rest ->
+                    let cond = 
+                      if c.pattern.ctor = "True" then scrut_expr
+                      else CUnOp ("!", scrut_expr)
+                    in
+                    let body_stmts = translate_pure env c.body in
+                    let then_block = CBlock body_stmts in
+                    let else_block = 
+                      match rest with
+                      | [] -> None
+                      | _ -> Some (CBlock (cases_to_if rest)) (* This nests ifs, could be optimized *)
+                    in
+                    [CIf (cond, then_block, else_block)]
+              in
+              cases_to_if cases
+            else
+              (* Assume Int32 switch *)
+              let switch_cases = 
+                List.map (fun c ->
+                  let val_expr = 
+                    if c.pattern.ctor = "_" then None
+                    else Some (CLitInt32 (Int32.of_string c.pattern.ctor))
+                  in
+                  (val_expr, translate_pure env c.body)
+                ) cases
+              in
+              
+              let rec build_if_chain = function
+                | [] -> []
+                | (Some v, stmts) :: rest ->
+                    let cond = CBinOp ("==", scrut_expr, v) in
+                    let then_block = CBlock stmts in
+                    let else_block = 
+                      match build_if_chain rest with
+                      | [] -> None
+                      | else_stmts -> Some (CBlock else_stmts)
+                    in
+                    [CIf (cond, then_block, else_block)]
+                | (None, stmts) :: _ -> stmts (* Default case *)
+              in
+              build_if_chain switch_cases
+
         | App (lam, [arg]) ->
             (match lam.desc with
              | Lambda { arg = binder; body } ->

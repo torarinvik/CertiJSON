@@ -9,119 +9,395 @@ import Raylib
 
 def get_i_x(rot: Int32, idx: Int32) -> Int32:
     horiz: Bool = (rot % 2) == 0
-    result: Int32 = idx if horiz else 0
-    return result
+    match idx:
+        case 0:
+            0 if horiz else 0
+        case 1:
+            1 if horiz else 0
+        case 2:
+            2 if horiz else 0
+        case 3:
+            3 if horiz else 0
 
 def get_i_y(rot: Int32, idx: Int32) -> Int32:
     horiz: Bool = (rot % 2) == 0
-    result: Int32 = 0 if horiz else idx
-    return result
+    match idx:
+        case 0:
+            0 if horiz else 0
+        case 1:
+            0 if horiz else 1
+        case 2:
+            0 if horiz else 2
+        case 3:
+            0 if horiz else 3
 
 def get_o_x(idx: Int32) -> Int32:
-    result: Int32 = idx % 2
-    return result
+    match idx:
+        case 0:
+            0
+        case 1:
+            1
+        case 2:
+            0
+        case 3:
+            1
 
 def get_o_y(idx: Int32) -> Int32:
-    result: Int32 = idx / 2
-    return result
+    match idx:
+        case 0:
+            0
+        case 1:
+            0
+        case 2:
+            1
+        case 3:
+            1
 
 def get_t_x(rot: Int32, idx: Int32) -> Int32:
     r: Int32 = rot % 4
-    x0: Int32 = 1 if (r == 0) else (0 if (r == 1) else (0 if (r == 2) else 1))
-    x1: Int32 = 0 if (r == 0) else (0 if (r == 1) else (1 if (r == 2) else 0))
-    x2: Int32 = 1 if (r == 0) else (1 if (r == 1) else (2 if (r == 2) else 1))
-    x3: Int32 = 2 if (r == 0) else (0 if (r == 1) else (1 if (r == 2) else 2))
-    result: Int32 = x0 if (idx == 0) else (x1 if (idx == 1) else (x2 if (idx == 2) else x3))
-    return result
+    match r:
+        case 0:
+            match idx:
+                case 0:
+                    1
+                case 1:
+                    0
+                case 2:
+                    1
+                case 3:
+                    2
+        case 1:
+            match idx:
+                case 0:
+                    1
+                case 1:
+                    1
+                case 2:
+                    1
+                case 3:
+                    0
+        case 2:
+            match idx:
+                case 0:
+                    1
+                case 1:
+                    2
+                case 2:
+                    1
+                case 3:
+                    0
+        case 3:
+            match idx:
+                case 0:
+                    0
+                case 1:
+                    0
+                case 2:
+                    0
+                case 3:
+                    1
 
 def get_t_y(rot: Int32, idx: Int32) -> Int32:
     r: Int32 = rot % 4
-    y0: Int32 = 0 if (r == 0) else (0 if (r == 1) else (1 if (r == 2) else 0))
-    y1: Int32 = 1 if (r == 0) else (1 if (r == 1) else (0 if (r == 2) else 1))
-    y2: Int32 = 1 if (r == 0) else (0 if (r == 1) else (0 if (r == 2) else 1))
-    y3: Int32 = 1 if (r == 0) else (2 if (r == 1) else (0 if (r == 2) else 2))
-    result: Int32 = y0 if (idx == 0) else (y1 if (idx == 1) else (y2 if (idx == 2) else y3))
-    return result
+    match r:
+        case 0:
+            match idx:
+                case 0:
+                    0
+                case 1:
+                    1
+                case 2:
+                    1
+                case 3:
+                    1
+        case 1:
+            match idx:
+                case 0:
+                    0
+                case 1:
+                    1
+                case 2:
+                    2
+                case 3:
+                    1
+        case 2:
+            match idx:
+                case 0:
+                    1
+                case 1:
+                    0
+                case 2:
+                    0
+                case 3:
+                    0
+        case 3:
+            match idx:
+                case 0:
+                    0
+                case 1:
+                    1
+                case 2:
+                    2
+                case 3:
+                    1
 
 def get_s_x(rot: Int32, idx: Int32) -> Int32:
     horiz: Bool = (rot % 2) == 0
-    x0: Int32 = 1 if horiz else 0
-    x1: Int32 = 2 if horiz else 0
-    x2: Int32 = 0 if horiz else 1
-    x3: Int32 = 1 if horiz else 1
-    result: Int32 = x0 if (idx == 0) else (x1 if (idx == 1) else (x2 if (idx == 2) else x3))
-    return result
+    match idx:
+        case 0:
+            1 if horiz else 0
+        case 1:
+            2 if horiz else 0
+        case 2:
+            0 if horiz else 1
+        case 3:
+            1 if horiz else 1
 
 def get_s_y(rot: Int32, idx: Int32) -> Int32:
     horiz: Bool = (rot % 2) == 0
-    y0: Int32 = 0 if horiz else 0
-    y1: Int32 = 0 if horiz else 1
-    y2: Int32 = 1 if horiz else 1
-    y3: Int32 = 1 if horiz else 2
-    result: Int32 = y0 if (idx == 0) else (y1 if (idx == 1) else (y2 if (idx == 2) else y3))
-    return result
+    match idx:
+        case 0:
+            0 if horiz else 0
+        case 1:
+            0 if horiz else 1
+        case 2:
+            1 if horiz else 1
+        case 3:
+            1 if horiz else 2
 
 def get_z_x(rot: Int32, idx: Int32) -> Int32:
     horiz: Bool = (rot % 2) == 0
-    x0: Int32 = 0 if horiz else 1
-    x1: Int32 = 1 if horiz else 0
-    x2: Int32 = 1 if horiz else 1
-    x3: Int32 = 2 if horiz else 0
-    result: Int32 = x0 if (idx == 0) else (x1 if (idx == 1) else (x2 if (idx == 2) else x3))
-    return result
+    match idx:
+        case 0:
+            0 if horiz else 1
+        case 1:
+            1 if horiz else 1
+        case 2:
+            1 if horiz else 0
+        case 3:
+            2 if horiz else 0
 
 def get_z_y(rot: Int32, idx: Int32) -> Int32:
     horiz: Bool = (rot % 2) == 0
-    y0: Int32 = 0 if horiz else 0
-    y1: Int32 = 0 if horiz else 1
-    y2: Int32 = 1 if horiz else 1
-    y3: Int32 = 1 if horiz else 2
-    result: Int32 = y0 if (idx == 0) else (y1 if (idx == 1) else (y2 if (idx == 2) else y3))
-    return result
+    match idx:
+        case 0:
+            0 if horiz else 0
+        case 1:
+            0 if horiz else 1
+        case 2:
+            1 if horiz else 1
+        case 3:
+            1 if horiz else 2
 
 def get_j_x(rot: Int32, idx: Int32) -> Int32:
     r: Int32 = rot % 4
-    x0: Int32 = 0 if (r == 0) else (0 if (r == 1) else (2 if (r == 2) else 1))
-    x1: Int32 = 0 if (r == 0) else (1 if (r == 1) else (0 if (r == 2) else 0))
-    x2: Int32 = 1 if (r == 0) else (0 if (r == 1) else (1 if (r == 2) else 1))
-    x3: Int32 = 2 if (r == 0) else (0 if (r == 1) else (2 if (r == 2) else 1))
-    result: Int32 = x0 if (idx == 0) else (x1 if (idx == 1) else (x2 if (idx == 2) else x3))
-    return result
+    match r:
+        case 0:
+            match idx:
+                case 0:
+                    0
+                case 1:
+                    0
+                case 2:
+                    1
+                case 3:
+                    2
+        case 1:
+            match idx:
+                case 0:
+                    0
+                case 1:
+                    1
+                case 2:
+                    0
+                case 3:
+                    0
+        case 2:
+            match idx:
+                case 0:
+                    0
+                case 1:
+                    1
+                case 2:
+                    2
+                case 3:
+                    2
+        case 3:
+            match idx:
+                case 0:
+                    1
+                case 1:
+                    1
+                case 2:
+                    1
+                case 3:
+                    0
 
 def get_j_y(rot: Int32, idx: Int32) -> Int32:
     r: Int32 = rot % 4
-    y0: Int32 = 0 if (r == 0) else (0 if (r == 1) else (0 if (r == 2) else 0))
-    y1: Int32 = 1 if (r == 0) else (0 if (r == 1) else (1 if (r == 2) else 1))
-    y2: Int32 = 1 if (r == 0) else (1 if (r == 1) else (1 if (r == 2) else 1))
-    y3: Int32 = 1 if (r == 0) else (2 if (r == 1) else (1 if (r == 2) else 2))
-    result: Int32 = y0 if (idx == 0) else (y1 if (idx == 1) else (y2 if (idx == 2) else y3))
-    return result
+    match r:
+        case 0:
+            match idx:
+                case 0:
+                    0
+                case 1:
+                    1
+                case 2:
+                    1
+                case 3:
+                    1
+        case 1:
+            match idx:
+                case 0:
+                    0
+                case 1:
+                    0
+                case 2:
+                    1
+                case 3:
+                    2
+        case 2:
+            match idx:
+                case 0:
+                    0
+                case 1:
+                    0
+                case 2:
+                    0
+                case 3:
+                    1
+        case 3:
+            match idx:
+                case 0:
+                    0
+                case 1:
+                    1
+                case 2:
+                    2
+                case 3:
+                    2
 
 def get_l_x(rot: Int32, idx: Int32) -> Int32:
     r: Int32 = rot % 4
-    x0: Int32 = 2 if (r == 0) else (0 if (r == 1) else (0 if (r == 2) else 1))
-    x1: Int32 = 0 if (r == 0) else (0 if (r == 1) else (2 if (r == 2) else 1))
-    x2: Int32 = 1 if (r == 0) else (1 if (r == 1) else (2 if (r == 2) else 0))
-    x3: Int32 = 2 if (r == 0) else (1 if (r == 1) else (2 if (r == 2) else 1))
-    result: Int32 = x0 if (idx == 0) else (x1 if (idx == 1) else (x2 if (idx == 2) else x3))
-    return result
+    match r:
+        case 0:
+            match idx:
+                case 0:
+                    2
+                case 1:
+                    0
+                case 2:
+                    1
+                case 3:
+                    2
+        case 1:
+            match idx:
+                case 0:
+                    0
+                case 1:
+                    0
+                case 2:
+                    0
+                case 3:
+                    1
+        case 2:
+            match idx:
+                case 0:
+                    0
+                case 1:
+                    1
+                case 2:
+                    2
+                case 3:
+                    0
+        case 3:
+            match idx:
+                case 0:
+                    0
+                case 1:
+                    1
+                case 2:
+                    1
+                case 3:
+                    1
 
 def get_l_y(rot: Int32, idx: Int32) -> Int32:
     r: Int32 = rot % 4
-    y0: Int32 = 0 if (r == 0) else (0 if (r == 1) else (1 if (r == 2) else 0))
-    y1: Int32 = 1 if (r == 0) else (1 if (r == 1) else (0 if (r == 2) else 1))
-    y2: Int32 = 1 if (r == 0) else (1 if (r == 1) else (0 if (r == 2) else 1))
-    y3: Int32 = 1 if (r == 0) else (2 if (r == 1) else (0 if (r == 2) else 2))
-    result: Int32 = y0 if (idx == 0) else (y1 if (idx == 1) else (y2 if (idx == 2) else y3))
-    return result
+    match r:
+        case 0:
+            match idx:
+                case 0:
+                    0
+                case 1:
+                    1
+                case 2:
+                    1
+                case 3:
+                    1
+        case 1:
+            match idx:
+                case 0:
+                    0
+                case 1:
+                    1
+                case 2:
+                    2
+                case 3:
+                    2
+        case 2:
+            match idx:
+                case 0:
+                    0
+                case 1:
+                    0
+                case 2:
+                    0
+                case 3:
+                    1
+        case 3:
+            match idx:
+                case 0:
+                    0
+                case 1:
+                    0
+                case 2:
+                    1
+                case 3:
+                    2
 
 def get_offset_x(ptype: Int32, rot: Int32, idx: Int32) -> Int32:
-    result: Int32 = get_i_x(rot, idx) if (ptype == 1) else (get_o_x(idx) if (ptype == 2) else (get_t_x(rot, idx) if (ptype == 3) else (get_s_x(rot, idx) if (ptype == 4) else (get_z_x(rot, idx) if (ptype == 5) else (get_j_x(rot, idx) if (ptype == 6) else get_l_x(rot, idx))))))
-    return result
+    match ptype:
+        case 1:
+            get_i_x(rot, idx)
+        case 2:
+            get_o_x(idx)
+        case 3:
+            get_t_x(rot, idx)
+        case 4:
+            get_s_x(rot, idx)
+        case 5:
+            get_z_x(rot, idx)
+        case 6:
+            get_j_x(rot, idx)
+        case 7:
+            get_l_x(rot, idx)
 
 def get_offset_y(ptype: Int32, rot: Int32, idx: Int32) -> Int32:
-    result: Int32 = get_i_y(rot, idx) if (ptype == 1) else (get_o_y(idx) if (ptype == 2) else (get_t_y(rot, idx) if (ptype == 3) else (get_s_y(rot, idx) if (ptype == 4) else (get_z_y(rot, idx) if (ptype == 5) else (get_j_y(rot, idx) if (ptype == 6) else get_l_y(rot, idx))))))
-    return result
+    match ptype:
+        case 1:
+            get_i_y(rot, idx)
+        case 2:
+            get_o_y(idx)
+        case 3:
+            get_t_y(rot, idx)
+        case 4:
+            get_s_y(rot, idx)
+        case 5:
+            get_z_y(rot, idx)
+        case 6:
+            get_j_y(rot, idx)
+        case 7:
+            get_l_y(rot, idx)
 
 # Collision check for a single block, returns 1 if collision, 0 if not
 def check_block_bounds(view: ArrayView(Int32, 200L), px: Int32, py: Int32, pt: Int32, pr: Int32, idx: Int32) -> IO(Int32):
@@ -154,8 +430,23 @@ def check_bounds(grid: ArrayHandle(Int32, 200L), px: Int32, py: Int32, pt: Int32
     return Std.IO.return(Pair(ArrayHandle(Int32, 200L), Int32), res_pair)
 
 def get_color_hex(c: Int32) -> Int32:
-    result: Int32 = (0 - 16776961) if (c == 1) else (16711935 if (c == 2) else (65535 if (c == 3) else ((0 - 256) if (c == 4) else ((0 - 65281) if (c == 5) else ((0 - 5963521) if (c == 6) else (1431655935 if (c == 7) else 255))))))
-    return result
+    match c:
+        case 1:
+            0 - 16776961
+        case 2:
+            16711935
+        case 3:
+            65535
+        case 4:
+            0 - 256
+        case 5:
+            0 - 65281
+        case 6:
+            0 - 5963521
+        case 7:
+            1431655935
+        case _:
+            255
 
 def draw_block(x: Int32, y: Int32, c: Int32) -> IO(Unit):
     DrawRectangle(x * 30, y * 30, 28, 28, GetColor(get_color_hex(c)))
@@ -182,12 +473,61 @@ def lock_block(view: ArrayView(Int32, 200L), px: Int32, py: Int32, pt: Int32, pr
     else:
         return Std.IO.return(Unit, tt)
 
+# Line clearing logic
+def check_row_full(view: ArrayView(Int32, 200L), y: Int32, x: Int32) -> IO(Bool):
+    if x >= 10:
+        return Std.IO.return(Bool, True)
+    else:
+        idx: Int64 = to_int64(x + y * 10)
+        cell: Int32 <- view_get_int32(200L, view, idx)
+        if cell == 0:
+            return Std.IO.return(Bool, False)
+        else:
+            check_row_full(view, y, x + 1)
+
+def shift_row_down(view: ArrayView(Int32, 200L), y: Int32, x: Int32) -> IO(Unit):
+    if x >= 10:
+        return Std.IO.return(Unit, tt)
+    else:
+        src_idx: Int64 = to_int64(x + (y - 1) * 10)
+        dst_idx: Int64 = to_int64(x + y * 10)
+        val: Int32 <- view_get_int32(200L, view, src_idx)
+        view_set_int32(200L, view, dst_idx, val)
+        shift_row_down(view, y, x + 1)
+
+def clear_top_row(view: ArrayView(Int32, 200L), x: Int32) -> IO(Unit):
+    if x >= 10:
+        return Std.IO.return(Unit, tt)
+    else:
+        idx: Int64 = to_int64(x)
+        view_set_int32(200L, view, idx, 0)
+        clear_top_row(view, x + 1)
+
+def shift_rows(view: ArrayView(Int32, 200L), y: Int32) -> IO(Unit):
+    if y <= 0:
+        clear_top_row(view, 0)
+    else:
+        shift_row_down(view, y, 0)
+        shift_rows(view, y - 1)
+
+def check_lines_rec(view: ArrayView(Int32, 200L), y: Int32) -> IO(Unit):
+    if y < 0:
+        return Std.IO.return(Unit, tt)
+    else:
+        is_full: Bool <- check_row_full(view, y, 0)
+        if is_full:
+            shift_rows(view, y)
+            check_lines_rec(view, y) # Check same row again
+        else:
+            check_lines_rec(view, y - 1)
+
 def lock_piece(grid: ArrayHandle(Int32, 200L), px: Int32, py: Int32, pt: Int32, pr: Int32) -> IO(ArrayHandle(Int32, 200L)):
     res_pair: Pair(ArrayHandle(Int32, 200L), Unit) <- as_view(Int32, 200L, Unit, grid, \view ->
         lock_block(view, px, py, pt, pr, 0)
         lock_block(view, px, py, pt, pr, 1)
         lock_block(view, px, py, pt, pr, 2)
         lock_block(view, px, py, pt, pr, 3)
+        check_lines_rec(view, 19)
         return Std.IO.return(Unit, tt)
     )
     return Std.IO.return(ArrayHandle(Int32, 200L), fst(ArrayHandle(Int32, 200L), Unit, res_pair))

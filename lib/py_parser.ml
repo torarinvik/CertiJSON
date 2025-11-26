@@ -74,6 +74,12 @@ let parse_pattern state =
        | _ -> 
            { ctor = name; args = []; pat_loc = None }
       )
+  | INT i ->
+      advance state;
+      { ctor = Int32.to_string i; args = []; pat_loc = None }
+  | BOOL b ->
+      advance state;
+      { ctor = if b then "True" else "False"; args = []; pat_loc = None }
   | _ -> raise (ParseError "Expected pattern")
 
 let rec fold_stmts stmts =
@@ -444,7 +450,20 @@ and parse_stmt state ret_ty =
                      mk_term (Lambda { arg = { name = "_"; ty = mk_term (Var "Unit") None None; role = Runtime; b_loc = None }; body = rest }) None None])) None None)
       )
   | NEWLINE -> advance state; parse_stmt state ret_ty (* Skip empty lines *)
-  | _ -> raise (ParseError ("Unexpected token in statement: " ^ (show_token (peek state))))
+  | _ -> 
+      (* Try to parse as expression statement *)
+      let expr = parse_expr state in
+      expect state NEWLINE "Expected newline after expression statement";
+      (fun rest -> 
+         match rest.desc with
+         | Var "tt" -> expr
+         | _ ->
+             let b_ty = guess_io_type rest in
+             mk_term (App (mk_term (Var "bind") None None, 
+               [mk_term (Var "Unit") None None;
+                b_ty;
+                expr;
+                mk_term (Lambda { arg = { name = "_"; ty = mk_term (Var "Unit") None None; role = Runtime; b_loc = None }; body = rest }) None None])) None None)
 
 let parse_arg state =
   match peek state with

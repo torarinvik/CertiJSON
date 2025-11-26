@@ -555,83 +555,116 @@ let rec infer (ctx : context) (t : term) : term =
         | App (f, args) -> (f, args)
         | _ -> (scrut_ty_whnf, [])
       in
-      let ind =
-        match head.desc with
-        | Var n | Global n -> (
-            match lookup ctx n with
-            | Some (`Global (GInductive ind)) -> ind
-            | _ -> raise (TypeError (UnknownInductive n)))
-        | _ -> raise (TypeError (InvalidPattern "scrutinee is not an inductive type"))
-      in
-      if List.length args <> List.length ind.params then
-        raise (TypeError (TypeMismatch { expected = inductive_type ind; actual = scrut_ty; context = "match scrutinee parameters"; loc = t.loc }));
-      (* Instantiate inductive parameters and check their types. *)
-      let param_substs =
-        let rec build acc params args =
-          match (params, args) with
-          | [], [] -> acc
-          | p :: ps, a :: as_ ->
-              let param_ty = subst_many acc p.ty in
-              let _ = check ctx a param_ty in
-              build ((p.name, a) :: acc) ps as_
-          | _ -> acc
+      
+      let check_prim_match () =
+        let motive_ctx =
+          match as_name with
+          | Some n -> extend ctx n scrut_ty
+          | None -> ctx
         in
-        build [] ind.params args
+        let motive_type = whnf ctx (infer motive_ctx motive) in
+        (match motive_type.desc with
+        | Universe u -> u
+        | _ -> raise (TypeError (NotAType (motive_type, motive_type.loc)))) |> ignore;
+        
+        List.iter (fun case ->
+           let branch_ctx = 
+             match as_name with
+             | Some n -> extend ctx n scrut_ty
+             | None -> ctx
+           in
+           let expected_branch_ty =
+             match as_name with
+             | Some _ -> motive (* Approximation *)
+             | None -> motive
+           in
+           check branch_ctx case.body expected_branch_ty
+        ) cases;
+        (match as_name with Some n -> subst n scrutinee motive | None -> motive)
       in
-      let motive_ctx =
-        match as_name with
-        | Some n -> extend ctx n scrut_ty
-        | None -> ctx
-      in
-      let motive_type = whnf ctx (infer motive_ctx motive) in
-      (match motive_type.desc with
-      | Universe u -> u
-      | _ -> raise (TypeError (NotAType (motive_type, motive_type.loc)))) |> ignore;
-      let seen = Hashtbl.create (List.length cases) in
-      let find_ctor name =
-        match List.find_opt (fun c -> String.equal c.ctor_name name) ind.constructors with
-        | Some ctor -> ctor
-        | None -> raise (TypeError (UnknownConstructor name))
-      in
-      List.iter
-        (fun case ->
-          let ctor = find_ctor case.pattern.ctor in
-          if Hashtbl.mem seen ctor.ctor_name then
-            raise (TypeError (InvalidPattern ("duplicate case for constructor " ^ ctor.ctor_name)));
-          Hashtbl.add seen ctor.ctor_name ();
-          if List.length case.pattern.args <> List.length ctor.ctor_args then
-            raise (TypeError (InvalidPattern "constructor argument count mismatch"));
-          let ctor_arg_tys =
-            List.map (fun arg -> subst_many param_substs arg.ty) ctor.ctor_args
+
+      begin match head.desc with
+      | PrimType Int32 -> check_prim_match ()
+      | PrimType Bool -> check_prim_match ()
+      | _ ->
+          let ind =
+            match head.desc with
+            | Var n | Global n -> (
+                match lookup ctx n with
+                | Some (`Global (GInductive ind)) -> ind
+                | _ -> raise (TypeError (UnknownInductive n)))
+            | _ -> raise (TypeError (InvalidPattern "scrutinee is not an inductive type"))
           in
-          let branch_ctx =
-            List.fold_left2
-              (fun c pat arg_ty -> extend c pat.arg_name arg_ty)
-              ctx case.pattern.args ctor_arg_tys
+          if List.length args <> List.length ind.params then
+            raise (TypeError (TypeMismatch { expected = inductive_type ind; actual = scrut_ty; context = "match scrutinee parameters"; loc = t.loc }));
+          (* Instantiate inductive parameters and check their types. *)
+          let param_substs =
+            let rec build acc params args =
+              match (params, args) with
+              | [], [] -> acc
+              | p :: ps, a :: as_ ->
+                  let param_ty = subst_many acc p.ty in
+                  let _ = check ctx a param_ty in
+                  build ((p.name, a) :: acc) ps as_
+              | _ -> acc
+            in
+            build [] ind.params args
           in
-          let branch_ctx =
+          let motive_ctx =
             match as_name with
-            | Some n -> extend branch_ctx n scrut_ty
-            | None -> branch_ctx
+            | Some n -> extend ctx n scrut_ty
+            | None -> ctx
           in
-          let ctor_term =
-            let ctor_args = args @ List.map (fun a -> mk ?loc:a.arg_loc (Var a.arg_name)) case.pattern.args in
-            if ctor_args = [] then mk (Var ctor.ctor_name)
-            else mk (App (mk (Var ctor.ctor_name), ctor_args))
+          let motive_type = whnf ctx (infer motive_ctx motive) in
+          (match motive_type.desc with
+          | Universe u -> u
+          | _ -> raise (TypeError (NotAType (motive_type, motive_type.loc)))) |> ignore;
+          let seen = Hashtbl.create (List.length cases) in
+          let find_ctor name =
+            match List.find_opt (fun c -> String.equal c.ctor_name name) ind.constructors with
+            | Some ctor -> ctor
+            | None -> raise (TypeError (UnknownConstructor name))
           in
-          let expected_branch_ty =
-            match as_name with
-            | Some n -> subst n ctor_term motive
-            | None -> motive
+          List.iter
+            (fun case ->
+              let ctor = find_ctor case.pattern.ctor in
+              if Hashtbl.mem seen ctor.ctor_name then
+                raise (TypeError (InvalidPattern ("duplicate case for constructor " ^ ctor.ctor_name)));
+              Hashtbl.add seen ctor.ctor_name ();
+              if List.length case.pattern.args <> List.length ctor.ctor_args then
+                raise (TypeError (InvalidPattern "constructor argument count mismatch"));
+              let ctor_arg_tys =
+                List.map (fun arg -> subst_many param_substs arg.ty) ctor.ctor_args
+              in
+              let branch_ctx =
+                List.fold_left2
+                  (fun c pat arg_ty -> extend c pat.arg_name arg_ty)
+                  ctx case.pattern.args ctor_arg_tys
+              in
+              let branch_ctx =
+                match as_name with
+                | Some n -> extend branch_ctx n scrut_ty
+                | None -> branch_ctx
+              in
+              let ctor_term =
+                let ctor_args = args @ List.map (fun a -> mk ?loc:a.arg_loc (Var a.arg_name)) case.pattern.args in
+                if ctor_args = [] then mk (Var ctor.ctor_name)
+                else mk (App (mk (Var ctor.ctor_name), ctor_args))
+              in
+              let expected_branch_ty =
+                match as_name with
+                | Some n -> subst n ctor_term motive
+                | None -> motive
+              in
+              check branch_ctx case.body expected_branch_ty)
+            cases;
+          let missing =
+            List.filter (fun c -> not (Hashtbl.mem seen c.ctor_name)) ind.constructors
+            |> List.map (fun c -> c.ctor_name)
           in
-          check branch_ctx case.body expected_branch_ty)
-        cases;
-      let missing =
-        List.filter (fun c -> not (Hashtbl.mem seen c.ctor_name)) ind.constructors
-        |> List.map (fun c -> c.ctor_name)
-      in
-      if missing <> [] then raise (TypeError (NonExhaustiveMatch missing));
-      (match as_name with Some n -> subst n scrutinee motive | None -> motive)
+          if missing <> [] then raise (TypeError (NonExhaustiveMatch missing));
+          (match as_name with Some n -> subst n scrutinee motive | None -> motive)
+      end
   | If { cond; then_; else_ } ->
       let _ = check ctx cond (mk ?loc:cond.loc (PrimType Bool)) in
       let then_ty = infer ctx then_ in
