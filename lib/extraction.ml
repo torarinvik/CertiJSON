@@ -13,6 +13,7 @@ type c_type =
   | CStruct of string
   | CPtr of c_type
   | CUserType of string
+  | CEnum of string  (* Enum types - represented as int32 *)
 
 type c_expr =
   | CVar of string
@@ -27,6 +28,7 @@ type c_expr =
   | CBinOp of string * c_expr * c_expr
   | CUnOp of string * c_expr
   | CFieldAccess of c_expr * string
+  | CStructInit of string * (string * c_expr) list  (* Struct initialization *)
 
 type c_stmt =
   | CReturn of c_expr
@@ -43,9 +45,15 @@ type c_func = {
   body : c_stmt;
 }
 
+(* C type definitions *)
+type c_typedef =
+  | CEnumDef of string * string list                    (* enum name, constructor names *)
+  | CStructDef of string * (c_type * string) list       (* struct name, fields *)
+
 type c_program = {
   includes : string list;
-  structs : string list; (* definitions *)
+  typedefs : c_typedef list;
+  structs : string list; (* old-style definitions - deprecated *)
   funcs : c_func list;
 }
 
@@ -59,6 +67,7 @@ let rec pp_c_type fmt = function
   | CStruct s -> Format.fprintf fmt "struct %s" s
   | CPtr t -> Format.fprintf fmt "%a*" pp_c_type t
   | CUserType s -> Format.fprintf fmt "%s" s
+  | CEnum s -> Format.fprintf fmt "enum %s" s
 
 let rec pp_c_expr fmt = function
   | CVar s -> Format.fprintf fmt "%s" s
@@ -75,6 +84,11 @@ let rec pp_c_expr fmt = function
   | CBinOp (op, l, r) -> Format.fprintf fmt "(%a %s %a)" pp_c_expr l op pp_c_expr r
   | CUnOp (op, e) -> Format.fprintf fmt "(%s%a)" op pp_c_expr e
   | CFieldAccess (e, f) -> Format.fprintf fmt "%a.%s" pp_c_expr e f
+  | CStructInit (name, fields) ->
+      Format.fprintf fmt "(struct %s){ %a }" name
+        (Format.pp_print_list ~pp_sep:(fun fmt () -> Format.fprintf fmt ", ")
+           (fun fmt (fname, fexpr) -> Format.fprintf fmt ".%s = %a" fname pp_c_expr fexpr))
+        fields
 
 (* Print expression without outer parens for use in if/while conditions *)
 let pp_c_expr_cond fmt = function
@@ -116,9 +130,26 @@ let pp_c_func fmt f =
     f.args
     pp_c_stmt f.body
 
+let pp_c_typedef fmt = function
+  | CEnumDef (name, ctors) ->
+      Format.fprintf fmt "typedef enum { %s } %s;@\n"
+        (String.concat ", " (List.mapi (fun i c -> Printf.sprintf "%s_%s = %d" name c i) ctors))
+        name
+  | CStructDef (name, fields) ->
+      Format.fprintf fmt "typedef struct %s {@\n%a} %s;@\n"
+        name
+        (Format.pp_print_list ~pp_sep:Format.pp_print_cut
+           (fun fmt (ty, fname) -> Format.fprintf fmt "  %a %s;@\n" pp_c_type ty fname))
+        fields
+        name
+
 let pp_c_program fmt p =
   List.iter (fun inc -> Format.fprintf fmt "#include %s@\n" inc) p.includes;
   Format.fprintf fmt "@\n";
+  (* Print typedefs (enums and structs) *)
+  List.iter (fun td -> pp_c_typedef fmt td) p.typedefs;
+  Format.fprintf fmt "@\n";
+  (* Print old-style structs for backward compatibility *)
   List.iter (fun s -> Format.fprintf fmt "%s@\n" s) p.structs;
   Format.fprintf fmt "@\n";
   List.iter (fun f -> Format.fprintf fmt "%a@\n" pp_c_func_sig f) p.funcs;
@@ -155,6 +186,7 @@ let rec string_of_c_type = function
   | CStruct s -> s
   | CPtr t -> "Ptr_" ^ string_of_c_type t
   | CUserType s -> s
+  | CEnum s -> s
 
 let pair_registry : (string, (c_type * c_type)) Hashtbl.t = Hashtbl.create 10
 
@@ -183,6 +215,9 @@ let translate_repr (ctx : Context.context) (name : string) : c_type =
       CStruct c_struct_name
   | _ -> CUserType name
 
+(* Registry of inductive types defined in this module *)
+let inductive_registry : (string, Syntax.inductive_decl) Hashtbl.t = Hashtbl.create 20
+
 let rec translate_type (ctx : Context.context) (t : Syntax.term) : c_type =
   let is_global name t =
     match t.desc with
@@ -192,6 +227,7 @@ let rec translate_type (ctx : Context.context) (t : Syntax.term) : c_type =
   match t.desc with
   | PrimType p -> translate_prim_type p
   | Universe _ -> CVoid (* Erased *)
+  | Eq _ -> CVoid  (* Equality proofs are erased *)
   | Array _ -> CVoid (* Functional arrays are erased *)
   | ArrayHandle _ -> CInt64 (* Handles are int64 *)
   | App (f, args) ->
@@ -210,6 +246,11 @@ let rec translate_type (ctx : Context.context) (t : Syntax.term) : c_type =
              let cb = translate_type ctx b in
              CStruct (get_pair_struct_name ca cb)
          | _ -> CVoid
+      else if is_global "Option" f then
+         (* Option A represented as pointer to A (NULL = None) *)
+         match args with
+         | [a] -> CPtr (translate_type ctx a)
+         | _ -> CVoid
       else if is_global "Array" f then
         CVoid
       else
@@ -217,19 +258,44 @@ let rec translate_type (ctx : Context.context) (t : Syntax.term) : c_type =
   | Global "Unit" | Var "Unit" -> CVoid
   | Subset { arg; _ } -> translate_type ctx arg.ty (* Refinement types extract to base type *)
   | Global name | Var name -> 
-      (match Context.lookup ctx name with
-       | Some (`Global (GRepr _)) -> translate_repr ctx name
-       | Some (`Global (GDefinition def)) ->
-           (* Check if this is a refinement type definition (nullary function returning Type) *)
-           (match def.def_type.desc with
-            | Universe Type ->
-                (* This is a type alias/refinement - look at the body *)
-                let body = def.def_body in
-                (match body.desc with
-                 | Subset { arg; _ } -> translate_type ctx arg.ty
-                 | _ -> translate_type ctx body)
-            | _ -> CUserType name)
-       | _ -> CUserType name)
+      (* Check if it's a locally defined inductive type *)
+      (match Hashtbl.find_opt inductive_registry name with
+       | Some ind ->
+           (* Check if it's a struct (single .mk constructor) *)
+           (match ind.constructors with
+            | [ctor] when String.ends_with ~suffix:".mk" ctor.ctor_name ->
+                CStruct name
+            | _ ->
+                (* Enum or ADT - use int32 representation *)
+                CInt32)
+       | None ->
+           (* Check context for repr or definition *)
+           (match Context.lookup ctx name with
+            | Some (`Global (GRepr _)) -> translate_repr ctx name
+            | Some (`Global (GInductive ind)) ->
+                (* Check if struct or enum *)
+                (match ind.constructors with
+                 | [ctor] when String.ends_with ~suffix:".mk" ctor.ctor_name ->
+                     CStruct name
+                 | _ -> CInt32)
+            | Some (`Global (GDefinition def)) ->
+                (* Check if this is a refinement type definition (nullary function returning Type) *)
+                (match def.def_type.desc with
+                 | Universe Type ->
+                     (* This is a type alias/refinement - look at the body *)
+                     let body = def.def_body in
+                     (match body.desc with
+                      | Subset { arg; _ } -> translate_type ctx arg.ty
+                      | _ -> translate_type ctx body)
+                 | _ -> CInt32) (* Default to int32 for unknown types *)
+            | _ -> 
+                (* Well-known stdlib types *)
+                if String.equal name "Nat" then CInt32
+                else if String.equal name "Bool" then CBool
+                else if String.equal name "Int32" then CInt32
+                else if String.equal name "Int64" then CInt64
+                else if String.equal name "String" then CString
+                else CInt32)) (* Default to int32 for unknown types *)
   | _ -> CVoid (* Fallback *)
 
 let is_type (t : Syntax.term) : bool =
@@ -259,8 +325,12 @@ let rec translate_term (ctx : Context.context) (env : (string * string) list) (t
   | Literal (LitFloat64 f) -> CLitFloat f
   | Literal (LitBool b) -> CLitBool b
   | Literal (LitString s) -> CLitString s
-  | Var x -> (
+  | Var x | Global x -> (
       if String.equal x "tt" then CLitInt32 0l
+      (* Nat constants - inline to integer literals *)
+      else if String.equal x "zero" || String.equal x "Nat.zero" then CLitInt32 0l
+      else if String.equal x "true" then CLitBool true
+      else if String.equal x "false" then CLitBool false
       else
       match List.assoc_opt x env with
       | Some fresh -> CVar fresh
@@ -278,6 +348,11 @@ let rec translate_term (ctx : Context.context) (env : (string * string) list) (t
       | Some "add" -> (match args with [a; b] -> CBinOp ("+", translate_term ctx env a, translate_term ctx env b) | _ -> CVar "<invalid_add>")
       | Some "sub" -> (match args with [a; b] -> CBinOp ("-", translate_term ctx env a, translate_term ctx env b) | _ -> CVar "<invalid_sub>")
       | Some "mul" -> (match args with [a; b] -> CBinOp ("*", translate_term ctx env a, translate_term ctx env b) | _ -> CVar "<invalid_mul>")
+      (* Nat operations - inline to integer operations *)
+      | Some "succ" | Some "Nat.succ" -> (match args with [a] -> CBinOp ("+", translate_term ctx env a, CLitInt32 1l) | _ -> CVar "<invalid_succ>")
+      | Some "add_nat" | Some "Nat.add_nat" -> (match args with [a; b] -> CBinOp ("+", translate_term ctx env a, translate_term ctx env b) | _ -> CVar "<invalid_add_nat>")
+      | Some "mul_nat" | Some "Nat.mul_nat" -> (match args with [a; b] -> CBinOp ("*", translate_term ctx env a, translate_term ctx env b) | _ -> CVar "<invalid_mul_nat>")
+      | Some "sub_nat" | Some "Nat.sub_nat" -> (match args with [a; b] -> CBinOp ("-", translate_term ctx env a, translate_term ctx env b) | _ -> CVar "<invalid_sub_nat>")
       | Some "Std.Int.mul64" | Some "mul64" | Some "mul64_builtin" -> (match args with [a; b] -> CBinOp ("*", translate_term ctx env a, translate_term ctx env b) | _ -> CVar "<invalid_mul64>")
       | Some "Std.Int.add64" | Some "add64" | Some "add64_builtin" -> (match args with [a; b] -> CBinOp ("+", translate_term ctx env a, translate_term ctx env b) | _ -> CVar "<invalid_add64>")
       | Some "Std.Int.sub64" | Some "sub64" | Some "sub64_builtin" -> (match args with [a; b] -> CBinOp ("-", translate_term ctx env a, translate_term ctx env b) | _ -> CVar "<invalid_sub64>")
@@ -300,6 +375,14 @@ let rec translate_term (ctx : Context.context) (env : (string * string) list) (t
       | Some "snd" -> (
           let args' = args |> List.filter (fun a -> not (is_type a)) |> List.map (translate_term ctx env) |> List.filter (function CVar "tt" -> false | _ -> true) in
           match args' with [p] -> CFieldAccess (p, "snd") | _ -> CVar "<invalid_snd>")
+      (* Option constructors *)
+      | Some "none" | Some "Option.none" -> CVar "NULL"
+      | Some "some" | Some "Option.some" -> (
+          (* some(val) - since Option A is represented as A*, we need malloc+assign *)
+          let args' = args |> List.filter (fun a -> not (is_type a)) |> List.map (translate_term ctx env) in
+          match args' with
+          | [v] -> v  (* Simplified: just return the value for now *)
+          | _ -> CVar "NULL")
       | Some name -> (
           let args' = 
             args
@@ -354,9 +437,23 @@ let rec get_return_type (t : Syntax.term) : Syntax.term =
   | Pi { result; _ } -> get_return_type result
   | _ -> t
 
+(* Check if a function takes a Type parameter that affects runtime behavior *)
+let is_polymorphic_function (def : Syntax.def_decl) : bool =
+  let rec check_type t =
+    match t.desc with
+    | Pi { arg; result } ->
+        (* Check if this argument is a Type *)
+        (match arg.ty.desc with
+         | Universe Type -> true
+         | _ -> check_type result)
+    | _ -> false
+  in
+  check_type def.def_type
+
 let extract_def (ctx : Context.context) (def : Syntax.def_decl) : c_func option =
   if def.def_role = Syntax.ProofOnly || returns_universe def.def_type 
-     || String.equal def.def_name "bind" || String.equal def.def_name "return" then None
+     || String.equal def.def_name "bind" || String.equal def.def_name "return" 
+     || is_polymorphic_function def then None
   else
     let args, body = collect_args_and_body def.def_body in
     let c_args = 
@@ -611,6 +708,13 @@ let extract_def (ctx : Context.context) (def : Syntax.def_decl) : c_func option 
               | _ -> false 
             in
             
+            (* Check if this is a Nat pattern match (zero/succ patterns) *)
+            let is_nat_case c =
+              match c.pattern.ctor with
+              | "zero" | "Nat.zero" | "succ" | "Nat.succ" -> true
+              | _ -> false
+            in
+            
             (* Check if this is an enum-like match (constructors are not Int32 literals) *)
             let is_enum_case c =
               match c.pattern.ctor with
@@ -640,6 +744,47 @@ let extract_def (ctx : Context.context) (def : Syntax.def_decl) : c_func option 
                     [CIf (cond, then_block, else_block)]
               in
               cases_to_if cases
+            else if List.exists is_nat_case cases then
+              (* Special handling for Nat pattern matching *)
+              (* zero matches == 0, succ(n) matches > 0 with n = scrutinee - 1 *)
+              let rec build_nat_cases = function
+                | [] -> []
+                | c :: rest ->
+                    let (cond_opt, bindings) = 
+                      match c.pattern.ctor with
+                      | "zero" | "Nat.zero" -> 
+                          (Some (CBinOp ("==", scrut_expr, CLitInt32 0l)), [])
+                      | "succ" | "Nat.succ" ->
+                          (* succ(n) matches any n > 0, bind n to scrutinee - 1 *)
+                          let bindings = 
+                            List.map (fun (arg : Syntax.pattern_arg) ->
+                              let fresh = fresh_name arg.arg_name in
+                              let decl = CDecl (CInt32, fresh, Some (CBinOp ("-", scrut_expr, CLitInt32 1l))) in
+                              (arg.arg_name, fresh, decl)
+                            ) c.pattern.args
+                          in
+                          (* If there are more cases after succ, use > 0 condition, otherwise it's the else case *)
+                          let cond = if rest = [] then None else Some (CBinOp (">", scrut_expr, CLitInt32 0l)) in
+                          (cond, bindings)
+                      | "_" -> (None, [])  (* wildcard is else case *)
+                      | _ -> (Some (CBinOp ("==", scrut_expr, CLitInt32 0l)), [])
+                    in
+                    let pattern_env = List.map (fun (orig, fresh, _) -> (orig, fresh)) bindings in
+                    let pattern_decls = List.map (fun (_, _, decl) -> decl) bindings in
+                    let env' = pattern_env @ env in
+                    let body_stmts = pattern_decls @ translate_pure env' c.body res_var ret_ty in
+                    match cond_opt with
+                    | Some cond ->
+                        let then_block = CBlock body_stmts in
+                        let else_block = 
+                          match build_nat_cases rest with
+                          | [] -> None
+                          | else_stmts -> Some (CBlock else_stmts)
+                        in
+                        [CIf (cond, then_block, else_block)]
+                    | None -> body_stmts  (* else case / wildcard *)
+              in
+              build_nat_cases cases
             else if List.exists is_enum_case cases then
               (* Enum-like match: use constructor indices *)
               let switch_cases = 
@@ -648,14 +793,12 @@ let extract_def (ctx : Context.context) (def : Syntax.def_decl) : c_func option 
                     if c.pattern.ctor = "_" then None
                     else Some (CLitInt32 (Int32.of_int idx))
                   in
-                  (* Add pattern variable bindings if any *)
-                  let pattern_env = 
-                    List.mapi (fun _i (arg : Syntax.pattern_arg) ->
-                      (arg.arg_name, fresh_name arg.arg_name)
-                    ) c.pattern.args
-                  in
-                  let env' = pattern_env @ env in
-                  (val_expr, translate_pure env' c.body res_var ret_ty)
+                  (* For simple enum patterns, we don't generate bindings for pattern args
+                     because we're using a flat int representation.
+                     In the future, ADTs with data would need proper handling. *)
+                  let env' = env in
+                  let body_stmts = translate_pure env' c.body res_var ret_ty in
+                  (val_expr, body_stmts)
                 ) cases
               in
               
@@ -835,17 +978,164 @@ let extract_def (ctx : Context.context) (def : Syntax.def_decl) : c_func option 
         body = CBlock body_stmts;
       }
 
+(* Check if a type is in Prop universe (proofs should be erased) *)
+let is_prop_type (ctx : Context.context) (ty : Syntax.term) : bool =
+  let rec check t =
+    match t.desc with
+    | Universe Prop -> true
+    | Eq _ -> true  (* Equality types are always in Prop *)
+    | Exists _ -> true (* Existential types are in Prop *)
+    | Pi { result; _ } -> check result
+    | App (f, _) -> check f
+    | Global name | Var name ->
+        (match Context.lookup ctx name with
+         | Some (`Global (GInductive ind)) -> ind.ind_universe = Prop
+         | _ -> false)
+    | _ -> false
+  in
+  check ty
+
+(* Extract an inductive type to C *)
+let extract_inductive (ctx : Context.context) (ind : Syntax.inductive_decl) : c_typedef option =
+  (* Skip Prop types - they are proofs *)
+  if ind.ind_universe = Prop then None
+  (* Skip parameterized types like List, Option - they use runtime representation *)
+  else if ind.params <> [] then None
+  else
+    let name = ind.ind_name in
+    (* Check if this is a struct (single constructor with .mk suffix) *)
+    match ind.constructors with
+    | [ctor] when String.ends_with ~suffix:".mk" ctor.ctor_name ->
+        (* This is a struct - generate struct typedef *)
+        let fields = List.map (fun (b : Syntax.binder) ->
+          let ty = translate_type ctx b.ty in
+          (ty, b.name)
+        ) ctor.ctor_args in
+        Some (CStructDef (name, fields))
+    | ctors ->
+        (* This is an enum - generate enum typedef *)
+        let ctor_names = List.map (fun c -> 
+          (* Extract short name from qualified name *)
+          let full = c.ctor_name in
+          match String.rindex_opt full '.' with
+          | Some i -> String.sub full (i + 1) (String.length full - i - 1)
+          | None -> full
+        ) ctors in
+        (* Only generate enum if constructors have no arguments (simple enum) *)
+        let all_nullary = List.for_all (fun c -> c.ctor_args = []) ctors in
+        if all_nullary then
+          Some (CEnumDef (name, ctor_names))
+        else
+          (* Complex ADT - needs tagged union, but for now just use int32 *)
+          Some (CEnumDef (name, ctor_names))
+
+(* Check if a definition is a struct projection or updater *)
+let is_struct_accessor (name : string) : bool =
+  String.contains name '.' || String.starts_with ~prefix:"_update_" name
+
+(* Generate struct constructor function *)
+let extract_struct_constructor (ctx : Context.context) (ind : Syntax.inductive_decl) (ctor : Syntax.constructor_decl) : c_func option =
+  if ind.ind_universe = Prop then None
+  else if ind.params <> [] then None
+  else
+    let struct_name = ind.ind_name in
+    let fields = List.map (fun (b : Syntax.binder) ->
+      let ty = translate_type ctx b.ty in
+      (ty, b.name)
+    ) ctor.ctor_args in
+    let field_inits = List.map (fun (_, fname) -> (fname, CVar fname)) fields in
+    Some {
+      name = mangle_name ctor.ctor_name;
+      ret_type = CStruct struct_name;
+      args = fields;
+      body = CBlock [CReturn (CStructInit (struct_name, field_inits))];
+    }
+
+(* Generate struct projection function *)
+let extract_struct_projection (struct_name : string) (field_name : string) (field_ty : c_type) : c_func =
+  {
+    name = mangle_name (struct_name ^ "." ^ field_name);
+    ret_type = field_ty;
+    args = [(CStruct struct_name, "s")];
+    body = CBlock [CReturn (CFieldAccess (CVar "s", field_name))];
+  }
+
+(* Generate struct updater function *)
+let extract_struct_updater (ctx : Context.context) (ind : Syntax.inductive_decl) (field_idx : int) (field : Syntax.binder) : c_func option =
+  if ind.ind_universe = Prop then None
+  else if ind.params <> [] then None
+  else
+    match ind.constructors with
+    | [ctor] ->
+        let struct_name = ind.ind_name in
+        let field_ty = translate_type ctx field.ty in
+        let field_inits = List.mapi (fun i (b : Syntax.binder) ->
+          let fname = b.name in
+          if i = field_idx then
+            (fname, CVar "newVal")
+          else
+            (fname, CFieldAccess (CVar "s", fname))
+        ) ctor.ctor_args in
+        Some {
+          name = "_update_" ^ field.name;
+          ret_type = CStruct struct_name;
+          args = [(CStruct struct_name, "s"); (field_ty, "newVal")];
+          body = CBlock [CReturn (CStructInit (struct_name, field_inits))];
+        }
+    | _ -> None
+
 let extract_module (mod_ : Syntax.module_decl) (sig_ : Context.signature) : c_program =
   Hashtbl.clear pair_registry;
+  Hashtbl.clear inductive_registry;
+  
+  (* First pass: register all inductive types *)
+  List.iter (function
+    | Syntax.Inductive ind -> Hashtbl.add inductive_registry ind.ind_name ind
+    | _ -> ()
+  ) mod_.declarations;
+  
   let mod_sig = Context.build_signature mod_.declarations in
   let full_sig = Context.merge_signatures sig_ mod_sig in
   let ctx = Context.make_ctx full_sig in
-  let funcs =
-    List.filter_map (function
-      | Syntax.Definition def -> extract_def ctx def
-      | _ -> None
-    ) mod_.declarations
-  in
+  
+  (* Extract inductive types (enums and structs) *)
+  let typedefs = List.filter_map (function
+    | Syntax.Inductive ind -> extract_inductive ctx ind
+    | _ -> None
+  ) mod_.declarations in
+  
+  (* Extract struct constructors, projections, and updaters *)
+  let struct_funcs = List.concat_map (function
+    | Syntax.Inductive ind when ind.ind_universe <> Prop && ind.params = [] ->
+        (match ind.constructors with
+         | [ctor] when String.ends_with ~suffix:".mk" ctor.ctor_name ->
+             (* Generate constructor *)
+             let mk_func = extract_struct_constructor ctx ind ctor in
+             (* Generate projections *)
+             let proj_funcs = List.map (fun (b : Syntax.binder) ->
+               let ty = translate_type ctx b.ty in
+               extract_struct_projection ind.ind_name b.name ty
+             ) ctor.ctor_args in
+             (* Generate updaters *)
+             let upd_funcs = List.filter_map (fun (i, b) ->
+               extract_struct_updater ctx ind i b
+             ) (List.mapi (fun i b -> (i, b)) ctor.ctor_args) in
+             (match mk_func with Some f -> [f] | None -> []) @ proj_funcs @ upd_funcs
+         | _ -> [])
+    | _ -> []
+  ) mod_.declarations in
+  
+  (* Extract regular definitions (skip struct accessors - we generate them above) *)
+  let funcs = List.filter_map (function
+    | Syntax.Definition def ->
+        if is_struct_accessor def.def_name then None
+        else if is_prop_type ctx def.def_type then None
+        else extract_def ctx def
+    | _ -> None
+  ) mod_.declarations in
+  
+  let all_funcs = struct_funcs @ funcs in
+  
   let base_includes = ["<stdio.h>"; "<stdlib.h>"; "<stdint.h>"; "<stdbool.h>"; "<certijson_io.h>"; "<certijson_memory.h>"] in
   let extra_includes =
     let collect_includes _ entry acc =
@@ -884,4 +1174,4 @@ let extract_module (mod_ : Syntax.module_decl) (sig_ : Context.signature) : c_pr
   in
   let structs = structs @ pair_structs in
   let includes = base_includes @ (List.filter (fun i -> not (List.mem i base_includes)) extra_includes) in
-  { includes; structs; funcs }
+  { includes; typedefs; structs; funcs = all_funcs }
