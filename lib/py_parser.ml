@@ -117,6 +117,31 @@ let rec parse_type state =
                 mk_term (Pi { arg = { name; ty; role = Runtime; b_loc = None }; result }) None None
             | _ -> raise (ParseError "Expected identifier in forall binding"))
        | _ -> raise (ParseError "Expected identifier or '(' after forall"))
+  | EXISTS ->
+      (* exists x: T, body -- creates an Exists type *)
+      advance state;
+      (match peek state with
+       | IDENT name ->
+           advance state;
+           expect state COLON "Expected ':' after exists variable";
+           let ty = parse_type state in
+           expect state COMMA "Expected ',' after exists type";
+           let body = parse_type state in
+           mk_term (Exists { arg = { name; ty; role = Runtime; b_loc = None }; body }) None None
+       | LPAREN ->
+           (* exists (x: T), body *)
+           advance state;
+           (match peek state with
+            | IDENT name ->
+                advance state;
+                expect state COLON "Expected ':' in exists binding";
+                let ty = parse_type state in
+                expect state RPAREN "Expected ')' after exists binding";
+                expect state COMMA "Expected ',' after exists type";
+                let body = parse_type state in
+                mk_term (Exists { arg = { name; ty; role = Runtime; b_loc = None }; body }) None None
+            | _ -> raise (ParseError "Expected identifier in exists binding"))
+       | _ -> raise (ParseError "Expected identifier or '(' after exists"))
   | LBRACE ->
       advance state;
       (match peek state with
@@ -243,6 +268,54 @@ and parse_unary_expr state =
 and parse_primary_expr state =
   let base =
     match peek state with
+    | EXISTS ->
+        (* exists x: T, body in expression context *)
+        advance state;
+        (match peek state with
+         | IDENT name ->
+             advance state;
+             expect state COLON "Expected ':' after exists variable";
+             let ty = parse_type state in
+             expect state COMMA "Expected ',' after exists type";
+             let body = parse_expr state in
+             mk_term (Exists { arg = { name; ty; role = Runtime; b_loc = None }; body }) None None
+         | LPAREN ->
+             advance state;
+             (match peek state with
+              | IDENT name ->
+                  advance state;
+                  expect state COLON "Expected ':' in exists binding";
+                  let ty = parse_type state in
+                  expect state RPAREN "Expected ')' after exists binding";
+                  expect state COMMA "Expected ',' after exists type";
+                  let body = parse_expr state in
+                  mk_term (Exists { arg = { name; ty; role = Runtime; b_loc = None }; body }) None None
+              | _ -> raise (ParseError "Expected identifier in exists binding"))
+         | _ -> raise (ParseError "Expected identifier or '(' after exists"))
+    | FORALL ->
+        (* forall x: T, body in expression context *)
+        advance state;
+        (match peek state with
+         | IDENT name ->
+             advance state;
+             expect state COLON "Expected ':' after forall variable";
+             let ty = parse_type state in
+             expect state COMMA "Expected ',' after forall type";
+             let result = parse_expr state in
+             mk_term (Pi { arg = { name; ty; role = Runtime; b_loc = None }; result }) None None
+         | LPAREN ->
+             advance state;
+             (match peek state with
+              | IDENT name ->
+                  advance state;
+                  expect state COLON "Expected ':' in forall binding";
+                  let ty = parse_type state in
+                  expect state RPAREN "Expected ')' after forall binding";
+                  expect state COMMA "Expected ',' after forall type";
+                  let result = parse_expr state in
+                  mk_term (Pi { arg = { name; ty; role = Runtime; b_loc = None }; result }) None None
+              | _ -> raise (ParseError "Expected identifier in forall binding"))
+         | _ -> raise (ParseError "Expected identifier or '(' after forall"))
     | IDENT name ->
         advance state;
         let rec parse_dotted acc =
@@ -334,6 +407,35 @@ and parse_stmts state ret_ty =
 
 and parse_stmt state ret_ty =
   match peek state with
+  | LET ->
+      (* let x: T = value in body  OR  let x: T = value (followed by more stmts) *)
+      advance state;
+      (match peek state with
+       | IDENT name ->
+           advance state;
+           expect state COLON "Expected ':' after let variable";
+           let ty = parse_type state in
+           expect state ASSIGN "Expected '=' after let type";
+           let value = parse_expr state in
+           (* Check for optional 'in' keyword *)
+           (match peek state with
+            | IN ->
+                advance state;
+                let body = parse_expr state in
+                expect state NEWLINE "Expected newline after let expression";
+                (fun rest ->
+                   let let_term = mk_term (Let { arg = { name; ty; role = Runtime; b_loc = None }; value; body }) None None in
+                   match rest.desc with
+                   | Var "tt" -> let_term
+                   | _ ->
+                       mk_term (App (mk_term (Lambda { arg = { name = "_"; ty = mk_term (Var "Unit") None None; role = Runtime; b_loc = None }; body = rest }) None None, [let_term])) None None)
+            | NEWLINE ->
+                (* let x: T = v followed by more statements - body is the rest *)
+                advance state;
+                (fun rest ->
+                   mk_term (Let { arg = { name; ty; role = Runtime; b_loc = None }; value; body = rest }) None None)
+            | _ -> raise (ParseError "Expected 'in' or newline after let value"))
+       | _ -> raise (ParseError "Expected variable name after let"))
   | MATCH ->
       advance state;
       let scrutinee = parse_expr state in
