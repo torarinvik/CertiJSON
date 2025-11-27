@@ -31,5 +31,6 @@
   (cmdliner (>= 1.1))
   (fmt (>= 0.9))
   (logs (>= 0.7))
+  (toml (>= 7.0))
   (alcotest (and (>= 1.6) :with-test))
   (odoc :with-doc)))

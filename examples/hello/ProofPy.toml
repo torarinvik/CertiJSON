@@ -1,0 +1,22 @@
+# ProofPy Project Configuration
+
+[package]
+name = "hello"
+version = "0.1.0"
+authors = []
+description = "Hello World in ProofPy"
+entry_point = "src/main.cj"
+stdlib = ["Std.Nat", "Std.IO"]
+
+[build]
+compiler = "clang"
+opt_level = 2
+debug = false
+warnings = ["-Wall"]
+cflags = []
+ldflags = []
+output_dir = "target"
+
+[dependencies]
+
+[libraries]

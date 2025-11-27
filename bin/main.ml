@@ -4,6 +4,19 @@ open Cmdliner
 
 module CJ = Certijson
 
+(** Common arguments *)
+let include_paths =
+  let doc = "Add directory to include search path." in
+  Arg.(value & opt_all dir [] & info ["I"; "include"] ~docv:"DIR" ~doc)
+
+let quiet_flag =
+  let doc = "Suppress informational output." in
+  Arg.(value & flag & info ["q"; "quiet"] ~doc)
+
+let make_config includes =
+  let base_paths = CJ.Loader.default_config.include_paths in
+  { CJ.Loader.include_paths = includes @ base_paths }
+
 (** {1 Commands} *)
 
 let check_cmd =
@@ -11,7 +24,8 @@ let check_cmd =
     let doc = "The CertiJSON source file to check." in
     Arg.(required & pos 0 (some file) None & info [] ~docv:"FILE" ~doc)
   in
-  let check file =
+  let check quiet includes file =
+    let config = make_config includes in
     match CJ.Loader.parse_file file with
     | Error (CJ.Loader.ParseError e) ->
         let err = CJ.Error.error_of_parse ~file e in
@@ -21,22 +35,25 @@ let check_cmd =
         Fmt.epr "%a@." CJ.Loader.pp_error e;
         `Error (false, "parsing failed")
     | Ok mod_ ->
-        Fmt.pr "Parsed module: %s@." mod_.module_name;
-        Fmt.pr "Imports: %a@."
-          Fmt.(list ~sep:comma string) mod_.imports;
-        Fmt.pr "Declarations: %d@." (List.length mod_.declarations);
+        if not quiet then begin
+          Fmt.pr "Parsed module: %s@." mod_.module_name;
+          Fmt.pr "Imports: %a@."
+            Fmt.(list ~sep:comma string) mod_.imports;
+          Fmt.pr "Declarations: %d@." (List.length mod_.declarations)
+        end;
         let cache = CJ.Loader.create_cache () in
-        match CJ.Loader.load_imports CJ.Loader.default_config cache [mod_.module_name] mod_ with
+        match CJ.Loader.load_imports config cache [mod_.module_name] mod_ with
         | Error e ->
             Fmt.epr "%a@." CJ.Loader.pp_error e;
             `Error (false, "type checking failed")
         | Ok _sig ->
-            Fmt.pr "✓ Module type-checked successfully@.";
+            if not quiet then
+              Fmt.pr "✓ Module type-checked successfully@.";
             `Ok ()
   in
   let doc = "Type-check a CertiJSON source file." in
   let info = Cmd.info "check" ~doc in
-  Cmd.v info Term.(ret (const check $ file))
+  Cmd.v info Term.(ret (const check $ quiet_flag $ include_paths $ file))
 
 let parse_cmd =
   let file =
@@ -69,7 +86,8 @@ let eval_cmd =
     let doc = "The name of the definition to evaluate." in
     Arg.(required & pos 1 (some string) None & info [] ~docv:"NAME" ~doc)
   in
-  let do_eval file def_name =
+  let do_eval includes file def_name =
+    let config = make_config includes in
     match CJ.Loader.parse_file file with
     | Error (CJ.Loader.ParseError e) ->
         let err = CJ.Error.error_of_parse ~file e in
@@ -80,7 +98,7 @@ let eval_cmd =
         `Error (false, "parsing failed")
     | Ok mod_ ->
         let cache = CJ.Loader.create_cache () in
-        match CJ.Loader.load_imports CJ.Loader.default_config cache [mod_.module_name] mod_ with
+        match CJ.Loader.load_imports config cache [mod_.module_name] mod_ with
         | Error e ->
             Fmt.epr "%a@." CJ.Loader.pp_error e;
             `Error (false, "type checking failed")
@@ -93,7 +111,7 @@ let eval_cmd =
   in
   let doc = "Evaluate a definition from a CertiJSON source file." in
   let cmd_info = Cmd.info "eval" ~doc in
-  Cmd.v cmd_info Term.(ret (const do_eval $ file $ def_name))
+  Cmd.v cmd_info Term.(ret (const do_eval $ include_paths $ file $ def_name))
 
 let run_cmd =
   let file =
@@ -104,7 +122,8 @@ let run_cmd =
     let doc = "The name of the IO definition to run (default: main)." in
     Arg.(value & opt string "main" & info ["entry"] ~docv:"NAME" ~doc)
   in
-  let do_run file def_name =
+  let do_run includes file def_name =
+    let config = make_config includes in
     match CJ.Loader.parse_file file with
     | Error (CJ.Loader.ParseError e) ->
         let err = CJ.Error.error_of_parse ~file e in
@@ -115,7 +134,7 @@ let run_cmd =
         `Error (false, "parsing failed")
     | Ok mod_ ->
         let cache = CJ.Loader.create_cache () in
-        match CJ.Loader.load_imports CJ.Loader.default_config cache [mod_.module_name] mod_ with
+        match CJ.Loader.load_imports config cache [mod_.module_name] mod_ with
         | Error e ->
             Fmt.epr "%a@." CJ.Loader.pp_error e;
             `Error (false, "type checking failed")
@@ -131,14 +150,15 @@ let run_cmd =
   in
   let doc = "Run a CertiJSON IO program." in
   let info = Cmd.info "run" ~doc in
-  Cmd.v info Term.(ret (const do_run $ file $ def_name))
+  Cmd.v info Term.(ret (const do_run $ include_paths $ file $ def_name))
 
 let extract_cmd =
   let file =
     let doc = "The CertiJSON source file to extract." in
     Arg.(required & pos 0 (some file) None & info [] ~docv:"FILE" ~doc)
   in
-  let do_extract file =
+  let do_extract includes file =
+    let config = make_config includes in
     match CJ.Loader.parse_file file with
     | Error (CJ.Loader.ParseError e) ->
         let err = CJ.Error.error_of_parse ~file e in
@@ -149,7 +169,7 @@ let extract_cmd =
         `Error (false, "parsing failed")
     | Ok mod_ ->
         let cache = CJ.Loader.create_cache () in
-        match CJ.Loader.load_imports CJ.Loader.default_config cache [mod_.module_name] mod_ with
+        match CJ.Loader.load_imports config cache [mod_.module_name] mod_ with
         | Error e ->
             Fmt.epr "%a@." CJ.Loader.pp_error e;
             `Error (false, "type checking failed")
@@ -160,7 +180,7 @@ let extract_cmd =
   in
   let doc = "Extract a CertiJSON file to C." in
   let info = Cmd.info "extract" ~doc in
-  Cmd.v info Term.(ret (const do_extract $ file))
+  Cmd.v info Term.(ret (const do_extract $ include_paths $ file))
 
 (** {1 Main} *)
 

@@ -1,0 +1,39 @@
+# ProofPy Project Configuration
+# Similar to Cargo.toml for Rust projects
+
+[package]
+name = "tetris"
+version = "0.1.0"
+authors = ["ProofPy Team"]
+description = "A verified Tetris game"
+entry_point = "examples/tetris.cj"
+stdlib = ["Std.Nat", "Std.Bool", "Std.Int", "Std.Option"]
+
+[build]
+# C compiler to use: gcc, clang, tcc
+compiler = "clang"
+
+# Optimization level: 0 (none), 1 (basic), 2 (default), 3 (aggressive)
+opt_level = 2
+
+# Include debug symbols
+debug = false
+
+# Compiler warnings
+warnings = ["-Wall", "-Wextra", "-Wno-unused-variable"]
+
+# Additional C compiler flags
+cflags = []
+
+# Additional linker flags  
+ldflags = []
+
+# Output directory for compiled binaries
+output_dir = "target"
+
+[dependencies]
+# No dependencies yet
+
+[libraries]
+# Link raylib for graphics (if available)
+# raylib = true

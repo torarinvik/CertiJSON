@@ -19,8 +19,21 @@ type config = {
   include_paths : string list;
 }
 
+(** Find stdlib directory relative to executable or current directory *)
+let find_stdlib_paths () =
+  let exe_dir = Filename.dirname Sys.executable_name in
+  let candidates = [
+    ".";
+    "stdlib";
+    exe_dir ^ "/stdlib";
+    exe_dir ^ "/../stdlib";
+    exe_dir ^ "/../../stdlib";
+    "/usr/local/share/proofpy/stdlib";
+  ] in
+  List.filter Sys.file_exists candidates
+
 let default_config = {
-  include_paths = ["."; "stdlib"];
+  include_paths = find_stdlib_paths ();
 }
 
 type cache = (name, signature) Hashtbl.t

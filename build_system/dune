@@ -1,0 +1,10 @@
+(library
+ (name build_system)
+ (modules config builder)
+ (libraries unix toml str))
+
+(executable
+ (name main)
+ (public_name proofpy)
+ (modules main)
+ (libraries build_system))
