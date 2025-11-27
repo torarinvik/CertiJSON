@@ -3,7 +3,7 @@
 # =============================================================================
 # This demonstrates Python-like syntax with dependent types:
 # - enum for algebraic data types (ADTs)
-# - @dataclass for record types with auto-generated projections
+# - struct for record types with auto-generated projections
 # - lambda for anonymous functions
 # - Propositions in Prop universe
 # - Small-step operational semantics
@@ -53,23 +53,20 @@ enum Input:
     hardDrop
 
 # =============================================================================
-# STRUCTURES (using Pythonic '@dataclass' syntax)
+# STRUCTURES (using Pythonic 'struct' syntax)
 # =============================================================================
 
-@dataclass
-class Pos:
+struct Pos:
     x: Nat
     y: Nat
 
-@dataclass
-class ActivePiece:
+struct ActivePiece:
     kind: Kind
     pos: Pos
     rotation: Rot
 
-@dataclass
-class GameState:
-    active: Option(ActivePiece)
+struct GameState:
+    active: Option[ActivePiece]
     score: Nat
     linesCleared: Nat
     status: GameStatus
@@ -140,11 +137,10 @@ def isCellFilled(c: Cell) -> Bool:
             return True
 
 # =============================================================================
-# INITIAL STATE
+# INITIAL STATE (as a value, not a function)
 # =============================================================================
 
-def initialState() -> GameState:
-    return GameState.mk(none(ActivePiece), zero, zero, GameStatus.running)
+initialState: GameState = GameState.mk(none(ActivePiece), zero, zero, GameStatus.running)
 
 # =============================================================================
 # PROPOSITIONS (in Prop universe)
@@ -184,53 +180,39 @@ class Steps(s1: GameState, s2: GameState) in prop:
 # =============================================================================
 
 # Rotation is invertible: ccw(cw(r)) === r
-def thm_rot_ccw_cw_r0 : Rot_ccw(Rot_cw(Rot.r0)) === Rot.r0 : Rot =
-    refl
+thm_rot_ccw_cw_r0: Rot_ccw(Rot_cw(Rot.r0)) === Rot.r0 : Rot = refl
 
-def thm_rot_ccw_cw_r90 : Rot_ccw(Rot_cw(Rot.r90)) === Rot.r90 : Rot =
-    refl
+thm_rot_ccw_cw_r90: Rot_ccw(Rot_cw(Rot.r90)) === Rot.r90 : Rot = refl
 
-def thm_rot_ccw_cw_r180 : Rot_ccw(Rot_cw(Rot.r180)) === Rot.r180 : Rot =
-    refl
+thm_rot_ccw_cw_r180: Rot_ccw(Rot_cw(Rot.r180)) === Rot.r180 : Rot = refl
 
-def thm_rot_ccw_cw_r270 : Rot_ccw(Rot_cw(Rot.r270)) === Rot.r270 : Rot =
-    refl
+thm_rot_ccw_cw_r270: Rot_ccw(Rot_cw(Rot.r270)) === Rot.r270 : Rot = refl
 
 # Rotation the other way: cw(ccw(r)) === r
-def thm_rot_cw_ccw_r0 : Rot_cw(Rot_ccw(Rot.r0)) === Rot.r0 : Rot =
-    refl
+thm_rot_cw_ccw_r0: Rot_cw(Rot_ccw(Rot.r0)) === Rot.r0 : Rot = refl
 
-def thm_rot_cw_ccw_r90 : Rot_cw(Rot_ccw(Rot.r90)) === Rot.r90 : Rot =
-    refl
+thm_rot_cw_ccw_r90: Rot_cw(Rot_ccw(Rot.r90)) === Rot.r90 : Rot = refl
 
 # Cell emptiness: isCellEmpty(empty) === True
-def thm_empty_is_empty : isCellEmpty(Cell.empty) === True : Bool =
-    refl
+thm_empty_is_empty: isCellEmpty(Cell.empty) === True : Bool = refl
 
 # Cell filled: isCellFilled(solid(n)) === True
-def thm_solid_is_filled : isCellFilled(Cell.solid(succ(zero))) === True : Bool =
-    refl
+thm_solid_is_filled: isCellFilled(Cell.solid(succ(zero))) === True : Bool = refl
 
 # Initial state theorems using struct projections
-def thm_initial_status : GameState.status(initialState) === GameStatus.running : GameStatus =
-    refl
+thm_initial_status: GameState.status(initialState) === GameStatus.running : GameStatus = refl
 
-def thm_initial_score : GameState.score(initialState) === zero : Nat =
-    refl
+thm_initial_score: GameState.score(initialState) === zero : Nat = refl
 
-def thm_initial_lines : GameState.linesCleared(initialState) === zero : Nat =
-    refl
+thm_initial_lines: GameState.linesCleared(initialState) === zero : Nat = refl
 
 # 4 clockwise rotations = identity (for r0)
-def thm_cw4_identity : Rot_cw(Rot_cw(Rot_cw(Rot_cw(Rot.r0)))) === Rot.r0 : Rot =
-    refl
+thm_cw4_identity: Rot_cw(Rot_cw(Rot_cw(Rot_cw(Rot.r0)))) === Rot.r0 : Rot = refl
 
 # Kind color uniqueness (different kinds have different colors)
-def thm_I_color : Kind_color(Kind.I) === succ(zero) : Nat =
-    refl
+thm_I_color: Kind_color(Kind.I) === succ(zero) : Nat = refl
 
-def thm_O_color : Kind_color(Kind.O) === succ(succ(zero)) : Nat =
-    refl
+thm_O_color: Kind_color(Kind.O) === succ(succ(zero)) : Nat = refl
 
 # =============================================================================
 # GAME STATE UPDATES (using struct update syntax)
@@ -305,33 +287,26 @@ def movePieceDown(ap: ActivePiece) -> ActivePiece:
 # =============================================================================
 
 # Pausing a running game results in paused status
-def thm_pause_status : GameState.status(pauseGame(initialState)) === GameStatus.paused : GameStatus =
-    refl
+thm_pause_status: GameState.status(pauseGame(initialState)) === GameStatus.paused : GameStatus = refl
 
 # Resuming a paused game results in running status
-def thm_resume_status : GameState.status(resumeGame(pauseGame(initialState))) === GameStatus.running : GameStatus =
-    refl
+thm_resume_status: GameState.status(resumeGame(pauseGame(initialState))) === GameStatus.running : GameStatus = refl
 
 # Game over results in gameOver status
-def thm_gameover_status : GameState.status(gameOver(initialState)) === GameStatus.gameOver : GameStatus =
-    refl
+thm_gameover_status: GameState.status(gameOver(initialState)) === GameStatus.gameOver : GameStatus = refl
 
 # Pausing preserves score
-def thm_pause_preserves_score : GameState.score(pauseGame(initialState)) === zero : Nat =
-    refl
+thm_pause_preserves_score: GameState.score(pauseGame(initialState)) === zero : Nat = refl
 
 # Pausing preserves lines cleared
-def thm_pause_preserves_lines : GameState.linesCleared(pauseGame(initialState)) === zero : Nat =
-    refl
+thm_pause_preserves_lines: GameState.linesCleared(pauseGame(initialState)) === zero : Nat = refl
 
 # =============================================================================
 # THEOREMS ABOUT ROTATION
 # =============================================================================
 
 # Double CW rotation after CCW cancels one CW
-def thm_ccw_cw_cw : Rot_cw(Rot_cw(Rot_ccw(Rot.r0))) === Rot.r90 : Rot =
-    refl
+thm_ccw_cw_cw: Rot_cw(Rot_cw(Rot_ccw(Rot.r0))) === Rot.r90 : Rot = refl
 
 # Position theorems
-def thm_right_left_identity : Pos.x(Pos_left(Pos_right(Pos.mk(zero, zero)))) === zero : Nat =
-    refl
+thm_right_left_identity: Pos.x(Pos_left(Pos_right(Pos.mk(zero, zero)))) === zero : Nat = refl

@@ -555,6 +555,130 @@
           }
         }
       }
+    },
+    {
+      "def": {
+        "name": "gt_nat",
+        "role": "runtime",
+        "type": {
+          "pi": {
+            "arg": { "name": "a", "type": { "var": "Nat" } },
+            "result": {
+              "pi": {
+                "arg": { "name": "b", "type": { "var": "Nat" } },
+                "result": { "prim": "Bool" }
+              }
+            }
+          }
+        },
+        "body": {
+          "lambda": {
+            "arg": { "name": "a", "type": { "var": "Nat" } },
+            "body": {
+              "lambda": {
+                "arg": { "name": "b", "type": { "var": "Nat" } },
+                "body": { "app": [{ "var": "lt_nat" }, { "var": "b" }, { "var": "a" }] }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "def": {
+        "name": "ge_nat",
+        "role": "runtime",
+        "type": {
+          "pi": {
+            "arg": { "name": "a", "type": { "var": "Nat" } },
+            "result": {
+              "pi": {
+                "arg": { "name": "b", "type": { "var": "Nat" } },
+                "result": { "prim": "Bool" }
+              }
+            }
+          }
+        },
+        "body": {
+          "lambda": {
+            "arg": { "name": "a", "type": { "var": "Nat" } },
+            "body": {
+              "lambda": {
+                "arg": { "name": "b", "type": { "var": "Nat" } },
+                "body": { "app": [{ "var": "le_nat" }, { "var": "b" }, { "var": "a" }] }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "def": {
+        "name": "min_nat",
+        "role": "runtime",
+        "type": {
+          "pi": {
+            "arg": { "name": "a", "type": { "var": "Nat" } },
+            "result": {
+              "pi": {
+                "arg": { "name": "b", "type": { "var": "Nat" } },
+                "result": { "var": "Nat" }
+              }
+            }
+          }
+        },
+        "body": {
+          "lambda": {
+            "arg": { "name": "a", "type": { "var": "Nat" } },
+            "body": {
+              "lambda": {
+                "arg": { "name": "b", "type": { "var": "Nat" } },
+                "body": {
+                  "if": {
+                    "cond": { "app": [{ "var": "le_nat" }, { "var": "a" }, { "var": "b" }] },
+                    "then": { "var": "a" },
+                    "else": { "var": "b" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "def": {
+        "name": "max_nat",
+        "role": "runtime",
+        "type": {
+          "pi": {
+            "arg": { "name": "a", "type": { "var": "Nat" } },
+            "result": {
+              "pi": {
+                "arg": { "name": "b", "type": { "var": "Nat" } },
+                "result": { "var": "Nat" }
+              }
+            }
+          }
+        },
+        "body": {
+          "lambda": {
+            "arg": { "name": "a", "type": { "var": "Nat" } },
+            "body": {
+              "lambda": {
+                "arg": { "name": "b", "type": { "var": "Nat" } },
+                "body": {
+                  "if": {
+                    "cond": { "app": [{ "var": "le_nat" }, { "var": "a" }, { "var": "b" }] },
+                    "then": { "var": "b" },
+                    "else": { "var": "a" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
     }
   ]
 }

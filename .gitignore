@@ -25,3 +25,4 @@ Thumbs.db
 *.o
 examples/verified_tetris.json
 docs/lean4_tetris_features.md
+examples/pythonic_showcase.cj

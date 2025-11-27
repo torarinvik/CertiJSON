@@ -4,7 +4,6 @@ type token =
   | DEF | RETURN | IF | ELSE | ELIF | WHILE | MATCH | CASE | CLASS | IMPORT
   | THEOREM | FORALL | PROOF | PROP | IN | STRUCT | ABBREV | NAMESPACE | WHERE
   | LET | EXISTS | REFL | WITH | THEN | FUN | LAMBDA | ENUM
-  | AT (* @ for decorators *)
   | IDENT of string
   | INT of int32
   | INT64 of int64
@@ -183,7 +182,7 @@ let tokenize (source : string) : token list =
     | '%' -> ignore (advance ()); add PERCENT
     | '|' -> ignore (advance ()); add PIPE
     | '\\' -> ignore (advance ()); add BACKSLASH
-    | '@' -> ignore (advance ()); add AT
+
     | '=' -> 
         ignore (advance ());
         if peek () = '=' then (

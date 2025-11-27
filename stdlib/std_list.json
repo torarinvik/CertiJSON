@@ -1321,6 +1321,359 @@
           }
         }
       }
+    },
+    {
+      "def": {
+        "name": "filterMap",
+        "role": "runtime",
+        "rec_args": [3],
+        "type": {
+          "pi": {
+            "arg": { "name": "A", "type": { "universe": "Type" } },
+            "result": {
+              "pi": {
+                "arg": { "name": "B", "type": { "universe": "Type" } },
+                "result": {
+                  "pi": {
+                    "arg": { "name": "f", "type": { "pi": { "arg": { "name": "_", "type": { "var": "A" } }, "result": { "app": [{ "var": "Option" }, { "var": "B" }] } } } },
+                    "result": {
+                      "pi": {
+                        "arg": { "name": "xs", "type": { "app": [{ "var": "List" }, { "var": "A" }] } },
+                        "result": { "app": [{ "var": "List" }, { "var": "B" }] }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "body": {
+          "lambda": {
+            "arg": { "name": "A", "type": { "universe": "Type" } },
+            "body": {
+              "lambda": {
+                "arg": { "name": "B", "type": { "universe": "Type" } },
+                "body": {
+                  "lambda": {
+                    "arg": { "name": "f", "type": { "pi": { "arg": { "name": "_", "type": { "var": "A" } }, "result": { "app": [{ "var": "Option" }, { "var": "B" }] } } } },
+                    "body": {
+                      "lambda": {
+                        "arg": { "name": "xs", "type": { "app": [{ "var": "List" }, { "var": "A" }] } },
+                        "body": {
+                          "match": {
+                            "scrutinee": { "var": "xs" },
+                            "motive": { "app": [{ "var": "List" }, { "var": "B" }] },
+                            "cases": [
+                              {
+                                "pattern": { "ctor": "nil", "args": [] },
+                                "body": { "app": [{ "var": "nil" }, { "var": "B" }] }
+                              },
+                              {
+                                "pattern": { "ctor": "cons", "args": [{ "name": "h" }, { "name": "t" }] },
+                                "body": {
+                                  "match": {
+                                    "scrutinee": { "app": [{ "var": "f" }, { "var": "h" }] },
+                                    "motive": { "app": [{ "var": "List" }, { "var": "B" }] },
+                                    "cases": [
+                                      {
+                                        "pattern": { "ctor": "none", "args": [] },
+                                        "body": { "app": [{ "var": "filterMap" }, { "var": "A" }, { "var": "B" }, { "var": "f" }, { "var": "t" }] }
+                                      },
+                                      {
+                                        "pattern": { "ctor": "some", "args": [{ "name": "b" }] },
+                                        "body": { "app": [{ "var": "cons" }, { "var": "B" }, { "var": "b" }, { "app": [{ "var": "filterMap" }, { "var": "A" }, { "var": "B" }, { "var": "f" }, { "var": "t" }] }] }
+                                      }
+                                    ],
+                                    "coverage_hint": "complete"
+                                  }
+                                }
+                              }
+                            ],
+                            "coverage_hint": "complete"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "def": {
+        "name": "replicate",
+        "role": "runtime",
+        "rec_args": [1],
+        "type": {
+          "pi": {
+            "arg": { "name": "A", "type": { "universe": "Type" } },
+            "result": {
+              "pi": {
+                "arg": { "name": "n", "type": { "var": "Nat" } },
+                "result": {
+                  "pi": {
+                    "arg": { "name": "x", "type": { "var": "A" } },
+                    "result": { "app": [{ "var": "List" }, { "var": "A" }] }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "body": {
+          "lambda": {
+            "arg": { "name": "A", "type": { "universe": "Type" } },
+            "body": {
+              "lambda": {
+                "arg": { "name": "n", "type": { "var": "Nat" } },
+                "body": {
+                  "lambda": {
+                    "arg": { "name": "x", "type": { "var": "A" } },
+                    "body": {
+                      "match": {
+                        "scrutinee": { "var": "n" },
+                        "motive": { "app": [{ "var": "List" }, { "var": "A" }] },
+                        "cases": [
+                          {
+                            "pattern": { "ctor": "zero", "args": [] },
+                            "body": { "app": [{ "var": "nil" }, { "var": "A" }] }
+                          },
+                          {
+                            "pattern": { "ctor": "succ", "args": [{ "name": "k" }] },
+                            "body": { "app": [{ "var": "cons" }, { "var": "A" }, { "var": "x" }, { "app": [{ "var": "replicate" }, { "var": "A" }, { "var": "k" }, { "var": "x" }] }] }
+                          }
+                        ],
+                        "coverage_hint": "complete"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "def": {
+        "name": "getD",
+        "role": "runtime",
+        "rec_args": [1],
+        "type": {
+          "pi": {
+            "arg": { "name": "A", "type": { "universe": "Type" } },
+            "result": {
+              "pi": {
+                "arg": { "name": "xs", "type": { "app": [{ "var": "List" }, { "var": "A" }] } },
+                "result": {
+                  "pi": {
+                    "arg": { "name": "n", "type": { "var": "Nat" } },
+                    "result": {
+                      "pi": {
+                        "arg": { "name": "default", "type": { "var": "A" } },
+                        "result": { "var": "A" }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "body": {
+          "lambda": {
+            "arg": { "name": "A", "type": { "universe": "Type" } },
+            "body": {
+              "lambda": {
+                "arg": { "name": "xs", "type": { "app": [{ "var": "List" }, { "var": "A" }] } },
+                "body": {
+                  "lambda": {
+                    "arg": { "name": "n", "type": { "var": "Nat" } },
+                    "body": {
+                      "lambda": {
+                        "arg": { "name": "default", "type": { "var": "A" } },
+                        "body": {
+                          "match": {
+                            "scrutinee": { "var": "xs" },
+                            "motive": { "var": "A" },
+                            "cases": [
+                              {
+                                "pattern": { "ctor": "nil", "args": [] },
+                                "body": { "var": "default" }
+                              },
+                              {
+                                "pattern": { "ctor": "cons", "args": [{ "name": "h" }, { "name": "t" }] },
+                                "body": {
+                                  "match": {
+                                    "scrutinee": { "var": "n" },
+                                    "motive": { "var": "A" },
+                                    "cases": [
+                                      {
+                                        "pattern": { "ctor": "zero", "args": [] },
+                                        "body": { "var": "h" }
+                                      },
+                                      {
+                                        "pattern": { "ctor": "succ", "args": [{ "name": "k" }] },
+                                        "body": { "app": [{ "var": "getD" }, { "var": "A" }, { "var": "t" }, { "var": "k" }, { "var": "default" }] }
+                                      }
+                                    ],
+                                    "coverage_hint": "complete"
+                                  }
+                                }
+                              }
+                            ],
+                            "coverage_hint": "complete"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "def": {
+        "name": "concatMap",
+        "role": "runtime",
+        "rec_args": [3],
+        "type": {
+          "pi": {
+            "arg": { "name": "A", "type": { "universe": "Type" } },
+            "result": {
+              "pi": {
+                "arg": { "name": "B", "type": { "universe": "Type" } },
+                "result": {
+                  "pi": {
+                    "arg": { "name": "f", "type": { "pi": { "arg": { "name": "_", "type": { "var": "A" } }, "result": { "app": [{ "var": "List" }, { "var": "B" }] } } } },
+                    "result": {
+                      "pi": {
+                        "arg": { "name": "xs", "type": { "app": [{ "var": "List" }, { "var": "A" }] } },
+                        "result": { "app": [{ "var": "List" }, { "var": "B" }] }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "body": {
+          "lambda": {
+            "arg": { "name": "A", "type": { "universe": "Type" } },
+            "body": {
+              "lambda": {
+                "arg": { "name": "B", "type": { "universe": "Type" } },
+                "body": {
+                  "lambda": {
+                    "arg": { "name": "f", "type": { "pi": { "arg": { "name": "_", "type": { "var": "A" } }, "result": { "app": [{ "var": "List" }, { "var": "B" }] } } } },
+                    "body": {
+                      "lambda": {
+                        "arg": { "name": "xs", "type": { "app": [{ "var": "List" }, { "var": "A" }] } },
+                        "body": {
+                          "match": {
+                            "scrutinee": { "var": "xs" },
+                            "motive": { "app": [{ "var": "List" }, { "var": "B" }] },
+                            "cases": [
+                              {
+                                "pattern": { "ctor": "nil", "args": [] },
+                                "body": { "app": [{ "var": "nil" }, { "var": "B" }] }
+                              },
+                              {
+                                "pattern": { "ctor": "cons", "args": [{ "name": "h" }, { "name": "t" }] },
+                                "body": { "app": [{ "var": "append" }, { "var": "B" }, { "app": [{ "var": "f" }, { "var": "h" }] }, { "app": [{ "var": "concatMap" }, { "var": "A" }, { "var": "B" }, { "var": "f" }, { "var": "t" }] }] }
+                              }
+                            ],
+                            "coverage_hint": "complete"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "def": {
+        "name": "range",
+        "role": "runtime",
+        "rec_args": [0],
+        "type": {
+          "pi": {
+            "arg": { "name": "n", "type": { "var": "Nat" } },
+            "result": { "app": [{ "var": "List" }, { "var": "Nat" }] }
+          }
+        },
+        "body": {
+          "lambda": {
+            "arg": { "name": "n", "type": { "var": "Nat" } },
+            "body": {
+              "match": {
+                "scrutinee": { "var": "n" },
+                "motive": { "app": [{ "var": "List" }, { "var": "Nat" }] },
+                "cases": [
+                  {
+                    "pattern": { "ctor": "zero", "args": [] },
+                    "body": { "app": [{ "var": "nil" }, { "var": "Nat" }] }
+                  },
+                  {
+                    "pattern": { "ctor": "succ", "args": [{ "name": "k" }] },
+                    "body": { "app": [{ "var": "append" }, { "var": "Nat" }, { "app": [{ "var": "range" }, { "var": "k" }] }, { "app": [{ "var": "singleton" }, { "var": "Nat" }, { "var": "k" }] }] }
+                  }
+                ],
+                "coverage_hint": "complete"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "def": {
+        "name": "enumerate",
+        "role": "runtime",
+        "type": {
+          "pi": {
+            "arg": { "name": "A", "type": { "universe": "Type" } },
+            "result": {
+              "pi": {
+                "arg": { "name": "xs", "type": { "app": [{ "var": "List" }, { "var": "A" }] } },
+                "result": { "app": [{ "var": "List" }, { "app": [{ "var": "Pair" }, { "var": "Nat" }, { "var": "A" }] }] }
+              }
+            }
+          }
+        },
+        "body": {
+          "lambda": {
+            "arg": { "name": "A", "type": { "universe": "Type" } },
+            "body": {
+              "lambda": {
+                "arg": { "name": "xs", "type": { "app": [{ "var": "List" }, { "var": "A" }] } },
+                "body": {
+                  "app": [
+                    { "var": "zip" },
+                    { "var": "Nat" },
+                    { "var": "A" },
+                    { "app": [{ "var": "range" }, { "app": [{ "var": "length" }, { "var": "A" }, { "var": "xs" }] }] },
+                    { "var": "xs" }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
     }
   ]
 }
