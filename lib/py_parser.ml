@@ -624,6 +624,90 @@ let parse_theorem state =
       }
   | _ -> raise (ParseError "Expected theorem name")
 
+(* Parse struct field: name : type *)
+let rec parse_struct_fields state =
+  match peek state with
+  | DEDENT -> []
+  | IDENT name ->
+      advance state;
+      expect state COLON "Expected ':' after field name";
+      let ty = parse_type state in
+      expect state NEWLINE "Expected newline after field";
+      { name; ty; role = Runtime; b_loc = None } :: parse_struct_fields state
+  | NEWLINE -> advance state; parse_struct_fields state
+  | _ -> raise (ParseError ("Unexpected token in struct body: " ^ (show_token (peek state))))
+
+(* Parse a structure declaration - single constructor record type *)
+let parse_struct state =
+  expect state STRUCT "Expected 'struct'";
+  match peek state with
+  | IDENT name ->
+      advance state;
+      let params =
+        match peek state with
+        | LPAREN ->
+            advance state;
+            let p = parse_arg_list state in
+            expect state RPAREN "Expected ')' in struct params";
+            p
+        | _ -> []
+      in
+      expect state COLON "Expected ':' after struct definition";
+      expect state NEWLINE "Expected newline after struct definition";
+      expect state INDENT "Expected indented block for struct fields";
+      let fields = parse_struct_fields state in
+      expect state DEDENT "Expected dedent after struct body";
+      (* Create an inductive with a single constructor named Name.mk *)
+      Inductive {
+        ind_name = name;
+        params = params;
+        ind_universe = Type;
+        constructors = [{
+          ctor_name = name ^ ".mk";
+          ctor_args = fields;
+          ctor_loc = None;
+        }];
+        ind_loc = None;
+      }
+  | _ -> raise (ParseError "Expected struct name")
+
+(* Parse an abbreviation/type alias *)
+let parse_abbrev state =
+  expect state ABBREV "Expected 'abbrev'";
+  match peek state with
+  | IDENT name ->
+      advance state;
+      let params =
+        match peek state with
+        | LPAREN ->
+            advance state;
+            let p = parse_arg_list state in
+            expect state RPAREN "Expected ')' in abbrev params";
+            p
+        | _ -> []
+      in
+      expect state ASSIGN "Expected '=' after abbrev name";
+      let body = parse_type state in
+      expect state NEWLINE "Expected newline after abbrev";
+      (* Create a definition that returns a Type *)
+      let full_type = List.fold_right 
+        (fun b acc -> mk_term (Pi { arg = b; result = acc }) None None) 
+        params 
+        (mk_term (Universe Type) None None) in
+      let full_body = List.fold_right 
+        (fun b acc -> mk_term (Lambda { arg = b; body = acc }) None None) 
+        params 
+        body in
+      Definition {
+        def_name = name;
+        def_role = Runtime;
+        def_type = full_type;
+        def_body = full_body;
+        rec_args = None;
+        def_loc = None;
+      }
+  | _ -> raise (ParseError "Expected abbrev name")
+
 let parse_def state =
   expect state DEF "Expected 'def'";
   match peek state with
@@ -678,6 +762,12 @@ let rec parse_top_level_items state =
   | CLASS ->
       let ind = parse_inductive state in
       Decl (Inductive ind) :: parse_top_level_items state
+  | STRUCT ->
+      let struct_decl = parse_struct state in
+      Decl struct_decl :: parse_top_level_items state
+  | ABBREV ->
+      let abbrev_decl = parse_abbrev state in
+      Decl abbrev_decl :: parse_top_level_items state
   | DEF ->
       let def = parse_def state in
       Decl def :: parse_top_level_items state

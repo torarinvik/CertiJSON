@@ -2,7 +2,7 @@ module Loc = Loc
 
 type token =
   | DEF | RETURN | IF | ELSE | ELIF | WHILE | MATCH | CASE | CLASS | IMPORT
-  | THEOREM | FORALL | PROOF | PROP | IN
+  | THEOREM | FORALL | PROOF | PROP | IN | STRUCT | ABBREV | NAMESPACE | WHERE
   | IDENT of string
   | INT of int32
   | INT64 of int64
@@ -50,6 +50,10 @@ let keywords = [
   ("proof", PROOF);
   ("prop", PROP);
   ("in", IN);
+  ("struct", STRUCT);
+  ("abbrev", ABBREV);
+  ("namespace", NAMESPACE);
+  ("where", WHERE);
   ("True", BOOL true);
   ("False", BOOL false);
   ("and", AND);
