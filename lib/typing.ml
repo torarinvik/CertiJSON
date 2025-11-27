@@ -966,6 +966,32 @@ and check (ctx : context) (t : term) (expected : term) : unit =
           let actual = infer ctx t in
           if not (conv ctx actual expected) then
             raise (TypeError (TypeMismatch { expected; actual; context = "check"; loc = t.loc })))
+  | Refl { ty; value } ->
+      (* Handle refl with placeholder types - infer from expected type *)
+      let expected' = whnf ctx expected in
+      (match expected'.desc with
+       | Eq { ty = expected_ty; lhs; rhs } ->
+           (* If ty/value are placeholders, use expected type *)
+           let actual_ty = 
+             match ty.desc with
+             | Var "_refl_type" -> expected_ty
+             | _ -> ty
+           in
+           let actual_value =
+             match value.desc with
+             | Var "_refl_value" -> lhs (* Use lhs as the value *)
+             | _ -> value
+           in
+           (* Check that actual type and value are well-typed *)
+           let _ = check ctx actual_ty (mk ?loc:ty.loc (Universe Type)) in
+           let _ = check ctx actual_value actual_ty in
+           (* For refl, lhs must equal rhs (after reduction) *)
+           if not (conv ctx lhs rhs) then
+             raise (TypeError (TypeMismatch { expected = lhs; actual = rhs; context = "refl: lhs must equal rhs"; loc = t.loc }))
+       | _ ->
+           let actual = infer ctx t in
+           if not (conv ctx actual expected) then
+             raise (TypeError (TypeMismatch { expected; actual; context = "check refl"; loc = t.loc })))
   | _ ->
       let actual = infer ctx t in
       if not (is_subtype ctx actual expected) then

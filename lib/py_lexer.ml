@@ -3,7 +3,7 @@ module Loc = Loc
 type token =
   | DEF | RETURN | IF | ELSE | ELIF | WHILE | MATCH | CASE | CLASS | IMPORT
   | THEOREM | FORALL | PROOF | PROP | IN | STRUCT | ABBREV | NAMESPACE | WHERE
-  | LET | EXISTS
+  | LET | EXISTS | REFL
   | IDENT of string
   | INT of int32
   | INT64 of int64
@@ -13,7 +13,7 @@ type token =
   | COLON | SEMICOLON | COMMA | DOT
   | ARROW (* -> *)
   | ASSIGN (* = *)
-  | EQ (* == *) | NEQ (* != *) | LT | GT | LE | GE
+  | EQ (* == *) | PROPEQ (* === *) | NEQ (* != *) | LT | GT | LE | GE
   | PLUS | MINUS | STAR | SLASH | PERCENT
   | AND | OR | NOT
   | PIPE
@@ -57,6 +57,7 @@ let keywords = [
   ("where", WHERE);
   ("let", LET);
   ("exists", EXISTS);
+  ("refl", REFL);
   ("True", BOOL true);
   ("False", BOOL false);
   ("and", AND);
@@ -174,7 +175,11 @@ let tokenize (source : string) : token list =
     | '\\' -> ignore (advance ()); add BACKSLASH
     | '=' -> 
         ignore (advance ());
-        if peek () = '=' then (ignore (advance ()); add EQ)
+        if peek () = '=' then (
+          ignore (advance ());
+          if peek () = '=' then (ignore (advance ()); add PROPEQ)
+          else add EQ
+        )
         else add ASSIGN
     | '!' ->
         ignore (advance ());

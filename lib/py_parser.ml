@@ -65,14 +65,25 @@ let parse_pattern state =
   match peek state with
   | IDENT name ->
       advance state;
+      (* Parse dotted pattern like Kind.I or just I *)
+      let rec parse_dotted_pattern acc =
+        match peek state with
+        | DOT ->
+            advance state;
+            (match peek state with
+             | IDENT n -> advance state; parse_dotted_pattern (acc ^ "." ^ n)
+             | _ -> acc)
+        | _ -> acc
+      in
+      let full_name = parse_dotted_pattern name in
       (match peek state with
        | LPAREN ->
            advance state;
            let args = parse_pattern_args state in
            expect state RPAREN "Expected ')' in pattern";
-           { ctor = name; args; pat_loc = None }
+           { ctor = full_name; args; pat_loc = None }
        | _ -> 
-           { ctor = name; args = []; pat_loc = None }
+           { ctor = full_name; args = []; pat_loc = None }
       )
   | INT i ->
       advance state;
@@ -237,6 +248,21 @@ and parse_comp_expr state =
   let left = parse_add_expr state in
   match peek state with
   | EQ -> advance state; let right = parse_add_expr state in mk_term (App (mk_term (Var "eq") None None, [left; right])) None None
+  | PROPEQ -> 
+      advance state; 
+      let right = parse_add_expr state in 
+      (* Check for optional type annotation: lhs === rhs : Type *)
+      let ty = 
+        match peek state with
+        | COLON ->
+            advance state;
+            parse_add_expr state
+        | _ ->
+            (* Without explicit type, we use left as a placeholder - type checker will infer *)
+            (* This is a hack - ideally we'd have proper type inference *)
+            left
+      in
+      mk_term (Eq { ty; lhs = left; rhs = right }) None None
   | NEQ -> advance state; let right = parse_add_expr state in mk_term (App (mk_term (Var "ne") None None, [left; right])) None None
   | LT -> advance state; let right = parse_add_expr state in mk_term (App (mk_term (Var "lt") None None, [left; right])) None None
   | GT -> advance state; let right = parse_add_expr state in mk_term (App (mk_term (Var "gt") None None, [left; right])) None None
@@ -316,6 +342,13 @@ and parse_primary_expr state =
                   mk_term (Pi { arg = { name; ty; role = Runtime; b_loc = None }; result }) None None
               | _ -> raise (ParseError "Expected identifier in forall binding"))
          | _ -> raise (ParseError "Expected identifier or '(' after forall"))
+    | REFL ->
+        (* refl is a proof of reflexive equality. The type checker will infer the 
+           type and value from context. We use placeholder terms here. *)
+        advance state;
+        (* Create a Refl with placeholders - type checker fills in from expected type *)
+        mk_term (Refl { ty = mk_term (Var "_refl_type") None None; 
+                        value = mk_term (Var "_refl_value") None None }) None None
     | IDENT name ->
         advance state;
         let rec parse_dotted acc =
@@ -361,7 +394,11 @@ and parse_postfix state term =
       (match peek state with
        | IDENT "value" -> advance state; parse_postfix state (mk_term (SubsetElim term) None None)
        | IDENT "proof" -> advance state; parse_postfix state (mk_term (SubsetProof term) None None)
-       | _ -> raise (ParseError "Expected 'value' or 'proof' after dot"))
+       | IDENT field_name -> 
+           (* General struct field access: expr.field -> field(expr) *)
+           advance state;
+           parse_postfix state (mk_term (App (mk_term (Var field_name) None None, [term])) None None)
+       | _ -> raise (ParseError "Expected field name after dot"))
   | LPAREN ->
       advance state;
       let args = parse_args state in
@@ -692,11 +729,19 @@ let parse_inductive state =
       expect state INDENT "Expected indented block for constructors";
       let ctors = parse_constructors state in
       expect state DEDENT "Expected dedent after class body";
+      (* Prefix constructor names with class name if not already prefixed *)
+      let qualified_ctors = List.map (fun ctor ->
+        let qualified_name =
+          if String.contains ctor.ctor_name '.' then ctor.ctor_name
+          else name ^ "." ^ ctor.ctor_name
+        in
+        { ctor with ctor_name = qualified_name }
+      ) ctors in
       {
         ind_name = name;
         params = params;
         ind_universe = universe;
-        constructors = ctors;
+        constructors = qualified_ctors;
         ind_loc = None;
       }
   | _ -> raise (ParseError "Expected class name")
@@ -813,29 +858,61 @@ let parse_abbrev state =
 let parse_def state =
   expect state DEF "Expected 'def'";
   match peek state with
-  | IDENT name ->
+  | IDENT first_name ->
       advance state;
-      expect state LPAREN "Expected '('";
-      let args = parse_arg_list state in
-      expect state RPAREN "Expected ')'";
-      expect state ARROW "Expected '->'";
-      let ret_ty = parse_type state in
-      expect state COLON "Expected ':'";
-      expect state NEWLINE "Expected newline after def";
-      let stmts = parse_block state (Some ret_ty) in
-      let body = fold_stmts stmts in
-      
-      let full_type = List.fold_right (fun b acc -> mk_term (Pi { arg = b; result = acc }) None None) args ret_ty in
-      let full_body = List.fold_right (fun b acc -> mk_term (Lambda { arg = b; body = acc }) None None) args body in
-      
-      Definition {
-        def_name = name;
-        def_role = Runtime;
-        def_type = full_type;
-        def_body = full_body;
-        rec_args = None;
-        def_loc = None;
-      }
+      (* Handle dotted names like Rot.cw *)
+      let name = 
+        match peek state with
+        | DOT -> 
+            advance state;
+            (match peek state with
+             | IDENT second_name -> advance state; first_name ^ "." ^ second_name
+             | _ -> raise (ParseError "Expected method name after dot"))
+        | _ -> first_name
+      in
+      (* Check if this is a value definition: def name : Type = body 
+         or a function definition: def name(args) -> ret : body *)
+      (match peek state with
+       | COLON ->
+           (* Value definition: def name : Type = body *)
+           advance state;
+           let ty = parse_type state in
+           expect state ASSIGN "Expected '=' after type annotation";
+           expect state NEWLINE "Expected newline after '='";
+           let stmts = parse_block state (Some ty) in
+           let body = fold_stmts stmts in
+           Definition {
+             def_name = name;
+             def_role = Runtime;
+             def_type = ty;
+             def_body = body;
+             rec_args = None;
+             def_loc = None;
+           }
+       | LPAREN ->
+           (* Function definition: def name(args) -> ret : body *)
+           advance state;
+           let args = parse_arg_list state in
+           expect state RPAREN "Expected ')'";
+           expect state ARROW "Expected '->'";
+           let ret_ty = parse_type state in
+           expect state COLON "Expected ':'";
+           expect state NEWLINE "Expected newline after def";
+           let stmts = parse_block state (Some ret_ty) in
+           let body = fold_stmts stmts in
+           
+           let full_type = List.fold_right (fun b acc -> mk_term (Pi { arg = b; result = acc }) None None) args ret_ty in
+           let full_body = List.fold_right (fun b acc -> mk_term (Lambda { arg = b; body = acc }) None None) args body in
+           
+           Definition {
+             def_name = name;
+             def_role = Runtime;
+             def_type = full_type;
+             def_body = full_body;
+             rec_args = None;
+             def_loc = None;
+           }
+       | _ -> raise (ParseError ("Expected '(' or ':' after definition name, got: " ^ (show_token (peek state)))))
   | _ -> raise (ParseError "Expected function name")
 
 type top_level_item =
