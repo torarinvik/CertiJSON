@@ -599,6 +599,16 @@ let extract_def (ctx : Context.context) (def : Syntax.def_decl) : c_func option 
               | _ -> false 
             in
             
+            (* Check if this is an enum-like match (constructors are not Int32 literals) *)
+            let is_enum_case c =
+              match c.pattern.ctor with
+              | "_" -> false (* wildcard is not an indicator *)
+              | s -> 
+                  (* Try to parse as Int32 - if it fails, it's an enum *)
+                  try let _ = Int32.of_string s in false
+                  with _ -> true
+            in
+            
             if List.exists is_bool_case cases then
               (* Convert to if/else chain *)
               let rec cases_to_if = function
@@ -618,6 +628,55 @@ let extract_def (ctx : Context.context) (def : Syntax.def_decl) : c_func option 
                     [CIf (cond, then_block, else_block)]
               in
               cases_to_if cases
+            else if List.exists is_enum_case cases then
+              (* Enum-like match: use constructor indices *)
+              let switch_cases = 
+                List.mapi (fun idx c ->
+                  let val_expr = 
+                    if c.pattern.ctor = "_" then None
+                    else Some (CLitInt32 (Int32.of_int idx))
+                  in
+                  (* Add pattern variable bindings if any *)
+                  let pattern_env = 
+                    List.mapi (fun _i (arg : Syntax.pattern_arg) ->
+                      (arg.arg_name, fresh_name arg.arg_name)
+                    ) c.pattern.args
+                  in
+                  let env' = pattern_env @ env in
+                  (val_expr, translate_pure env' c.body res_var ret_ty)
+                ) cases
+              in
+              
+              (* Check if there's a default case *)
+              let has_default = List.exists (fun (v, _) -> v = None) switch_cases in
+              
+              let rec build_if_chain = function
+                | [] -> []
+                | (Some v, stmts) :: rest ->
+                    let cond = CBinOp ("==", scrut_expr, v) in
+                    let then_block = CBlock stmts in
+                    let else_block = 
+                      match build_if_chain rest with
+                      | [] -> None
+                      | else_stmts -> Some (CBlock else_stmts)
+                    in
+                    [CIf (cond, then_block, else_block)]
+                | (None, stmts) :: _ -> stmts (* Default case *)
+              in
+              let if_chain = build_if_chain switch_cases in
+              (* Add fallback return for non-void functions without default case *)
+              if has_default || ret_ty = CVoid then
+                if_chain
+              else
+                let fallback = 
+                  match ret_ty with
+                  | CInt32 -> [CReturn (CLitInt32 0l)]
+                  | CInt64 -> [CReturn (CLitInt64 0L)]
+                  | CDouble -> [CReturn (CLitFloat 0.0)]
+                  | CBool -> [CReturn (CLitBool false)]
+                  | _ -> [CReturn (CLitInt32 0l)]
+                in
+                if_chain @ fallback
             else
               (* Assume Int32 switch *)
               let switch_cases = 
